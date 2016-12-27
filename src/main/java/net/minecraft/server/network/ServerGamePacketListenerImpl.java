@@ -3186,7 +3186,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     }
 
     public final boolean isDisconnected() {
-        return !this.player.joining && !this.connection.isConnected();
+        return (!this.player.joining && !this.connection.isConnected()) || this.processedDisconnect; // Paper
     }
     // CraftBukkit end
 
