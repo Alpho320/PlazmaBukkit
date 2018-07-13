@@ -2562,6 +2562,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                             }
 
                             if (event.isCancelled()) {
+                            ServerGamePacketListenerImpl.this.player.containerMenu.sendAllDataToRemote(); // Paper - Refresh player inventory
                                 return;
                             }
                             // CraftBukkit end
