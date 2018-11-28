@@ -40,7 +40,7 @@ public class PacketEncoder extends MessageToByteEncoder<Packet<?>> {
                     int j = friendlyByteBuf.writerIndex();
                     packet.write(friendlyByteBuf);
                     int k = friendlyByteBuf.writerIndex() - j;
-                    if (k > 8388608) {
+                    if (false && k > 8388608) { // Paper - disable
                         throw new IllegalArgumentException("Packet too big (is " + k + ", should be less than 8388608): " + packet);
                     } else {
                         int l = channelHandlerContext.channel().attr(Connection.ATTRIBUTE_PROTOCOL).get().getId();
@@ -54,7 +54,31 @@ public class PacketEncoder extends MessageToByteEncoder<Packet<?>> {
                         throw var10;
                     }
                 }
+
+                // Paper start
+                int packetLength = friendlyByteBuf.readableBytes();
+                if (packetLength > MAX_PACKET_SIZE) {
+                    throw new PacketTooLargeException(packet, packetLength);
+                }
+                // Paper end
             }
         }
     }
+
+    // Paper start
+    private static int MAX_PACKET_SIZE = 8388608;
+
+    public static class PacketTooLargeException extends RuntimeException {
+        private final Packet<?> packet;
+
+        PacketTooLargeException(Packet<?> packet, int packetLength) {
+            super("PacketTooLarge - " + packet.getClass().getSimpleName() + " is " + packetLength + ". Max is " + MAX_PACKET_SIZE);
+            this.packet = packet;
+        }
+
+        public Packet<?> getPacket() {
+            return packet;
+        }
+    }
+    // Paper end
 }

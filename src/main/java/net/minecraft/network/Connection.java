@@ -152,6 +152,18 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
     }
 
     public void exceptionCaught(ChannelHandlerContext channelhandlercontext, Throwable throwable) {
+        // Paper start
+        if (throwable instanceof io.netty.handler.codec.EncoderException && throwable.getCause() instanceof PacketEncoder.PacketTooLargeException packetTooLargeException) {
+            if (packetTooLargeException.getPacket().packetTooLarge(this)) {
+                return;
+            } else if (packetTooLargeException.getPacket().isSkippable()) {
+                Connection.LOGGER.debug("Skipping packet due to errors", throwable.getCause());
+                return;
+            } else {
+                throwable = throwable.getCause();
+            }
+        }
+        // Paper end
         if (throwable instanceof SkipPacketException) {
             Connection.LOGGER.debug("Skipping packet due to errors", throwable.getCause());
         } else {
