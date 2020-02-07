@@ -388,6 +388,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     // Paper start
     public long activatedImmunityTick = Integer.MIN_VALUE; // Paper
     public boolean isTemporarilyActive = false; // Paper
+    public boolean fromNetherPortal; // Paper
     protected int numCollisions = 0; // Paper
     public boolean spawnedViaMobSpawner; // Paper - Yes this name is similar to above, upstream took the better one
     @javax.annotation.Nullable
@@ -2081,6 +2082,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             if (spawnedViaMobSpawner) {
                 nbt.putBoolean("Paper.FromMobSpawner", true);
             }
+            if (fromNetherPortal) {
+                nbt.putBoolean("Paper.FromNetherPortal", true);
+            }
             // Paper end
             return nbt;
         } catch (Throwable throwable) {
@@ -2223,6 +2227,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             }
 
             spawnedViaMobSpawner = nbt.getBoolean("Paper.FromMobSpawner"); // Restore entity's from mob spawner status
+            fromNetherPortal = nbt.getBoolean("Paper.FromNetherPortal");
             if (nbt.contains("Paper.SpawnReason")) {
                 String spawnReasonName = nbt.getString("Paper.SpawnReason");
                 try {
