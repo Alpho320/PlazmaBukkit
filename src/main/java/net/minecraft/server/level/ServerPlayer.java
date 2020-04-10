@@ -336,7 +336,7 @@ public class ServerPlayer extends Player {
         this.stats = server.getPlayerList().getPlayerStats(this);
         this.advancements = server.getPlayerList().getPlayerAdvancements(this);
         this.setMaxUpStep(1.0F);
-        this.fudgeSpawnLocation(world);
+        //this.fudgeSpawnLocation(world); // Paper - don't move to spawn on login, only first join
 
         this.cachedSingleHashSet = new com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<>(this); // Paper
 
@@ -570,7 +570,7 @@ public class ServerPlayer extends Player {
                 position = Vec3.atCenterOf(world.getSharedSpawnPos());
             }
             this.level = world;
-            this.setPos(position);
+            this.setPosRaw(position.x(), position.y(), position.z()); // Paper - don't register to chunks yet
         }
         this.gameMode.setLevel((ServerLevel) world);
     }
