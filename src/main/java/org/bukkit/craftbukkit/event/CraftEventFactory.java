@@ -1918,4 +1918,12 @@ public class CraftEventFactory {
 
         return !event.isCancelled();
     }
+
+    // Paper start
+    public static boolean handleBlockFailedDispenseEvent(ServerLevel serverLevel, BlockPos blockposition) {
+        org.bukkit.block.Block block = serverLevel.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
+        io.papermc.paper.event.block.BlockFailedDispenseEvent event = new io.papermc.paper.event.block.BlockFailedDispenseEvent(block);
+        return event.callEvent();
+    }
+    // Paper end
 }
