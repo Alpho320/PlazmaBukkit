@@ -168,6 +168,7 @@ public class Explosion {
                         for (float f1 = 0.3F; f > 0.0F; f -= 0.22500001F) {
                             BlockPos blockposition = BlockPos.containing(d4, d5, d6);
                             BlockState iblockdata = this.level.getBlockState(blockposition);
+                            if (!iblockdata.isDestroyable()) continue; // Paper
                             FluidState fluid = iblockdata.getFluidState(); // Paper
 
                             if (!this.level.isInWorldBounds(blockposition)) {
@@ -369,7 +370,7 @@ public class Explosion {
                 }
                 // CraftBukkit end
 
-                if (!iblockdata.isAir()) {
+                if (!iblockdata.isAir() && iblockdata.isDestroyable()) { // Paper
                     BlockPos blockposition1 = blockposition.immutable();
 
                     this.level.getProfiler().push("explosion_blocks");
