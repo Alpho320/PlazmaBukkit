@@ -98,6 +98,7 @@ public class CraftSign<T extends SignBlockEntity> extends CraftBlockEntityState<
         this.front.applyLegacyStringToSignSide();
 
         super.applyTo(sign);
+        sign.isEditable = getSnapshot().isEditable; // Paper - copy manually
     }
 
     public static void openSign(Sign sign, org.bukkit.entity.HumanEntity player) { // Paper - change move open sign to HumanEntity
