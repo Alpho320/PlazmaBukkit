@@ -38,11 +38,23 @@ public class SetSpawnCommand {
         ResourceKey<Level> resourcekey = source.getLevel().dimension();
         Iterator iterator = targets.iterator();
 
+        final Collection<ServerPlayer> actualTargets = new java.util.ArrayList<>(); // Paper
         while (iterator.hasNext()) {
             ServerPlayer entityplayer = (ServerPlayer) iterator.next();
 
-            entityplayer.setRespawnPosition(resourcekey, pos, angle, true, false, org.bukkit.event.player.PlayerSpawnChangeEvent.Cause.COMMAND); // CraftBukkit
+            // Paper start - PlayerSetSpawnEvent
+            if (entityplayer.setRespawnPosition(resourcekey, pos, angle, true, false, com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.COMMAND)) {
+                actualTargets.add(entityplayer);
+            }
+            // Paper end
         }
+        // Paper start
+        if (actualTargets.isEmpty()) {
+            return 0;
+        } else {
+            targets = actualTargets;
+        }
+        // Paper end
 
         String s = resourcekey.location().toString();
 
