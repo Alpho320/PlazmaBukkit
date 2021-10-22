@@ -124,6 +124,7 @@ public class RespawnAnchorBlock extends Block {
     }
 
     private void explode(BlockState state, Level world, final BlockPos explodedPos) {
+        final org.bukkit.block.BlockState explodedBlockState = org.bukkit.craftbukkit.block.CraftBlockStates.getBlockState(explodedPos, state, null); // Paper - exploded block state
         world.removeBlock(explodedPos, false);
         Stream<Direction> stream = Direction.Plane.HORIZONTAL.stream(); // CraftBukkit - decompile error
 
@@ -140,7 +141,7 @@ public class RespawnAnchorBlock extends Block {
         };
         Vec3 vec3d = explodedPos.getCenter();
 
-        world.explode((Entity) null, world.damageSources().badRespawnPointExplosion(vec3d), explosiondamagecalculator, vec3d, 5.0F, true, Level.ExplosionInteraction.BLOCK);
+        world.explode((Entity) null, world.damageSources().badRespawnPointExplosion(vec3d, explodedBlockState), explosiondamagecalculator, vec3d, 5.0F, true, Level.ExplosionInteraction.BLOCK); // Paper
     }
 
     public static boolean canSetSpawn(Level world) {
