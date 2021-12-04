@@ -84,6 +84,10 @@ public class CropBlock extends BushBlock implements BonemealableBlock {
                     modifier = world.spigotConfig.carrotModifier;
                 } else if (this == Blocks.POTATOES) {
                     modifier = world.spigotConfig.potatoModifier;
+                // Paper start
+                } else if (this == Blocks.TORCHFLOWER_CROP) {
+                    modifier = world.spigotConfig.torchFlowerModifier;
+                // Paper end
                 } else {
                     modifier = world.spigotConfig.wheatModifier;
                 }
