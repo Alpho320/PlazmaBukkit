@@ -398,6 +398,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     private org.bukkit.util.Vector origin;
     @javax.annotation.Nullable
     private UUID originWorld;
+    public boolean freezeLocked = false; // Paper - Freeze Tick Lock API
 
     public void setOrigin(@javax.annotation.Nonnull Location location) {
         this.origin = location.toVector();
@@ -827,7 +828,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 this.setRemainingFireTicks(this.remainingFireTicks - 1);
             }
 
-            if (this.getTicksFrozen() > 0) {
+            if (this.getTicksFrozen() > 0 && !freezeLocked) { // Paper - Freeze Tick Lock API
                 this.setTicksFrozen(0);
                 this.level.levelEvent((Player) null, 1009, this.blockPosition, 1);
             }
@@ -2298,6 +2299,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             if (fromNetherPortal) {
                 nbt.putBoolean("Paper.FromNetherPortal", true);
             }
+            if (freezeLocked) {
+                nbt.putBoolean("Paper.FreezeLock", true);
+            }
             // Paper end
             return nbt;
         } catch (Throwable throwable) {
@@ -2462,6 +2466,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             }
             if (spawnReason == null) {
                 spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT;
+            }
+            if (nbt.contains("Paper.FreezeLock")) {
+                freezeLocked = nbt.getBoolean("Paper.FreezeLock");
             }
             // Paper end
 
