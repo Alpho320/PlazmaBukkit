@@ -2163,7 +2163,9 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         }
         // CraftBukkit end
         if (ServerGamePacketListenerImpl.isChatMessageIllegal(packet.message())) {
+            this.server.scheduleOnMain(() -> { // Paper - push to main for event firing
             this.disconnect(Component.translatable("multiplayer.disconnect.illegal_characters"), org.bukkit.event.player.PlayerKickEvent.Cause.ILLEGAL_CHARACTERS); // Paper - add cause
+            }); // Paper - push to main for event firing
         } else {
             Optional<LastSeenMessages> optional = this.tryHandleChat(packet.message(), packet.timeStamp(), packet.lastSeenMessages());
 
@@ -2197,7 +2199,9 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     @Override
     public void handleChatCommand(ServerboundChatCommandPacket packet) {
         if (ServerGamePacketListenerImpl.isChatMessageIllegal(packet.command())) {
+            this.server.scheduleOnMain(() -> { // Paper - push to main for event firing
             this.disconnect(Component.translatable("multiplayer.disconnect.illegal_characters"), org.bukkit.event.player.PlayerKickEvent.Cause.ILLEGAL_CHARACTERS); // Paper
+            }); // Paper - push to main for event firing
         } else {
             Optional<LastSeenMessages> optional = this.tryHandleChat(packet.command(), packet.timeStamp(), packet.lastSeenMessages());
 
@@ -2283,7 +2287,9 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     private Optional<LastSeenMessages> tryHandleChat(String message, Instant timestamp, LastSeenMessages.Update acknowledgment) {
         if (!this.updateChatOrder(timestamp)) {
             ServerGamePacketListenerImpl.LOGGER.warn("{} sent out-of-order chat: '{}'", this.player.getName().getString(), message);
+            this.server.scheduleOnMain(() -> { // Paper - push to main
             this.disconnect(Component.translatable("multiplayer.disconnect.out_of_order_chat"), org.bukkit.event.player.PlayerKickEvent.Cause.OUT_OF_ORDER_CHAT); // Paper - kick event ca
+            }); // Paper - push to main
             return Optional.empty();
         } else {
             Optional<LastSeenMessages> optional = this.unpackAndApplyLastSeen(acknowledgment);
