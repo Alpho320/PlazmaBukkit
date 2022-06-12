@@ -14,6 +14,7 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SignItem;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -76,11 +77,11 @@ public abstract class SignBlock extends BaseEntityBlock implements SimpleWaterlo
         if (world.isClientSide) {
             return bl4 ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
         } else {
-            BlockEntity bl5 = world.getBlockEntity(pos);
-            if (!(bl5 instanceof SignBlockEntity)) {
+            BlockEntity blockEntity = world.getBlockEntity(pos); // Purpur - decompile fix
+            if (!(blockEntity instanceof SignBlockEntity)) { // Purpur - decompile fix
                 return InteractionResult.PASS;
             } else {
-                SignBlockEntity signBlockEntity = (SignBlockEntity)bl5;
+                SignBlockEntity signBlockEntity = (SignBlockEntity)blockEntity; // Purpur - decompile fix
                 boolean bl5 = signBlockEntity.hasGlowingText();
                 if ((!bl2 || !bl5) && (!bl3 || bl5)) {
                     if (bl4) {
@@ -107,6 +108,17 @@ public abstract class SignBlock extends BaseEntityBlock implements SimpleWaterlo
                             player.awardStat(Stats.ITEM_USED.get(item));
                         }
                     }
+
+                    // Purpur start - right click to open sign editor
+                    if (world.purpurConfig.signRightClickEdit && itemStack.getItem() instanceof SignItem &&
+                        !player.isCrouching() && player.getAbilities().mayBuild &&
+                        player.getBukkitEntity().hasPermission("purpur.sign.edit")) {
+                        signBlockEntity.setEditable(true);
+                        signBlockEntity.setAllowedPlayerEditor(player.getUUID());
+                        player.openTextEdit(signBlockEntity);
+                        return InteractionResult.SUCCESS;
+                    }
+                    // Purpur end
 
                     return signBlockEntity.executeClickCommands((ServerPlayer)player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
                 } else {

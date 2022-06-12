@@ -20,7 +20,60 @@ public class Husk extends Zombie {
 
     public Husk(EntityType<? extends Husk> type, Level world) {
         super(type, world);
+        this.setShouldBurnInDay(false); // Purpur
     }
+
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.huskRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.huskRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.huskControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.huskMaxHealth);
+    }
+
+    @Override
+    protected void randomizeReinforcementsChance() {
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SPAWN_REINFORCEMENTS_CHANCE).setBaseValue(this.random.nextDouble() * this.level.purpurConfig.huskSpawnReinforcements);
+    }
+
+    @Override
+    public boolean jockeyOnlyBaby() {
+        return level.purpurConfig.huskJockeyOnlyBaby;
+    }
+
+    @Override
+    public double jockeyChance() {
+        return level.purpurConfig.huskJockeyChance;
+    }
+
+    @Override
+    public boolean jockeyTryExistingChickens() {
+        return level.purpurConfig.huskJockeyTryExistingChickens;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.huskTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.huskAlwaysDropExp;
+    }
+    // Purpur end
 
     public static boolean checkHuskSpawnRules(EntityType<Husk> type, ServerLevelAccessor world, MobSpawnType spawnReason, BlockPos pos, RandomSource random) {
         return checkMonsterSpawnRules(type, world, spawnReason, pos, random) && (spawnReason == MobSpawnType.SPAWNER || world.canSeeSky(pos));
@@ -28,7 +81,7 @@ public class Husk extends Zombie {
 
     @Override
     public boolean isSunSensitive() {
-        return false;
+        return this.shouldBurnInDay; // Purpur - moved to LivingEntity - keep methods for ABI compatibility
     }
 
     @Override

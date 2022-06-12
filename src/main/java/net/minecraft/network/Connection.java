@@ -572,11 +572,20 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
     private static final int MAX_PER_TICK = io.papermc.paper.configuration.GlobalConfiguration.get().misc.maxJoinsPerTick; // Paper
     private static int joinAttemptsThisTick; // Paper
     private static int currTick; // Paper
+    private static int tickSecond; // Purpur
     public void tick() {
         this.flushQueue();
         // Paper start
         if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
             Connection.currTick = net.minecraft.server.MinecraftServer.currentTick;
+            // Purpur start
+            if (org.purpurmc.purpur.PurpurConfig.maxJoinsPerSecond) {
+                if (++Connection.tickSecond > 20) {
+                    Connection.tickSecond = 0;
+                    Connection.joinAttemptsThisTick = 0;
+                }
+            } else
+            // Purpur end
             Connection.joinAttemptsThisTick = 0;
         }
         // Paper end

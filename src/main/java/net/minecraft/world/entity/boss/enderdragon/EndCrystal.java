@@ -30,6 +30,12 @@ public class EndCrystal extends Entity {
     private static final EntityDataAccessor<Boolean> DATA_SHOW_BOTTOM = SynchedEntityData.defineId(EndCrystal.class, EntityDataSerializers.BOOLEAN);
     public int time;
     public boolean generatedByDragonFight = false; // Paper - Fix invulnerable end crystals
+    // Purpur start
+    private net.minecraft.world.entity.monster.Phantom targetPhantom;
+    private int phantomBeamTicks = 0;
+    private int phantomDamageCooldown = 0;
+    private int idleCooldown = 0;
+    // Purpur end
 
     public EndCrystal(EntityType<? extends EndCrystal> type, Level world) {
         super(type, world);
@@ -77,9 +83,69 @@ public class EndCrystal extends Entity {
                 }
             }
             // Paper end
+            if (this.level.purpurConfig.endCrystalCramming > 0 && this.level.getEntitiesOfClass(EndCrystal.class, getBoundingBox()).size() > this.level.purpurConfig.endCrystalCramming) this.hurt(this.damageSources().cramming(), 6.0F); // Purpur
         }
 
+        // Purpur start
+        if (level.purpurConfig.phantomAttackedByCrystalRadius <= 0 || --idleCooldown > 0) {
+            return; // on cooldown
+        }
+
+        if (targetPhantom == null) {
+            for (net.minecraft.world.entity.monster.Phantom phantom : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Phantom.class, getBoundingBox().inflate(level.purpurConfig.phantomAttackedByCrystalRadius))) {
+                if (phantom.hasLineOfSight(this)) {
+                    attackPhantom(phantom);
+                    break;
+                }
+            }
+        } else {
+            setBeamTarget(new BlockPos(targetPhantom).offset(0, -2, 0));
+            if (--phantomBeamTicks > 0 && targetPhantom.isAlive()) {
+                phantomDamageCooldown--;
+                if (targetPhantom.hasLineOfSight(this)) {
+                    if (phantomDamageCooldown <= 0) {
+                        phantomDamageCooldown = 20;
+                        targetPhantom.hurt(targetPhantom.damageSources().indirectMagic(this, this), level.purpurConfig.phantomAttackedByCrystalDamage);
+                    }
+                } else {
+                    forgetPhantom(); // no longer in sight
+                }
+            } else {
+                forgetPhantom(); // attacked long enough
+            }
+        }
     }
+
+    private void attackPhantom(net.minecraft.world.entity.monster.Phantom phantom) {
+        phantomDamageCooldown = 0;
+        phantomBeamTicks = 60;
+        targetPhantom = phantom;
+    }
+
+    private void forgetPhantom() {
+        targetPhantom = null;
+        setBeamTarget(null);
+        phantomBeamTicks = 0;
+        phantomDamageCooldown = 0;
+        idleCooldown = 60;
+    }
+
+    public boolean shouldExplode() {
+        return showsBottom() ? level.purpurConfig.basedEndCrystalExplode : level.purpurConfig.baselessEndCrystalExplode;
+    }
+
+    public float getExplosionPower() {
+        return (float) (showsBottom() ? level.purpurConfig.basedEndCrystalExplosionPower : level.purpurConfig.baselessEndCrystalExplosionPower);
+    }
+
+    public boolean hasExplosionFire() {
+        return showsBottom() ? level.purpurConfig.basedEndCrystalExplosionFire : level.purpurConfig.baselessEndCrystalExplosionFire;
+    }
+
+    public Level.ExplosionInteraction getExplosionEffect() {
+        return showsBottom() ? level.purpurConfig.basedEndCrystalExplosionEffect : level.purpurConfig.baselessEndCrystalExplosionEffect;
+    }
+    // Purpur end
 
     @Override
     protected void addAdditionalSaveData(CompoundTag nbt) {
@@ -124,17 +190,19 @@ public class EndCrystal extends Entity {
                 // CraftBukkit end
                 this.remove(Entity.RemovalReason.KILLED);
                 if (!source.is(DamageTypeTags.IS_EXPLOSION)) {
+                    if (shouldExplode()) {// Purpur
                     DamageSource damagesource1 = source.getEntity() != null ? this.damageSources().explosion(this, source.getEntity()) : null;
 
                     // CraftBukkit start
-                    ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), 6.0F, false);
+                    ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), getExplosionPower(), hasExplosionFire()); // Purpur
                     this.level.getCraftServer().getPluginManager().callEvent(event);
                     if (event.isCancelled()) {
                         this.unsetRemoved();
                         return false;
                     }
-                    this.level.explode(this, damagesource1, (ExplosionDamageCalculator) null, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), Level.ExplosionInteraction.BLOCK);
+                    this.level.explode(this, damagesource1, (ExplosionDamageCalculator) null, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), getExplosionEffect()); // Purpur
                     // CraftBukkit end
+                    } else this.unsetRemoved(); // Purpur
                 }
 
                 this.onDestroyedBy(source);

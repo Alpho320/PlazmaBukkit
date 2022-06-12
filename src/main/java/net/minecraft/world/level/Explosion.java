@@ -86,7 +86,7 @@ public class Explosion {
         this.hitPlayers = Maps.newHashMap();
         this.level = world;
         this.source = entity;
-        this.radius = (float) Math.max(power, 0.0); // CraftBukkit - clamp bad values
+        this.radius = (float) (world == null || world.purpurConfig.explosionClampRadius ? Math.max(power, 0.0) : power); // CraftBukkit - clamp bad values // Purpur
         this.x = x;
         this.y = y;
         this.z = z;
@@ -137,10 +137,27 @@ public class Explosion {
 
     public void explode() {
         // CraftBukkit start
-        if (this.radius < 0.1F) {
+        if ((this.level == null || this.level.purpurConfig.explosionClampRadius) && this.radius < 0.1F) { // Purpur
             return;
         }
         // CraftBukkit end
+
+        // Purpur start - add PreExplodeEvents
+        if(this.source != null){
+            Location location = new Location(this.level.getWorld(), this.x, this.y, this.z);
+            if(!new org.purpurmc.purpur.event.entity.PreEntityExplodeEvent(this.source.getBukkitEntity(), location, this.blockInteraction == Explosion.BlockInteraction.DESTROY_WITH_DECAY ? 1.0F / this.radius : 1.0F).callEvent()) {
+                this.wasCanceled = true;
+                return;
+            }
+        }else {
+            Location location = new Location(this.level.getWorld(), this.x, this.y, this.z);
+            if(!new org.purpurmc.purpur.event.PreBlockExplodeEvent(location.getBlock(), this.blockInteraction == Explosion.BlockInteraction.DESTROY_WITH_DECAY ? 1.0F / this.radius : 1.0F).callEvent()) {
+                this.wasCanceled = true;
+                return;
+            }
+        }
+        //Purpur end
+
         this.level.gameEvent(this.source, GameEvent.EXPLODE, new Vec3(this.x, this.y, this.z));
         Set<BlockPos> set = Sets.newHashSet();
         boolean flag = true;
@@ -382,7 +399,7 @@ public class Explosion {
                 if (!iblockdata.isAir() && iblockdata.isDestroyable()) { // Paper
                     BlockPos blockposition1 = blockposition.immutable();
 
-                    this.level.getProfiler().push("explosion_blocks");
+                    //this.level.getProfiler().push("explosion_blocks"); // Purpur
                     if (block.dropFromExplosion(this)) {
                         Level world = this.level;
 
@@ -404,7 +421,7 @@ public class Explosion {
 
                     this.level.setBlock(blockposition, Blocks.AIR.defaultBlockState(), 3);
                     block.wasExploded(this.level, blockposition, this);
-                    this.level.getProfiler().pop();
+                    //this.level.getProfiler().pop(); // Purpur
                 }
             }
 

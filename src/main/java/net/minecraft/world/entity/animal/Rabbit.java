@@ -83,6 +83,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     private boolean wasOnGround;
     private int jumpDelayTicks;
     public int moreCarrotTicks;
+    private boolean actualJump; // Purpur
 
     public Rabbit(EntityType<? extends Rabbit> type, Level world) {
         super(type, world);
@@ -90,6 +91,71 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         this.moveControl = new Rabbit.RabbitMoveControl(this);
         this.initializePathFinderGoals(); // CraftBukkit - moved code
     }
+
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.rabbitRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.rabbitRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.rabbitControllable;
+    }
+
+    @Override
+    public boolean onSpacebar() {
+        if (onGround) {
+            actualJump = true;
+            jumpFromGround();
+            actualJump = false;
+        }
+        return true;
+    }
+
+    private void handleJumping() {
+        if (onGround) {
+            RabbitJumpControl jumpController = (RabbitJumpControl) jumpControl;
+            if (!wasOnGround) {
+                setJumping(false);
+                jumpController.setCanJump(false);
+            }
+            if (!jumpController.wantJump()) {
+                if (moveControl.hasWanted()) {
+                    startJumping();
+                }
+            } else if (!jumpController.canJump()) {
+                jumpController.setCanJump(true);
+            }
+        }
+        wasOnGround = onGround;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.rabbitMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.rabbitBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.rabbitTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.rabbitAlwaysDropExp;
+    }
+    // Purpur end
 
     // CraftBukkit start - code from constructor
     public void initializePathFinderGoals(){
@@ -100,6 +166,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     @Override
     public void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level));
         this.goalSelector.addGoal(1, new Rabbit.RabbitPanicGoal(this, 2.2D));
         this.goalSelector.addGoal(2, new BreedGoal(this, 0.8D));
@@ -114,6 +181,13 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
 
     @Override
     protected float getJumpPower() {
+        if (getRider() != null && this.isControllable()) {
+            if (getForwardMot() < 0) {
+                setSpeed(getForwardMot() * 2F);
+            }
+            return actualJump ? 0.5F : 0.3F;
+        }
+        // Purpur end
         if (!this.horizontalCollision && (!this.moveControl.hasWanted() || this.moveControl.getWantedY() <= this.getY() + 0.5D)) {
             Path pathentity = this.navigation.getPath();
 
@@ -132,7 +206,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     @Override
-    protected void jumpFromGround() {
+    public void jumpFromGround() { // Purpur - protected -> public
         super.jumpFromGround();
         double d0 = this.moveControl.getSpeedModifier();
 
@@ -182,6 +256,13 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
 
     @Override
     public void customServerAiStep() {
+        // Purpur start
+        if (getRider() != null && this.isControllable()) {
+            handleJumping();
+            return;
+        }
+        // Purpur end
+
         if (this.jumpDelayTicks > 0) {
             --this.jumpDelayTicks;
         }
@@ -399,10 +480,23 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         }
 
         this.setVariant(entityrabbit_variant);
+
+        // Purpur start
+        if (entityrabbit_variant != Variant.EVIL && world.getLevel().purpurConfig.rabbitNaturalToast > 0D && random.nextDouble() <= world.getLevel().purpurConfig.rabbitNaturalToast) {
+            setCustomName(Component.translatable("Toast"));
+        }
+        // Purpur end
+
         return super.finalizeSpawn(world, difficulty, spawnReason, (SpawnGroupData) entityData, entityNbt);
     }
 
     private static Rabbit.Variant getRandomRabbitVariant(LevelAccessor world, BlockPos pos) {
+        // Purpur start
+        Level level = world.getMinecraftWorld();
+        if (level.purpurConfig.rabbitNaturalKiller > 0D && world.getRandom().nextDouble() <= level.purpurConfig.rabbitNaturalKiller) {
+            return Rabbit.Variant.EVIL;
+        }
+        // Purpur end
         Holder<Biome> holder = world.getBiome(pos);
         int i = world.getRandom().nextInt(100);
 
@@ -466,7 +560,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         }
     }
 
-    private static class RabbitMoveControl extends MoveControl {
+    private static class RabbitMoveControl extends org.purpurmc.purpur.controller.MoveControllerWASD { // Purpur
 
         private final Rabbit rabbit;
         private double nextJumpSpeed;
@@ -477,14 +571,14 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         }
 
         @Override
-        public void tick() {
+        public void vanillaTick() { // Purpur
             if (this.rabbit.onGround && !this.rabbit.jumping && !((Rabbit.RabbitJumpControl) this.rabbit.jumpControl).wantJump()) {
                 this.rabbit.setSpeedModifier(0.0D);
             } else if (this.hasWanted()) {
                 this.rabbit.setSpeedModifier(this.nextJumpSpeed);
             }
 
-            super.tick();
+            super.vanillaTick(); // Purpur
         }
 
         @Override
@@ -546,7 +640,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         @Override
         public boolean canUse() {
             if (this.nextStartTick <= 0) {
-                if (!this.rabbit.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                if (!this.rabbit.level.purpurConfig.rabbitBypassMobGriefing && !this.rabbit.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) { // Purpur
                     return false;
                 }
 

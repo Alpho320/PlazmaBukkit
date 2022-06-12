@@ -46,12 +46,36 @@ public class EndPortalBlock extends BaseEntityBlock {
     public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
         if (!new io.papermc.paper.event.entity.EntityInsideBlockEvent(entity.getBukkitEntity(), org.bukkit.craftbukkit.block.CraftBlock.at(world, pos)).callEvent()) { return; } // Paper
         if (world instanceof ServerLevel && entity.canChangeDimensions() && Shapes.joinIsNotEmpty(Shapes.create(entity.getBoundingBox().move((double) (-pos.getX()), (double) (-pos.getY()), (double) (-pos.getZ()))), state.getShape(world, pos), BooleanOp.AND)) {
+            // Purpur start
+            if (entity.isPassenger() || entity.isVehicle()) {
+                if (new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), entity.isPassenger() ? org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_PASSENGER : org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, PlayerTeleportEvent.TeleportCause.END_PORTAL).callEvent()) {
+                    this.entityInside(state, world, pos, entity);
+                }
+                return;
+            }
+            // Purpur end
             ResourceKey<Level> resourcekey = world.getTypeKey() == LevelStem.END ? Level.OVERWORLD : Level.END; // CraftBukkit - SPIGOT-6152: send back to main overworld in custom ends
             ServerLevel worldserver = ((ServerLevel) world).getServer().getLevel(resourcekey);
 
             if (worldserver == null) {
                 // return; // CraftBukkit - always fire event in case plugins wish to change it
             }
+
+            // Purpur start
+            if (!world.purpurConfig.endPortalSafeTeleporting) {
+                // CraftBukkit start - Entity in portal
+                EntityPortalEnterEvent event = new EntityPortalEnterEvent(entity.getBukkitEntity(), new org.bukkit.Location(world.getWorld(), pos.getX(), pos.getY(), pos.getZ()));
+                world.getCraftServer().getPluginManager().callEvent(event);
+
+                if (entity instanceof ServerPlayer) {
+                    ((ServerPlayer) entity).changeDimension(worldserver, PlayerTeleportEvent.TeleportCause.END_PORTAL);
+                    return;
+                }
+                // CraftBukkit end
+                entity.changeDimension(worldserver);
+                return;
+            }
+            // Purpur end
 
             // Paper start - move all of this logic into portal tick
             entity.portalWorld = ((ServerLevel)world);

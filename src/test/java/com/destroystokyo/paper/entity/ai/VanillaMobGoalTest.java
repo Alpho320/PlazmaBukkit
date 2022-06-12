@@ -37,7 +37,7 @@ public class VanillaMobGoalTest {
         }
 
         List<Class<?>> classes;
-        try (ScanResult scanResult = new ClassGraph().enableAllInfo().whitelistPackages("net.minecraft").scan()) {
+        try (ScanResult scanResult = new ClassGraph().enableAllInfo().whitelistPackages("net.minecraft", "org.purpurmc.purpur.entity.ai").scan()) { // Purpur
             classes = scanResult.getSubclasses(net.minecraft.world.entity.ai.goal.Goal.class.getName()).loadClasses();
         }
 

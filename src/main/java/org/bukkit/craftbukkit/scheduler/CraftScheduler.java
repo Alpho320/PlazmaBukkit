@@ -504,7 +504,7 @@ public class CraftScheduler implements BukkitScheduler {
                 this.parsePending();
             } else {
                 //this.debugTail = this.debugTail.setNext(new CraftAsyncDebugger(currentTick + CraftScheduler.RECENT_TICKS, task.getOwner(), task.getTaskClass())); // Paper
-                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Paper"); // Paper
+                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Purpur"); // Paper // Purpur
                 // We don't need to parse pending
                 // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
             }
@@ -516,10 +516,10 @@ public class CraftScheduler implements BukkitScheduler {
                 this.runners.remove(task.getTaskId());
             }
         }
-        MinecraftTimings.bukkitSchedulerFinishTimer.startTiming(); // Paper
+        //MinecraftTimings.bukkitSchedulerFinishTimer.startTiming(); // Paper // Purpur
         this.pending.addAll(temp);
         temp.clear();
-        MinecraftTimings.bukkitSchedulerFinishTimer.stopTiming(); // Paper
+        //MinecraftTimings.bukkitSchedulerFinishTimer.stopTiming(); // Paper // Purpur
         //this.debugHead = this.debugHead.getNextHead(currentTick); // Paper
     }
 
@@ -563,7 +563,7 @@ public class CraftScheduler implements BukkitScheduler {
     }
 
     void parsePending() { // Paper
-        if (!this.isAsyncScheduler) MinecraftTimings.bukkitSchedulerPendingTimer.startTiming(); // Paper
+        //if (!this.isAsyncScheduler) MinecraftTimings.bukkitSchedulerPendingTimer.startTiming(); // Paper // Purpur
         CraftTask head = this.head;
         CraftTask task = head.getNext();
         CraftTask lastTask = head;
@@ -582,7 +582,7 @@ public class CraftScheduler implements BukkitScheduler {
             task.setNext(null);
         }
         this.head = lastTask;
-        if (!this.isAsyncScheduler) MinecraftTimings.bukkitSchedulerPendingTimer.stopTiming(); // Paper
+        //if (!this.isAsyncScheduler) MinecraftTimings.bukkitSchedulerPendingTimer.stopTiming(); // Paper // Purpur
     }
 
     private boolean isReady(final int currentTick) {

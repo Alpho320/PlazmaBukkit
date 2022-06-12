@@ -14,6 +14,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
+import org.bukkit.NamespacedKey;
 
 public class MobEffectInstance implements Comparable<MobEffectInstance> {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -25,6 +26,7 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
     private boolean visible;
     private boolean showIcon;
     @Nullable
+    private NamespacedKey key; // Purpur - add key
     private MobEffectInstance hiddenEffect;
     private final Optional<MobEffectInstance.FactorData> factorData;
 
@@ -44,17 +46,36 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
         this(type, duration, amplifier, ambient, visible, visible);
     }
 
+    // Purpur start
+    public MobEffectInstance(MobEffect type, int duration, int amplifier, boolean ambient, boolean visible, @Nullable NamespacedKey key) {
+        this(type, duration, amplifier, ambient, visible, visible, key);
+    }
+    // Purpur end
+
     public MobEffectInstance(MobEffect type, int duration, int amplifier, boolean ambient, boolean showParticles, boolean showIcon) {
-        this(type, duration, amplifier, ambient, showParticles, showIcon, (MobEffectInstance)null, type.createFactorData());
+        // Purpur start
+        this(type, duration, amplifier, ambient, showParticles, showIcon, (MobEffectInstance)null, type.createFactorData(), (NamespacedKey)null);
+    }
+
+    public MobEffectInstance(MobEffect type, int duration, int amplifier, boolean ambient, boolean showParticles, boolean showIcon, @Nullable NamespacedKey key) {
+        this(type, duration, amplifier, ambient, showParticles, showIcon, (MobEffectInstance)null, type.createFactorData(), key);
+        // Purpur end
     }
 
     public MobEffectInstance(MobEffect type, int duration, int amplifier, boolean ambient, boolean showParticles, boolean showIcon, @Nullable MobEffectInstance hiddenEffect, Optional<MobEffectInstance.FactorData> factorCalculationData) {
+        // Purpur start
+        this(type, duration, amplifier, ambient, showParticles, showIcon, hiddenEffect, factorCalculationData, (NamespacedKey) null);
+    }
+
+    public MobEffectInstance(MobEffect type, int duration, int amplifier, boolean ambient, boolean showParticles, boolean showIcon, @Nullable MobEffectInstance hiddenEffect, Optional<MobEffectInstance.FactorData> factorCalculationData, @Nullable NamespacedKey key) {
+        // Purpur end
         this.effect = type;
         this.duration = duration;
         this.amplifier = amplifier;
         this.ambient = ambient;
         this.visible = showParticles;
         this.showIcon = showIcon;
+        this.key = key; // Purpur - add key
         this.hiddenEffect = hiddenEffect;
         this.factorData = factorCalculationData;
     }
@@ -75,6 +96,7 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
         this.ambient = that.ambient;
         this.visible = that.visible;
         this.showIcon = that.showIcon;
+        this.key = that.key; // Purpur - add key
     }
 
     public boolean update(MobEffectInstance that) {
@@ -120,6 +142,13 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
             bl = true;
         }
 
+        // Purpur start
+        if (that.key != this.key) {
+            this.key = that.key;
+            bl = true;
+        }
+        // Purpur end
+
         return bl;
     }
 
@@ -162,6 +191,17 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
     public boolean showIcon() {
         return this.showIcon;
     }
+
+    // Purpur start
+    public boolean hasKey() {
+        return this.key != null;
+    }
+
+    @Nullable
+    public NamespacedKey getKey() {
+        return this.key;
+    }
+    // Purpur end
 
     public boolean tick(LivingEntity entity, Runnable overwriteCallback) {
         if (this.hasRemainingDuration()) {
@@ -226,6 +266,12 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
             string = string + ", Show Icon: false";
         }
 
+        // Purpur start
+        if (this.hasKey()) {
+            string = string + ", Key: " + this.key;
+        }
+        // Purpur end
+
         return string;
     }
 
@@ -241,7 +287,7 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
             return false;
         } else {
             MobEffectInstance mobEffectInstance = (MobEffectInstance)object;
-            return this.duration == mobEffectInstance.duration && this.amplifier == mobEffectInstance.amplifier && this.ambient == mobEffectInstance.ambient && this.effect.equals(mobEffectInstance.effect);
+            return this.duration == mobEffectInstance.duration && this.amplifier == mobEffectInstance.amplifier && this.ambient == mobEffectInstance.ambient && this.effect.equals(mobEffectInstance.effect) && this.key == mobEffectInstance.key; // Purpur - add key
         }
     }
 
@@ -265,6 +311,11 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
         nbt.putBoolean("Ambient", this.isAmbient());
         nbt.putBoolean("ShowParticles", this.isVisible());
         nbt.putBoolean("ShowIcon", this.showIcon());
+        // Purpur start
+        if (this.key != null) {
+            nbt.putString("Key", this.key.toString());
+        }
+        // Purpur end
         if (this.hiddenEffect != null) {
             CompoundTag compoundTag = new CompoundTag();
             this.hiddenEffect.save(compoundTag);
@@ -299,6 +350,13 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
             bl3 = nbt.getBoolean("ShowIcon");
         }
 
+        // Purpur start
+        NamespacedKey key = null;
+        if (nbt.contains("Key")) {
+            key = NamespacedKey.fromString(nbt.getString("Key"));
+        }
+        // Purpur end
+
         MobEffectInstance mobEffectInstance = null;
         if (nbt.contains("HiddenEffect", 10)) {
             mobEffectInstance = loadSpecifiedEffect(type, nbt.getCompound("HiddenEffect"));
@@ -311,7 +369,7 @@ public class MobEffectInstance implements Comparable<MobEffectInstance> {
             optional = Optional.empty();
         }
 
-        return new MobEffectInstance(type, j, Math.max(i, 0), bl, bl2, bl3, mobEffectInstance, optional);
+        return new MobEffectInstance(type, j, Math.max(i, 0), bl, bl2, bl3, mobEffectInstance, optional, key); // Purpur - add key
     }
 
     @Override

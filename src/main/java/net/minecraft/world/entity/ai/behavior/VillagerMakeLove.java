@@ -123,8 +123,10 @@ public class VillagerMakeLove extends Behavior<Villager> {
                 return Optional.empty();
             }
             // CraftBukkit end
-            parent.setAge(6000);
-            partner.setAge(6000);
+            // Purpur start
+            parent.setAge(world.purpurConfig.villagerBreedingTicks);
+            partner.setAge(world.purpurConfig.villagerBreedingTicks);
+            // Purpur end
             world.addFreshEntityWithPassengers(entityvillager2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason
             world.broadcastEntityEvent(entityvillager2, (byte) 12);
             return Optional.of(entityvillager2);

@@ -107,7 +107,7 @@ public class ShearsDispenseItemBehavior extends OptionalDispenseItemBehavior {
                         continue;
                     }
                     // CraftBukkit end
-                    ishearable.shear(SoundSource.BLOCKS);
+                    ishearable.shear(SoundSource.BLOCKS, net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING, CraftItemStack.asNMSCopy(craftItem))); // Purpur
                     worldserver.gameEvent((Entity) null, GameEvent.SHEAR, blockposition);
                     return true;
                 }

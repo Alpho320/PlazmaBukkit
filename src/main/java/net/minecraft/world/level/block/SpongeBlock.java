@@ -73,16 +73,16 @@ public class SpongeBlock extends Block {
                 // CraftBukkit end
                 Material material = iblockdata.getMaterial();
 
-                if (fluid.is(FluidTags.WATER)) {
+                if (fluid.is(FluidTags.WATER) || (world.purpurConfig.spongeAbsorbsLava && fluid.is(FluidTags.LAVA))) { // Purpur
                     if (iblockdata.getBlock() instanceof BucketPickup && !((BucketPickup) iblockdata.getBlock()).pickupBlock(blockList, blockposition2, iblockdata).isEmpty()) { // CraftBukkit
                         ++i;
-                        if (j < 6) {
+                        if (j < world.purpurConfig.spongeAbsorptionRadius) { // Purpur
                             queue.add(new Tuple<>(blockposition2, j + 1));
                         }
                     } else if (iblockdata.getBlock() instanceof LiquidBlock) {
                         blockList.setBlock(blockposition2, Blocks.AIR.defaultBlockState(), 3); // CraftBukkit
                         ++i;
-                        if (j < 6) {
+                        if (j < world.purpurConfig.spongeAbsorptionRadius) { // Purpur
                             queue.add(new Tuple<>(blockposition2, j + 1));
                         }
                     } else if (material == Material.WATER_PLANT || material == Material.REPLACEABLE_WATER_PLANT) {
@@ -93,14 +93,14 @@ public class SpongeBlock extends Block {
                         blockList.setBlock(blockposition2, Blocks.AIR.defaultBlockState(), 3);
                         // CraftBukkit end
                         ++i;
-                        if (j < 6) {
+                        if (j < world.purpurConfig.spongeAbsorptionRadius) { // Purpur
                             queue.add(new Tuple<>(blockposition2, j + 1));
                         }
                     }
                 }
             }
 
-            if (i > 64) {
+            if (i > world.purpurConfig.spongeAbsorptionArea) { // Purpur
                 break;
             }
         }

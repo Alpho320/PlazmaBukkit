@@ -203,6 +203,23 @@ public class SignBlockEntity extends BlockEntity implements CommandSource { // C
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    // Purpur start
+    public ClientboundBlockEntityDataPacket getTranslatedUpdatePacket(boolean filtered) {
+        final CompoundTag nbt = new CompoundTag();
+        this.saveAdditional(nbt);
+        final Component[] lines = getMessages(filtered);
+        for (int i = 0; i < 4; i++) {
+            final var component = io.papermc.paper.adventure.PaperAdventure.asAdventure(lines[i]);
+            final String line = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().serialize(component);
+            final var text = net.kyori.adventure.text.Component.text(line);
+            final String json = net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().serialize(text);
+            nbt.putString("Text" + (i + 1), json);
+        }
+        nbt.putString("PurpurEditor", "true");
+        return ClientboundBlockEntityDataPacket.create(this, entity -> nbt);
+    }
+    // Purpur end
+
     @Override
     public CompoundTag getUpdateTag() {
         return this.saveWithoutMetadata();

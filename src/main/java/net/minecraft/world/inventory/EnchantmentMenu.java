@@ -38,6 +38,12 @@ import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.entity.Player;
 // CraftBukkit end
 
+// Purpur start
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.EnchantmentTableBlockEntity;
+import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+// Purpur end
+
 public class EnchantmentMenu extends AbstractContainerMenu {
 
     private final Container enchantSlots;
@@ -71,6 +77,22 @@ public class EnchantmentMenu extends AbstractContainerMenu {
                 return context.getLocation();
             }
             // CraftBukkit end
+
+            // Purpur start
+            @Override
+            public void onClose(CraftHumanEntity who) {
+                super.onClose(who);
+
+                if (who.getHandle().getLevel().purpurConfig.enchantmentTableLapisPersists) {
+                    access.execute((level, pos) -> {
+                        BlockEntity blockEntity = level.getBlockEntity(pos);
+                        if (blockEntity instanceof EnchantmentTableBlockEntity enchantmentTable) {
+                            enchantmentTable.setLapis(this.getItem(1).getCount());
+                        }
+                    });
+                }
+            }
+            // Purpur end
         };
         this.random = RandomSource.create();
         this.enchantmentSeed = DataSlot.standalone();
@@ -95,6 +117,17 @@ public class EnchantmentMenu extends AbstractContainerMenu {
                 return stack.is(Items.LAPIS_LAZULI);
             }
         });
+
+        // Purpur start
+        access.execute((level, pos) -> {
+            if (level.purpurConfig.enchantmentTableLapisPersists) {
+                BlockEntity blockEntity = level.getBlockEntity(pos);
+                if (blockEntity instanceof EnchantmentTableBlockEntity enchantmentTable) {
+                    this.getSlot(1).set(new ItemStack(Items.LAPIS_LAZULI, enchantmentTable.getLapis()));
+                }
+            }
+        });
+        // Purpur end
 
         int j;
 
@@ -338,6 +371,7 @@ public class EnchantmentMenu extends AbstractContainerMenu {
     public void removed(net.minecraft.world.entity.player.Player player) {
         super.removed(player);
         this.access.execute((world, blockposition) -> {
+            if (world.purpurConfig.enchantmentTableLapisPersists) this.getSlot(1).set(ItemStack.EMPTY); // Purpur
             this.clearContainer(player, this.enchantSlots);
         });
     }

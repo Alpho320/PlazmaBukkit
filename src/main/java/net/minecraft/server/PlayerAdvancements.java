@@ -147,6 +147,7 @@ public class PlayerAdvancements {
                         if (advancement == null) {
                             // CraftBukkit start
                             if (entry.getKey().getNamespace().equals("minecraft")) {
+                                if (!org.purpurmc.purpur.PurpurConfig.loggerSuppressIgnoredAdvancementWarnings) // Purpur
                                 PlayerAdvancements.LOGGER.warn("Ignored advancement '{}' in progress file {} - it doesn't exist anymore?", entry.getKey(), this.playerSavePath);
                             }
                             // CraftBukkit end
@@ -249,6 +250,7 @@ public class PlayerAdvancements {
                 advancement.getRewards().grant(this.player);
                 // Paper start - Add Adventure message to PlayerAdvancementDoneEvent
                 if (message != null && this.player.level.getGameRules().getBoolean(GameRules.RULE_ANNOUNCE_ADVANCEMENTS)) {
+                    if (org.purpurmc.purpur.PurpurConfig.advancementOnlyBroadcastToAffectedPlayer) this.player.sendMessage(message); else // Purpur
                     this.playerList.broadcastSystemMessage(io.papermc.paper.adventure.PaperAdventure.asVanilla(message), false);
                     // Paper end
                 }

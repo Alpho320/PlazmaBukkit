@@ -22,7 +22,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
-public class CactusBlock extends Block {
+public class CactusBlock extends Block implements BonemealableBlock { // Purpur
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_15;
     public static final int MAX_AGE = 15;
@@ -109,7 +109,7 @@ public class CactusBlock extends Block {
             BlockState iblockdata2 = world.getBlockState(pos.relative(enumdirection));
 
             material = iblockdata2.getMaterial();
-        } while (!material.isSolid() && !world.getFluidState(pos.relative(enumdirection)).is(FluidTags.LAVA));
+        } while ((!world.getWorldBorder().world.purpurConfig.cactusBreaksFromSolidNeighbors || !material.isSolid()) && !world.getFluidState(pos.relative(enumdirection)).is(FluidTags.LAVA)); // Purpur
 
         return false;
     }
@@ -131,4 +131,34 @@ public class CactusBlock extends Block {
     public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
         return false;
     }
+
+    // Purpur start
+    @Override
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+        if (!((Level) world).purpurConfig.cactusAffectedByBonemeal || !world.isEmptyBlock(pos.above())) return false;
+
+        int cactusHeight = 0;
+        while (world.getBlockState(pos.below(cactusHeight)).is(this)) {
+            cactusHeight++;
+        }
+
+        return cactusHeight < ((Level) world).paperConfig().maxGrowthHeight.cactus;
+    }
+
+    @Override
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
+        return true;
+    }
+
+    @Override
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+        int cactusHeight = 0;
+        while (world.getBlockState(pos.below(cactusHeight)).is(this)) {
+            cactusHeight++;
+        }
+        for (int i = 0; i <= world.paperConfig().maxGrowthHeight.cactus - cactusHeight; i++) {
+            world.setBlockAndUpdate(pos.above(i), state.setValue(CactusBlock.AGE, 0));
+        }
+    }
+    // Purpur end
 }

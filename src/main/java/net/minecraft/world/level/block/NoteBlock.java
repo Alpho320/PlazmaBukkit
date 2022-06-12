@@ -62,11 +62,13 @@ public class NoteBlock extends Block {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        if (org.purpurmc.purpur.PurpurConfig.disableNoteBlockUpdates) return this.defaultBlockState(); // Purpur
         return this.setInstrument(ctx.getLevel(), ctx.getClickedPos(), this.defaultBlockState());
     }
 
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+        if (org.purpurmc.purpur.PurpurConfig.disableNoteBlockUpdates) return state; // Purpur
         boolean flag = NoteBlock.isFeatureFlagEnabled(world) ? direction.getAxis() == Direction.Axis.Y : direction == Direction.DOWN;
 
         return flag ? this.setInstrument(world, pos, state) : super.updateShape(state, direction, neighborState, world, pos, neighborPos);
@@ -82,13 +84,14 @@ public class NoteBlock extends Block {
                 state = world.getBlockState(pos); // CraftBukkit - SPIGOT-5617: update in case changed in event
             }
 
+            if (!org.purpurmc.purpur.PurpurConfig.disableNoteBlockUpdates) // Purpur
             world.setBlock(pos, (BlockState) state.setValue(NoteBlock.POWERED, flag1), 3);
         }
 
     }
 
     private void playNote(@Nullable Entity entity, BlockState state, Level world, BlockPos pos) {
-        if (!((NoteBlockInstrument) state.getValue(NoteBlock.INSTRUMENT)).requiresAirAbove() || world.getBlockState(pos.above()).isAir()) {
+        if (world.purpurConfig.noteBlockIgnoreAbove || !((NoteBlockInstrument) state.getValue(NoteBlock.INSTRUMENT)).requiresAirAbove() || world.getBlockState(pos.above()).isAir()) { // Purpur
             // CraftBukkit start
             // org.bukkit.event.block.NotePlayEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callNotePlayEvent(world, pos, state.getValue(NoteBlock.INSTRUMENT), state.getValue(NoteBlock.NOTE));
             // if (event.isCancelled()) {

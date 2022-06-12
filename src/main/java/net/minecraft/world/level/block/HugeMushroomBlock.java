@@ -22,29 +22,65 @@ public class HugeMushroomBlock extends Block {
 
     public HugeMushroomBlock(BlockBehaviour.Properties settings) {
         super(settings);
-        this.registerDefaultState(this.stateDefinition.any().setValue(NORTH, Boolean.valueOf(true)).setValue(EAST, Boolean.valueOf(true)).setValue(SOUTH, Boolean.valueOf(true)).setValue(WEST, Boolean.valueOf(true)).setValue(UP, Boolean.valueOf(true)).setValue(DOWN, Boolean.valueOf(true)));
+        // Purpur start
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(NORTH, true)
+                .setValue(EAST, true)
+                .setValue(SOUTH, true)
+                .setValue(WEST, true)
+                .setValue(UP, true)
+                .setValue(DOWN, true));
+        // Purpur end
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        if (org.purpurmc.purpur.PurpurConfig.disableMushroomBlockUpdates) return this.defaultBlockState(); // Purpur
         BlockGetter blockGetter = ctx.getLevel();
         BlockPos blockPos = ctx.getClickedPos();
-        return this.defaultBlockState().setValue(DOWN, Boolean.valueOf(!blockGetter.getBlockState(blockPos.below()).is(this))).setValue(UP, Boolean.valueOf(!blockGetter.getBlockState(blockPos.above()).is(this))).setValue(NORTH, Boolean.valueOf(!blockGetter.getBlockState(blockPos.north()).is(this))).setValue(EAST, Boolean.valueOf(!blockGetter.getBlockState(blockPos.east()).is(this))).setValue(SOUTH, Boolean.valueOf(!blockGetter.getBlockState(blockPos.south()).is(this))).setValue(WEST, Boolean.valueOf(!blockGetter.getBlockState(blockPos.west()).is(this)));
+        // Purpur start
+        return this.defaultBlockState()
+                .setValue(DOWN, this != blockGetter.getBlockStateIfLoaded(blockPos.below()).getBlock())
+                .setValue(UP, this != blockGetter.getBlockStateIfLoaded(blockPos.above()).getBlock())
+                .setValue(NORTH, this != blockGetter.getBlockStateIfLoaded(blockPos.north()).getBlock())
+                .setValue(EAST, this != blockGetter.getBlockStateIfLoaded(blockPos.east()).getBlock())
+                .setValue(SOUTH, this != blockGetter.getBlockStateIfLoaded(blockPos.south()).getBlock())
+                .setValue(WEST, this != blockGetter.getBlockStateIfLoaded(blockPos.west()).getBlock());
+        // Purpur end
     }
 
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+        if (org.purpurmc.purpur.PurpurConfig.disableMushroomBlockUpdates) return state; // Purpur
         return neighborState.is(this) ? state.setValue(PROPERTY_BY_DIRECTION.get(direction), Boolean.valueOf(false)) : super.updateShape(state, direction, neighborState, world, pos, neighborPos);
     }
 
     @Override
     public BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.NORTH)), state.getValue(NORTH)).setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.SOUTH)), state.getValue(SOUTH)).setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.EAST)), state.getValue(EAST)).setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.WEST)), state.getValue(WEST)).setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.UP)), state.getValue(UP)).setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.DOWN)), state.getValue(DOWN));
+        // Purpur start
+        if (org.purpurmc.purpur.PurpurConfig.disableMushroomBlockUpdates) return state;
+        return state
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.NORTH)), state.getValue(NORTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.SOUTH)), state.getValue(SOUTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.EAST)), state.getValue(EAST))
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.WEST)), state.getValue(NORTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.UP)), state.getValue(UP))
+                .setValue(PROPERTY_BY_DIRECTION.get(rotation.rotate(Direction.DOWN)), state.getValue(DOWN));
+        // Purpur end
     }
 
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.NORTH)), state.getValue(NORTH)).setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.SOUTH)), state.getValue(SOUTH)).setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.EAST)), state.getValue(EAST)).setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.WEST)), state.getValue(WEST)).setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.UP)), state.getValue(UP)).setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.DOWN)), state.getValue(DOWN));
+        // Purpur start
+        if (org.purpurmc.purpur.PurpurConfig.disableMushroomBlockUpdates) return state;
+        return state
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.NORTH)), state.getValue(NORTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.SOUTH)), state.getValue(SOUTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.EAST)), state.getValue(EAST))
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.WEST)), state.getValue(NORTH))
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.UP)), state.getValue(UP))
+                .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.DOWN)), state.getValue(DOWN));
+        // Purpur end
     }
 
     @Override

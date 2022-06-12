@@ -59,6 +59,7 @@ public class CraftEnchantment extends Enchantment {
             return EnchantmentTarget.CROSSBOW;
         case VANISHABLE:
             return EnchantmentTarget.VANISHABLE;
+        case BOW_AND_CROSSBOW: return EnchantmentTarget.BOW_AND_CROSSBOW; // Purpur
         default:
             return null;
         }

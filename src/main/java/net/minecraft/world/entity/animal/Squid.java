@@ -46,13 +46,66 @@ public class Squid extends WaterAnimal {
 
     public Squid(EntityType<? extends Squid> type, Level world) {
         super(type, world);
-        //this.random.setSeed((long) this.getId()); // Paper - we set the random to shared, do not clobber the seed
+        if (!world.purpurConfig.entitySharedRandom) this.random.setSeed((long) this.getId()); // Paper - we set the random to shared, do not clobber the seed // Purpur
         this.tentacleSpeed = 1.0F / (this.random.nextFloat() + 1.0F) * 0.2F;
     }
+
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.squidRidable;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.squidControllable;
+    }
+
+    protected void rotateVectorAroundY(org.bukkit.util.Vector vector, double degrees) {
+        double rad = Math.toRadians(degrees);
+        double cos = Math.cos(rad);
+        double sine = Math.sin(rad);
+        double x = vector.getX();
+        double z = vector.getZ();
+        vector.setX(cos * x - sine * z);
+        vector.setZ(sine * x + cos * z);
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.squidMaxHealth);
+    }
+
+    @Override
+    public net.minecraft.world.phys.AABB getAxisForFluidCheck() {
+        // Stops squids from floating just over the water
+        return super.getAxisForFluidCheck().offsetY(level.purpurConfig.squidOffsetWaterCheck);
+    }
+
+    public boolean canFly() {
+        return this.level.purpurConfig.squidsCanFly;
+    }
+
+    @Override
+    public boolean isInWater() {
+        return this.wasTouchingWater || canFly();
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.squidTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.squidAlwaysDropExp;
+    }
+    // Purpur end
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new Squid.SquidRandomMovementGoal(this));
+        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.goalSelector.addGoal(1, new Squid.SquidFleeGoal());
     }
 
@@ -121,6 +174,7 @@ public class Squid extends WaterAnimal {
         }
 
         if (this.isInWaterOrBubble()) {
+            if (canFly()) setNoGravity(!wasTouchingWater); // Purpur
             if (this.tentacleMovement < 3.1415927F) {
                 float f = this.tentacleMovement / 3.1415927F;
 
@@ -244,11 +298,43 @@ public class Squid extends WaterAnimal {
 
         @Override
         public void tick() {
+            // Purpur start
+            Player rider = squid.getRider();
+            if (rider != null && squid.isControllable()) {
+                if (rider.jumping) {
+                    squid.onSpacebar();
+                }
+                float forward = rider.getForwardMot();
+                float strafe = rider.getStrafeMot();
+                float speed = (float) squid.getAttributeValue(Attributes.MOVEMENT_SPEED) * 10F;
+                if (forward < 0.0F) {
+                    speed *= -0.5;
+                }
+                org.bukkit.util.Vector dir = rider.getBukkitEntity().getEyeLocation().getDirection().normalize().multiply(speed / 20.0F);
+                if (strafe != 0.0F) {
+                    if (forward == 0.0F) {
+                        dir.setY(0);
+                        rotateVectorAroundY(dir, strafe > 0.0F ? -90 : 90);
+                    } else if (forward < 0.0F) {
+                        rotateVectorAroundY(dir, strafe > 0.0F ? 45 : -45);
+                    } else {
+                        rotateVectorAroundY(dir, strafe > 0.0F ? -45 : 45);
+                    }
+                }
+                if (forward != 0.0F || strafe != 0.0F) {
+                    squid.setMovementVector((float) dir.getX(), (float) dir.getY(), (float) dir.getZ());
+                } else {
+                    squid.setMovementVector(0.0F, 0.0F, 0.0F);
+                }
+                return;
+            }
+            // Purpur end
+
             int i = this.squid.getNoActionTime();
 
             if (i > 100) {
                 this.squid.setMovementVector(0.0F, 0.0F, 0.0F);
-            } else if (this.squid.getRandom().nextInt(reducedTickDelay(50)) == 0 || !this.squid.wasTouchingWater || !this.squid.hasMovementVector()) {
+            } else if (this.squid.getRandom().nextInt(reducedTickDelay(50)) == 0 || !this.squid.isInWater() || !this.squid.hasMovementVector()) { // Purpur
                 float f = this.squid.getRandom().nextFloat() * 6.2831855F;
                 float f1 = Mth.cos(f) * 0.2F;
                 float f2 = -0.1F + this.squid.getRandom().nextFloat() * 0.2F;

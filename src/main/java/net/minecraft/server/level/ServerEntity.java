@@ -72,7 +72,7 @@ public class ServerEntity {
     @Nullable
     private List<SynchedEntityData.DataValue<?>> trackedDataValues;
     // CraftBukkit start
-    final Set<ServerPlayerConnection> trackedPlayers; // Paper - private -> package
+    public final Set<ServerPlayerConnection> trackedPlayers; // Paper - private -> package // Purpur - package -> public
 
     public ServerEntity(ServerLevel worldserver, Entity entity, int i, boolean flag, Consumer<Packet<?>> consumer, Set<ServerPlayerConnection> trackedPlayers) {
         this.trackedPlayers = trackedPlayers;

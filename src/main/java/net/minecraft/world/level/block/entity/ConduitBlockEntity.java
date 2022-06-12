@@ -171,7 +171,7 @@ public class ConduitBlockEntity extends BlockEntity {
                     if ((l > 1 || i1 > 1 || j1 > 1) && (i == 0 && (i1 == 2 || j1 == 2) || j == 0 && (l == 2 || j1 == 2) || k == 0 && (l == 2 || i1 == 2))) {
                         BlockPos blockposition2 = pos.offset(i, j, k);
                         BlockState iblockdata = world.getBlockState(blockposition2);
-                        Block[] ablock = ConduitBlockEntity.VALID_BLOCKS;
+                        Block[] ablock = world.purpurConfig.conduitBlocks; // Purpur
                         int k1 = ablock.length;
 
                         for (int l1 = 0; l1 < k1; ++l1) {
@@ -191,7 +191,7 @@ public class ConduitBlockEntity extends BlockEntity {
 
     private static void applyEffects(Level world, BlockPos pos, List<BlockPos> activatingBlocks) {
         int i = activatingBlocks.size();
-        int j = i / 7 * 16;
+        int j = i / 7 * world.purpurConfig.conduitDistance; // Purpur
         int k = pos.getX();
         int l = pos.getY();
         int i1 = pos.getZ();
@@ -222,21 +222,21 @@ public class ConduitBlockEntity extends BlockEntity {
             blockEntity.destroyTarget = ConduitBlockEntity.findDestroyTarget(world, pos, blockEntity.destroyTargetUUID);
             blockEntity.destroyTargetUUID = null;
         } else if (blockEntity.destroyTarget == null) {
-            List<LivingEntity> list1 = world.getEntitiesOfClass(LivingEntity.class, ConduitBlockEntity.getDestroyRangeAABB(pos), (entityliving1) -> {
+            List<LivingEntity> list1 = world.getEntitiesOfClass(LivingEntity.class, ConduitBlockEntity.getDestroyRangeAABB(pos, world), (entityliving1) -> { // Purpur
                 return entityliving1 instanceof Enemy && entityliving1.isInWaterOrRain();
             });
 
             if (!list1.isEmpty()) {
                 blockEntity.destroyTarget = (LivingEntity) list1.get(world.random.nextInt(list1.size()));
             }
-        } else if (!blockEntity.destroyTarget.isAlive() || !pos.closerThan(blockEntity.destroyTarget.blockPosition(), 8.0D)) {
+        } else if (!blockEntity.destroyTarget.isAlive() || !pos.closerThan(blockEntity.destroyTarget.blockPosition(), world.purpurConfig.conduitDamageDistance)) { // Purpur
             blockEntity.destroyTarget = null;
         }
 
         if (blockEntity.destroyTarget != null) {
             // CraftBukkit start
             CraftEventFactory.blockDamage = CraftBlock.at(world, pos);
-            if (blockEntity.destroyTarget.hurt(world.damageSources().magic(), 4.0F)) {
+            if (blockEntity.destroyTarget.hurt(world.damageSources().magic(), world.purpurConfig.conduitDamageAmount)) { // Purpur
                 world.playSound((Player) null, blockEntity.destroyTarget.getX(), blockEntity.destroyTarget.getY(), blockEntity.destroyTarget.getZ(), SoundEvents.CONDUIT_ATTACK_TARGET, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
             CraftEventFactory.blockDamage = null;
@@ -262,16 +262,22 @@ public class ConduitBlockEntity extends BlockEntity {
     }
 
     private static AABB getDestroyRangeAABB(BlockPos pos) {
+        // Purpur start
+        return getDestroyRangeAABB(pos, null);
+    }
+
+    private static AABB getDestroyRangeAABB(BlockPos pos, Level level) {
+        // Purpur end
         int i = pos.getX();
         int j = pos.getY();
         int k = pos.getZ();
 
-        return (new AABB((double) i, (double) j, (double) k, (double) (i + 1), (double) (j + 1), (double) (k + 1))).inflate(8.0D);
+        return (new AABB((double) i, (double) j, (double) k, (double) (i + 1), (double) (j + 1), (double) (k + 1))).inflate(level == null ? 8.0D : level.purpurConfig.conduitDamageDistance); // Purpur
     }
 
     @Nullable
     private static LivingEntity findDestroyTarget(Level world, BlockPos pos, UUID uuid) {
-        List<LivingEntity> list = world.getEntitiesOfClass(LivingEntity.class, ConduitBlockEntity.getDestroyRangeAABB(pos), (entityliving) -> {
+        List<LivingEntity> list = world.getEntitiesOfClass(LivingEntity.class, ConduitBlockEntity.getDestroyRangeAABB(pos, world), (entityliving) -> { // Purpur
             return entityliving.getUUID().equals(uuid);
         });
 

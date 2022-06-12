@@ -200,10 +200,10 @@ public class EntitySelector {
 
         if (this.playerName != null) {
             entityplayer = source.getServer().getPlayerList().getPlayerByName(this.playerName);
-            return (List) (entityplayer == null ? Collections.emptyList() : Lists.newArrayList(new ServerPlayer[]{entityplayer}));
+            return entityplayer == null || !canSee(source, entityplayer) ? Collections.emptyList() : Lists.newArrayList(entityplayer); // Purpur
         } else if (this.entityUUID != null) {
             entityplayer = source.getServer().getPlayerList().getPlayer(this.entityUUID);
-            return (List) (entityplayer == null ? Collections.emptyList() : Lists.newArrayList(new ServerPlayer[]{entityplayer}));
+            return entityplayer == null || !canSee(source, entityplayer) ? Collections.emptyList() : Lists.newArrayList(entityplayer); // Purpur
         } else {
             Vec3 vec3d = (Vec3) this.position.apply(source.getPosition());
             Predicate<Entity> predicate = this.getPredicate(vec3d);
@@ -213,7 +213,7 @@ public class EntitySelector {
                     ServerPlayer entityplayer1 = (ServerPlayer) source.getEntity();
 
                     if (predicate.test(entityplayer1)) {
-                        return Lists.newArrayList(new ServerPlayer[]{entityplayer1});
+                        return !canSee(source, entityplayer1) ? Collections.emptyList() : Lists.newArrayList(entityplayer1); // Purpur
                     }
                 }
 
@@ -224,6 +224,7 @@ public class EntitySelector {
 
                 if (this.isWorldLimited()) {
                     object = source.getLevel().getPlayers(predicate, i);
+                    ((List) object).removeIf(entityplayer3 -> !canSee(source, (ServerPlayer) entityplayer3)); // Purpur
                 } else {
                     object = Lists.newArrayList();
                     Iterator iterator = source.getServer().getPlayerList().getPlayers().iterator();
@@ -231,7 +232,7 @@ public class EntitySelector {
                     while (iterator.hasNext()) {
                         ServerPlayer entityplayer2 = (ServerPlayer) iterator.next();
 
-                        if (predicate.test(entityplayer2)) {
+                        if (predicate.test(entityplayer2) && canSee(source, entityplayer2)) { // Purpur
                             ((List) object).add(entityplayer2);
                             if (((List) object).size() >= i) {
                                 return (List) object;
@@ -276,4 +277,10 @@ public class EntitySelector {
     public static Component joinNames(List<? extends Entity> entities) {
         return ComponentUtils.formatList(entities, Entity::getDisplayName);
     }
+
+    // Purpur start
+    private boolean canSee(CommandSourceStack sender, ServerPlayer target) {
+        return !org.purpurmc.purpur.PurpurConfig.hideHiddenPlayersFromEntitySelector || !(sender.getEntity() instanceof ServerPlayer player) || player.getBukkitEntity().canSee(target.getBukkitEntity());
+    }
+    // Purpur end
 }

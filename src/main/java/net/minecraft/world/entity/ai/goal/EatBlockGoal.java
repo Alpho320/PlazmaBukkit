@@ -31,6 +31,12 @@ public class EatBlockGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // Purpur start
+        net.minecraft.world.level.chunk.LevelChunk chunk = this.mob.level.getChunkIfLoaded(this.mob.blockPosition());
+        if (chunk == null || chunk.playerChunk == null || !((net.minecraft.server.level.ServerLevel) this.mob.level).getChunkSource().chunkMap.anyPlayerCloseEnoughForSpawning(chunk.playerChunk, this.mob.chunkPosition(), false)) {
+            return false;
+        }
+        // Purpur end
         if (this.mob.getRandom().nextInt(this.mob.isBaby() ? 50 : 1000) != 0) {
             return false;
         } else {
@@ -69,7 +75,7 @@ public class EatBlockGoal extends Goal {
 
             if (EatBlockGoal.IS_TALL_GRASS.test(this.level.getBlockState(blockposition))) {
                 // CraftBukkit
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition, Blocks.AIR.defaultBlockState(), !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)).isCancelled()) {
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition, Blocks.AIR.defaultBlockState(), !this.level.purpurConfig.sheepBypassMobGriefing && !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)).isCancelled()) { // Purpur
                     this.level.destroyBlock(blockposition, false);
                 }
 
@@ -79,7 +85,7 @@ public class EatBlockGoal extends Goal {
 
                 if (this.level.getBlockState(blockposition1).is(Blocks.GRASS_BLOCK)) {
                     // CraftBukkit
-                    if (!CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition1, Blocks.DIRT.defaultBlockState(), !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)).isCancelled()) { // Paper - Fix wrong block state
+                    if (!CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition1, Blocks.DIRT.defaultBlockState(), !this.level.purpurConfig.sheepBypassMobGriefing && !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)).isCancelled()) { // Paper - Fix wrong block state // Purpur
                         this.level.levelEvent(2001, blockposition1, Block.getId(Blocks.GRASS_BLOCK.defaultBlockState()));
                         this.level.setBlock(blockposition1, Blocks.DIRT.defaultBlockState(), 2);
                     }

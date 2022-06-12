@@ -67,6 +67,43 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         this.xpReward = 5;
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.hoglinRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.hoglinRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.hoglinControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.hoglinMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.hoglinBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.hoglinTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.hoglinAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     public boolean canBeLeashed(Player player) {
         return !this.isLeashed();
@@ -129,10 +166,10 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     private int behaviorTick; // Pufferfish
     @Override
     protected void customServerAiStep() {
-        this.level.getProfiler().push("hoglinBrain");
-        if (this.behaviorTick++ % this.activatedPriority == 0) // Pufferfish
+        //this.level.getProfiler().push("hoglinBrain"); // Purpur
+        if ((getRider() == null || !this.isControllable()) && this.behaviorTick++ % this.activatedPriority == 0) // Pufferfish // Purpur - only use brain if no rider
         this.getBrain().tick((ServerLevel)this.level, this);
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         HoglinAi.updateActivity(this);
         if (this.isConverting()) {
             ++this.timeInOverworld;

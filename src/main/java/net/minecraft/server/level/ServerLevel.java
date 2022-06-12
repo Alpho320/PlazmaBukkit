@@ -212,6 +212,8 @@ public class ServerLevel extends Level implements WorldGenLevel {
     private final StructureManager structureManager;
     private final StructureCheck structureCheck;
     private final boolean tickTime;
+    private double preciseTime; // Purpur
+    private boolean forceTime; // Purpur
     public long lastMidTickExecuteFailure; // Paper - execute chunk tasks mid tick
 
     // CraftBukkit start
@@ -220,6 +222,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
     public boolean hasPhysicsEvent = true; // Paper
     public boolean hasEntityMoveEvent = false; // Paper
     private final alternate.current.wire.WireHandler wireHandler = new alternate.current.wire.WireHandler(this); // Paper - optimize redstone (Alternate Current)
+    public boolean hasRidableMoveEvent = false; // Purpur
     public static Throwable getAddToWorldStackTrace(Entity entity) {
         final Throwable thr = new Throwable(entity + " Added to world at " + new java.util.Date());
         io.papermc.paper.util.StacktraceDeobfuscator.INSTANCE.deobfuscateThrowable(thr);
@@ -542,7 +545,24 @@ public class ServerLevel extends Level implements WorldGenLevel {
         this.dragonParts = new Int2ObjectOpenHashMap();
         this.tickTime = flag1;
         this.server = minecraftserver;
-        this.customSpawners = list;
+        // Purpur start - enable/disable MobSpawners per world
+        this.customSpawners = Lists.newArrayList();
+        if (purpurConfig.phantomSpawning) {
+            customSpawners.add(new net.minecraft.world.level.levelgen.PhantomSpawner());
+        }
+        if (purpurConfig.patrolSpawning) {
+            customSpawners.add(new net.minecraft.world.level.levelgen.PatrolSpawner());
+        }
+        if (purpurConfig.catSpawning) {
+            customSpawners.add(new net.minecraft.world.entity.npc.CatSpawner());
+        }
+        if (purpurConfig.villageSiegeSpawning) {
+            customSpawners.add(new net.minecraft.world.entity.ai.village.VillageSiege());
+        }
+        if (purpurConfig.villagerTraderSpawning) {
+            customSpawners.add(new net.minecraft.world.entity.npc.WanderingTraderSpawner(iworlddataserver));
+        }
+        // Purpur end
         this.serverLevelData = iworlddataserver;
         ChunkGenerator chunkgenerator = worlddimension.generator();
         // CraftBukkit start
@@ -605,6 +625,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
         this.chunkTaskScheduler = new io.papermc.paper.chunk.system.scheduling.ChunkTaskScheduler(this, io.papermc.paper.chunk.system.scheduling.ChunkTaskScheduler.workerThreads); // Paper - rewrite chunk system
         this.entityLookup = new io.papermc.paper.chunk.system.entity.EntityLookup(this, new EntityCallbacks()); // Paper - rewrite chunk system
+        this.preciseTime = this.serverLevelData.getDayTime(); // Purpur
     }
 
     public void setWeatherParameters(int clearDuration, int rainDuration, boolean raining, boolean thundering) {
@@ -633,17 +654,17 @@ public class ServerLevel extends Level implements WorldGenLevel {
             }
         }
         // Paper end - optimise checkDespawn
-        ProfilerFiller gameprofilerfiller = this.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.getProfiler(); // Purpur
 
         this.handlingTick = true;
-        gameprofilerfiller.push("world border");
+        //gameprofilerfiller.push("world border"); // Purpur
         this.getWorldBorder().tick();
-        gameprofilerfiller.popPush("weather");
+        //gameprofilerfiller.popPush("weather"); // Purpur
         this.advanceWeatherCycle();
         int i = this.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
         long j;
 
-        if (this.sleepStatus.areEnoughSleeping(i) && this.sleepStatus.areEnoughDeepSleeping(i, this.players)) {
+        if (this.purpurConfig.playersSkipNight && this.sleepStatus.areEnoughSleeping(i) && this.sleepStatus.areEnoughDeepSleeping(i, this.players)) {
             // CraftBukkit start
             j = this.levelData.getDayTime() + 24000L;
             TimeSkipEvent event = new TimeSkipEvent(this.getWorld(), TimeSkipEvent.SkipReason.NIGHT_SKIP, (j - j % 24000L) - this.getDayTime());
@@ -665,32 +686,32 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
         this.updateSkyBrightness();
         this.tickTime();
-        gameprofilerfiller.popPush("tickPending");
-        timings.scheduledBlocks.startTiming(); // Paper
+        //gameprofilerfiller.popPush("tickPending"); // Purpur
+        //timings.scheduledBlocks.startTiming(); // Paper // Purpur
         if (!this.isDebug()) {
             j = this.getGameTime();
-            gameprofilerfiller.push("blockTicks");
+            //gameprofilerfiller.push("blockTicks"); // Purpur
             this.blockTicks.tick(j, 65536, this::tickBlock);
-            gameprofilerfiller.popPush("fluidTicks");
+            //gameprofilerfiller.popPush("fluidTicks"); // Purpur
             this.fluidTicks.tick(j, 65536, this::tickFluid);
-            gameprofilerfiller.pop();
+            //gameprofilerfiller.pop(); // Purpur
         }
-        timings.scheduledBlocks.stopTiming(); // Paper
+        //timings.scheduledBlocks.stopTiming(); // Paper // Purpur
 
-        gameprofilerfiller.popPush("raid");
-        this.timings.raids.startTiming(); // Paper - timings
+        //gameprofilerfiller.popPush("raid"); // Purpur
+        //this.timings.raids.startTiming(); // Paper - timings // Purpur
         this.raids.tick();
-        this.timings.raids.stopTiming(); // Paper - timings
-        gameprofilerfiller.popPush("chunkSource");
-        this.timings.chunkProviderTick.startTiming(); // Paper - timings
+        //this.timings.raids.stopTiming(); // Paper - timings // Purpur
+        //gameprofilerfiller.popPush("chunkSource"); // Purpur
+        //this.timings.chunkProviderTick.startTiming(); // Paper - timings // Purpur
         this.getChunkSource().tick(shouldKeepTicking, true);
-        this.timings.chunkProviderTick.stopTiming(); // Paper - timings
-        gameprofilerfiller.popPush("blockEvents");
-        timings.doSounds.startTiming(); // Spigot
+        //this.timings.chunkProviderTick.stopTiming(); // Paper - timings // Purpur
+        //gameprofilerfiller.popPush("blockEvents"); // Purpur
+        //timings.doSounds.startTiming(); // Spigot // Purpur
         this.runBlockEvents();
-        timings.doSounds.stopTiming(); // Spigot
+        //timings.doSounds.stopTiming(); // Spigot // Purpur
         this.handlingTick = false;
-        gameprofilerfiller.pop();
+        //gameprofilerfiller.pop(); // Purpur
         boolean flag = true || !this.players.isEmpty() || !this.getForcedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players
 
         if (flag) {
@@ -698,25 +719,25 @@ public class ServerLevel extends Level implements WorldGenLevel {
         }
 
         if (flag || this.emptyTime++ < 300) {
-            gameprofilerfiller.push("entities");
-            timings.tickEntities.startTiming(); // Spigot
+            //gameprofilerfiller.push("entities"); // Purpur
+            //timings.tickEntities.startTiming(); // Spigot // Purpur
             if (this.dragonFight != null) {
-                gameprofilerfiller.push("dragonFight");
+                //gameprofilerfiller.push("dragonFight"); // Purpur
                 this.dragonFight.tick();
-                gameprofilerfiller.pop();
+                //gameprofilerfiller.pop(); // Purpur
             }
 
             org.spigotmc.ActivationRange.activateEntities(this); // Spigot
-            timings.entityTick.startTiming(); // Spigot
+            //timings.entityTick.startTiming(); // Spigot // Purpur
             this.entityTickList.forEach((entity) -> {
                 entity.activatedPriorityReset = false; // Pufferfish - DAB
                 if (!entity.isRemoved()) {
                     if (false && this.shouldDiscardEntity(entity)) { // CraftBukkit - We prevent spawning in general, so this butchering is not needed
                         entity.discard();
                     } else {
-                        gameprofilerfiller.push("checkDespawn");
+                        //gameprofilerfiller.push("checkDespawn"); // Purpur
                         entity.checkDespawn();
-                        gameprofilerfiller.pop();
+                        //gameprofilerfiller.pop(); // Purpur
                         if (true || this.chunkSource.chunkMap.getDistanceManager().inEntityTickingRange(entity.chunkPosition().toLong())) { // Paper - now always true if in the ticking list
                             Entity entity1 = entity.getVehicle();
 
@@ -728,7 +749,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
                                 entity.stopRiding();
                             }
 
-                            gameprofilerfiller.push("tick");
+                            //gameprofilerfiller.push("tick"); // Purpur
                         // Pufferfish start - copied from this.guardEntityTick
                         try {
                             this.tickNonPassenger(entity); // Pufferfish - changed
@@ -743,20 +764,19 @@ public class ServerLevel extends Level implements WorldGenLevel {
                             // Paper end
                         }
                         // Pufferfish end
-                            gameprofilerfiller.pop();
+                            //gameprofilerfiller.pop(); // Purpur
                         }
                     }
                 }
             });
-            timings.entityTick.stopTiming(); // Spigot
-            timings.tickEntities.stopTiming(); // Spigot
-            gameprofilerfiller.pop();
+            //timings.entityTick.stopTiming(); // Spigot // Purpur
+            //timings.tickEntities.stopTiming(); // Spigot // Purpur
+            //gameprofilerfiller.pop(); // Purpur
             this.tickBlockEntities();
         }
 
-        gameprofilerfiller.push("entityManagement");
+        //gameprofilerfiller.push("entityManagement"); // Purpur
         //this.entityManager.tick(); // Paper - rewrite chunk system
-        gameprofilerfiller.pop();
     }
 
     @Override
@@ -774,6 +794,13 @@ public class ServerLevel extends Level implements WorldGenLevel {
             this.serverLevelData.setGameTime(i);
             this.serverLevelData.getScheduledEvents().tick(this.server, i);
             if (this.levelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
+                // Purpur start
+                int incrementTicks = isDay() ? this.purpurConfig.daytimeTicks : this.purpurConfig.nighttimeTicks;
+                if (incrementTicks != 12000) {
+                    this.preciseTime += 12000 / (double) incrementTicks;
+                    this.setDayTime(this.preciseTime);
+                } else
+                // Purpur end
                 this.setDayTime(this.levelData.getDayTime() + 1L);
             }
 
@@ -782,7 +809,21 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
     public void setDayTime(long timeOfDay) {
         this.serverLevelData.setDayTime(timeOfDay);
+        // Purpur start
+        this.preciseTime = timeOfDay;
+        this.forceTime = false;
     }
+    public void setDayTime(double i) {
+        this.serverLevelData.setDayTime((long) i);
+        this.forceTime = true;
+        // Purpur end
+    }
+
+    // Purpur start
+    public boolean isForceTime() {
+        return this.forceTime;
+    }
+    // Purpur end
 
     public void tickCustomSpawners(boolean spawnMonsters, boolean spawnAnimals) {
         Iterator iterator = this.customSpawners.iterator();
@@ -807,7 +848,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
     }
     // Paper start - optimise random block ticking
     private final BlockPos.MutableBlockPos chunkTickMutablePosition = new BlockPos.MutableBlockPos();
-    // private final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(); // Pufferfish - moved to super
+    private final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(this.random.nextLong()); public net.minecraft.util.RandomSource getThreadUnsafeRandom() { return this.randomTickRandom; } // Pufferfish - moved to super // Purpur - dont break ABI
     // Paper end
 
     private int currentIceAndSnowTick = 0; protected void resetIceAndSnowTick() { this.currentIceAndSnowTick = this.randomTickRandom.nextInt(16); } // Pufferfish
@@ -817,9 +858,9 @@ public class ServerLevel extends Level implements WorldGenLevel {
         boolean flag = this.isRaining();
         int j = chunkcoordintpair.getMinBlockX();
         int k = chunkcoordintpair.getMinBlockZ();
-        ProfilerFiller gameprofilerfiller = this.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.getProfiler(); // Purpur
 
-        gameprofilerfiller.push("thunder");
+        //gameprofilerfiller.push("thunder"); // Purpur
         final BlockPos.MutableBlockPos blockposition = this.chunkTickMutablePosition; // Paper - use mutable to reduce allocation rate, final to force compile fail on change
 
         if (!this.paperConfig().environment.disableThunder && flag && this.isThundering() && this.spigotConfig.thunderChance > 0 && /*this.random.nextInt(this.spigotConfig.thunderChance) == 0 &&*/ chunk.shouldDoLightning(this.random)) { // Spigot // Paper - disable thunder // Pufferfish - replace random with shouldDoLightning
@@ -829,10 +870,18 @@ public class ServerLevel extends Level implements WorldGenLevel {
                 boolean flag1 = this.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && this.random.nextDouble() < (double) difficultydamagescaler.getEffectiveDifficulty() * this.paperConfig().entities.spawning.skeletonHorseThunderSpawnChance.or(0.01D) && !this.getBlockState(blockposition.below()).is(Blocks.LIGHTNING_ROD); // Paper
 
                 if (flag1) {
-                    SkeletonHorse entityhorseskeleton = (SkeletonHorse) EntityType.SKELETON_HORSE.create(this);
+                    // Purpur start
+                    net.minecraft.world.entity.animal.horse.AbstractHorse entityhorseskeleton;
+                    if (purpurConfig.zombieHorseSpawnChance > 0D && random.nextDouble() <= purpurConfig.zombieHorseSpawnChance) {
+                        entityhorseskeleton = EntityType.ZOMBIE_HORSE.create(this);
+                    } else {
+                        entityhorseskeleton = EntityType.SKELETON_HORSE.create(this);
+                        if (entityhorseskeleton != null) ((SkeletonHorse) entityhorseskeleton).setTrap(true);
+                    }
+                    // Purpur end
 
                     if (entityhorseskeleton != null) {
-                        entityhorseskeleton.setTrap(true);
+                        //entityhorseskeleton.setTrap(true); // Purpur - moved up
                         entityhorseskeleton.setAge(0);
                         entityhorseskeleton.setPos((double) blockposition.getX(), (double) blockposition.getY(), (double) blockposition.getZ());
                         this.addFreshEntity(entityhorseskeleton, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING); // CraftBukkit
@@ -849,7 +898,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
             }
         }
 
-        gameprofilerfiller.popPush("iceandsnow");
+        //gameprofilerfiller.popPush("iceandsnow"); // Purpur
         int l;
 
         if (!this.paperConfig().environment.disableIceAndSnow && (this.currentIceAndSnowTick++ & 15) == 0) { // Paper - Disable ice and snow // Paper - optimise random ticking  // Pufferfish - optimize further random ticking
@@ -900,8 +949,8 @@ public class ServerLevel extends Level implements WorldGenLevel {
         }
 
         // Paper start - optimise random block ticking
-        gameprofilerfiller.popPush("randomTick");
-        timings.chunkTicksBlocks.startTiming(); // Paper
+        //gameprofilerfiller.popPush("randomTick"); // Purpur
+        //timings.chunkTicksBlocks.startTiming(); // Paper // Purpur
         if (randomTickSpeed > 0) {
             LevelChunkSection[] sections = chunk.getSections();
             int minSection = io.papermc.paper.util.WorldUtil.getMinSection(this);
@@ -935,8 +984,8 @@ public class ServerLevel extends Level implements WorldGenLevel {
             }
         }
         // Paper end - optimise random block ticking
-        timings.chunkTicksBlocks.stopTiming(); // Paper
-        gameprofilerfiller.pop();
+        //timings.chunkTicksBlocks.stopTiming(); // Paper // Purpur
+        //gameprofilerfiller.pop(); // Purpur
     }
 
     public Optional<BlockPos> findLightningRod(BlockPos pos) {
@@ -944,7 +993,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
             return holder.is(PoiTypes.LIGHTNING_ROD);
         }, (blockposition1) -> {
             return blockposition1.getY() == this.getHeight(Heightmap.Types.WORLD_SURFACE, blockposition1.getX(), blockposition1.getZ()) - 1;
-        }, pos, 128, PoiManager.Occupancy.ANY);
+        }, pos, org.purpurmc.purpur.PurpurConfig.lightningRodRange, PoiManager.Occupancy.ANY);
 
         return optional.map((blockposition1) -> {
             return blockposition1.above(1);
@@ -993,11 +1042,27 @@ public class ServerLevel extends Level implements WorldGenLevel {
         if (this.canSleepThroughNights()) {
             if (!this.getServer().isSingleplayer() || this.getServer().isPublished()) {
                 int i = this.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
-                MutableComponent ichatmutablecomponent;
+                Component ichatmutablecomponent;
 
                 if (this.sleepStatus.areEnoughSleeping(i)) {
+                    // Purpur start
+                    if (org.purpurmc.purpur.PurpurConfig.sleepSkippingNight.isBlank()) {
+                        return;
+                    }
+                    if (!org.purpurmc.purpur.PurpurConfig.sleepSkippingNight.equalsIgnoreCase("default")) {
+                        ichatmutablecomponent = io.papermc.paper.adventure.PaperAdventure.asVanilla(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(org.purpurmc.purpur.PurpurConfig.sleepSkippingNight));
+                    } else
                     ichatmutablecomponent = Component.translatable("sleep.skipping_night");
                 } else {
+                    if (org.purpurmc.purpur.PurpurConfig.sleepingPlayersPercent.isBlank()) {
+                        return;
+                    }
+                    if (!org.purpurmc.purpur.PurpurConfig.sleepingPlayersPercent.equalsIgnoreCase("default")) {
+                        ichatmutablecomponent = io.papermc.paper.adventure.PaperAdventure.asVanilla(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(org.purpurmc.purpur.PurpurConfig.sleepingPlayersPercent,
+                                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed("count", Integer.toString(this.sleepStatus.amountSleeping())),
+                                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed("total", Integer.toString(this.sleepStatus.sleepersNeeded(i)))));
+                    } else
+                    // Purpur end
                     ichatmutablecomponent = Component.translatable("sleep.players_sleeping", this.sleepStatus.amountSleeping(), this.sleepStatus.sleepersNeeded(i));
                 }
 
@@ -1136,6 +1201,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
     private void resetWeatherCycle() {
         // CraftBukkit start
+        if (this.purpurConfig.rainStopsAfterSleep) // Purpur
         this.serverLevelData.setRaining(false, org.bukkit.event.weather.WeatherChangeEvent.Cause.SLEEP); // Paper - when passing the night
         // If we stop due to everyone sleeping we should reset the weather duration to some other random value.
         // Not that everyone ever manages to get the whole server to sleep at the same time....
@@ -1143,6 +1209,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
             this.serverLevelData.setRainTime(0);
         }
         // CraftBukkit end
+        if (this.purpurConfig.thunderStopsAfterSleep) // Purpur
         this.serverLevelData.setThundering(false, org.bukkit.event.weather.ThunderChangeEvent.Cause.SLEEP); // Paper - when passing the night
         // CraftBukkit start
         // If we stop due to everyone sleeping we should reset the weather duration to some other random value.
@@ -1210,24 +1277,24 @@ public class ServerLevel extends Level implements WorldGenLevel {
         // Spigot end
         // Paper start- timings
         final boolean isActive = org.spigotmc.ActivationRange.checkIfActive(entity);
-        timer = isActive ? entity.getType().tickTimer.startTiming() : entity.getType().inactiveTickTimer.startTiming(); // Paper
-        try {
+        //timer = isActive ? entity.getType().tickTimer.startTiming() : entity.getType().inactiveTickTimer.startTiming(); // Paper // Purpur
+        //try { // Purpur
         // Paper end - timings
         entity.setOldPosAndRot();
-        ProfilerFiller gameprofilerfiller = this.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.getProfiler(); // Purpur
 
         ++entity.tickCount;
-        this.getProfiler().push(() -> {
+        /*this.getProfiler().push(() -> { // Purpur
             return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
-        });
-        gameprofilerfiller.incrementCounter("tickNonPassenger");
+        });*/ // Purpur
+        //gameprofilerfiller.incrementCounter("tickNonPassenger"); // Purpur
         if (isActive) { // Paper - EAR 2
             TimingHistory.activatedEntityTicks++;
         entity.tick();
         entity.postTick(); // CraftBukkit
         } else { entity.inactiveTick(); } // Paper - EAR 2
-        this.getProfiler().pop();
-        } finally { timer.stopTiming(); } // Paper - timings
+        //this.getProfiler().pop(); // Purpur
+        //} finally { timer.stopTiming(); } // Paper - timings // Purpur
         Iterator iterator = entity.getPassengers().iterator();
 
         while (iterator.hasNext()) {
@@ -1250,17 +1317,17 @@ public class ServerLevel extends Level implements WorldGenLevel {
             if (passenger instanceof Player || this.entityTickList.contains(passenger)) {
                 // Paper - EAR 2
                 final boolean isActive = org.spigotmc.ActivationRange.checkIfActive(passenger);
-                co.aikar.timings.Timing timer = isActive ? passenger.getType().passengerTickTimer.startTiming() : passenger.getType().passengerInactiveTickTimer.startTiming(); // Paper
-                try {
+                //co.aikar.timings.Timing timer = isActive ? passenger.getType().passengerTickTimer.startTiming() : passenger.getType().passengerInactiveTickTimer.startTiming(); // Paper // Purpur
+                //try { // Purpur
                 // Paper end
                 passenger.setOldPosAndRot();
                 ++passenger.tickCount;
-                ProfilerFiller gameprofilerfiller = this.getProfiler();
+                //ProfilerFiller gameprofilerfiller = this.getProfiler(); // Purpur
 
-                gameprofilerfiller.push(() -> {
+                /*gameprofilerfiller.push(() -> { // Purpur
                     return BuiltInRegistries.ENTITY_TYPE.getKey(passenger.getType()).toString();
-                });
-                gameprofilerfiller.incrementCounter("tickPassenger");
+                });*/ // Purpur
+                //gameprofilerfiller.incrementCounter("tickPassenger"); // Purpur
                 // Paper start - EAR 2
                 if (isActive) {
                 passenger.rideTick();
@@ -1272,7 +1339,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
                     vehicle.positionRider(passenger);
                 }
                 // Paper end - EAR 2
-                gameprofilerfiller.pop();
+                //gameprofilerfiller.pop(); // Purpur
                 Iterator iterator = passenger.getPassengers().iterator();
 
                 while (iterator.hasNext()) {
@@ -1281,7 +1348,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
                     this.tickPassenger(passenger, entity2);
                 }
 
-            } finally { timer.stopTiming(); }// Paper - EAR2 timings
+            //} finally { timer.stopTiming(); }// Paper - EAR2 timings // Purpur
             }
         } else {
             passenger.stopRiding();
@@ -1301,14 +1368,14 @@ public class ServerLevel extends Level implements WorldGenLevel {
             org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.world.WorldSaveEvent(getWorld()));
         }
 
-        try (co.aikar.timings.Timing ignored = this.timings.worldSave.startTiming()) {
+        //try (co.aikar.timings.Timing ignored = this.timings.worldSave.startTiming()) { // Purpur
             if (doFull) {
                 this.saveLevelData();
             }
 
-            this.timings.worldSaveChunks.startTiming(); // Paper
+            //this.timings.worldSaveChunks.startTiming(); // Paper // Purpur
             if (!this.noSave()) chunkproviderserver.saveIncrementally();
-            this.timings.worldSaveChunks.stopTiming(); // Paper
+            //this.timings.worldSaveChunks.stopTiming(); // Paper // Purpur
 
             // Copied from save()
             // CraftBukkit start - moved from MinecraftServer.saveChunks
@@ -1320,7 +1387,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
                 this.convertable.saveDataTag(this.server.registryAccess(), this.serverLevelData, this.server.getPlayerList().getSingleplayerData());
             }
             // CraftBukkit end
-        }
+        //} // Purpur
     }
     // Paper end
 
@@ -1334,7 +1401,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
         if (!savingDisabled) {
             org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.world.WorldSaveEvent(getWorld())); // CraftBukkit
-            try (co.aikar.timings.Timing ignored = timings.worldSave.startTiming()) { // Paper
+            //try (co.aikar.timings.Timing ignored = timings.worldSave.startTiming()) { // Paper // Purpur // Purpur
             if (progressListener != null) {
                 progressListener.progressStartNoAbort(Component.translatable("menu.savingLevel"));
             }
@@ -1344,11 +1411,11 @@ public class ServerLevel extends Level implements WorldGenLevel {
                 progressListener.progressStage(Component.translatable("menu.savingChunks"));
             }
 
-                timings.worldSaveChunks.startTiming(); // Paper
+                //timings.worldSaveChunks.startTiming(); // Paper // Purpur
             if (!close) chunkproviderserver.save(flush); // Paper - rewrite chunk system
             if (close) chunkproviderserver.close(true); // Paper - rewrite chunk system
-                timings.worldSaveChunks.stopTiming(); // Paper
-            }// Paper
+                //timings.worldSaveChunks.stopTiming(); // Paper // Purpur
+            //}// Paper // Purpur
             // Paper - rewrite chunk system - entity saving moved into ChunkHolder
 
         } else if (close) { chunkproviderserver.close(false); } // Paper - rewrite chunk system
@@ -2619,7 +2686,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
             // Spigot Start
             if (entity.getBukkitEntity() instanceof org.bukkit.inventory.InventoryHolder && (!(entity instanceof ServerPlayer) || entity.getRemovalReason() != Entity.RemovalReason.KILLED)) { // SPIGOT-6876: closeInventory clears death message
                 // Paper start
-                if (entity.getBukkitEntity() instanceof org.bukkit.inventory.Merchant merchant && merchant.getTrader() != null) {
+                if (!entity.level.purpurConfig.playerVoidTrading && entity.getBukkitEntity() instanceof org.bukkit.inventory.Merchant merchant && merchant.getTrader() != null) { // Purpur
                     merchant.getTrader().closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.UNLOADED);
                 }
                 // Paper end

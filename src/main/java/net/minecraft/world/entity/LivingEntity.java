@@ -216,9 +216,9 @@ public abstract class LivingEntity extends Entity implements Attackable {
     protected int deathScore;
     public float lastHurt;
     public boolean jumping;
-    public float xxa;
-    public float yya;
-    public float zza;
+    public float xxa; public float getStrafeMot() { return xxa; } public void setStrafeMot(float strafe) { xxa = strafe; } // Purpur - OBFHELPER
+    public float yya; public float getVerticalMot() { return yya; } public void setVerticalMot(float vertical) { yya = vertical; } // Purpur - OBFHELPER
+    public float zza; public float getForwardMot() { return zza; } public void setForwardMot(float forward) { zza = forward; } // Purpur - OBFHELPER
     protected int lerpSteps;
     protected double lerpX;
     protected double lerpY;
@@ -251,6 +251,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
     private boolean skipDropExperience;
     // CraftBukkit start
     public int expToDrop;
+    public float safeFallDistance = 3.0F; // Purpur
     public boolean forceDrops;
     public ArrayList<org.bukkit.inventory.ItemStack> drops = new ArrayList<org.bukkit.inventory.ItemStack>();
     public final org.bukkit.craftbukkit.attribute.CraftAttributeMap craftAttributes;
@@ -260,6 +261,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
     public org.bukkit.craftbukkit.entity.CraftLivingEntity getBukkitLivingEntity() { return (org.bukkit.craftbukkit.entity.CraftLivingEntity) super.getBukkitEntity(); } // Paper
     public boolean silentDeath = false; // Paper - mark entity as dying silently for cancellable death event
     public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper
+    protected boolean shouldBurnInDay = false;  public boolean shouldBurnInDay() { return this.shouldBurnInDay; } public void setShouldBurnInDay(boolean shouldBurnInDay) { this.shouldBurnInDay = shouldBurnInDay; } // Purpur
 
     @Override
     public float getBukkitYaw() {
@@ -284,7 +286,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
         this.effectsDirty = true;
         this.useItem = ItemStack.EMPTY;
         this.lastClimbablePos = Optional.empty();
-        this.attributes = new AttributeMap(DefaultAttributes.getSupplier(type));
+        this.attributes = new AttributeMap(DefaultAttributes.getSupplier(type), this); // Purpur
+        this.initAttributes(); // Purpur
         this.craftAttributes = new CraftAttributeMap(this.attributes); // CraftBukkit
         // CraftBukkit - setHealth(getMaxHealth()) inlined and simplified to skip the instanceof check for EntityPlayer, as getBukkitEntity() is not initialized in constructor
         this.entityData.set(LivingEntity.DATA_HEALTH_ID, (float) this.getAttribute(Attributes.MAX_HEALTH).getValue());
@@ -299,6 +302,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
 
         this.brain = this.makeBrain(new Dynamic(dynamicopsnbt, (Tag) dynamicopsnbt.createMap((Map) ImmutableMap.of(dynamicopsnbt.createString("memories"), (Tag) dynamicopsnbt.emptyMap()))));
     }
+
+    protected void initAttributes() {}// Purpur
 
     public Brain<?> getBrain() {
         return this.brain;
@@ -335,6 +340,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
     public static AttributeSupplier.Builder createLivingAttributes() {
         return AttributeSupplier.builder().add(Attributes.MAX_HEALTH).add(Attributes.KNOCKBACK_RESISTANCE).add(Attributes.MOVEMENT_SPEED).add(Attributes.ARMOR).add(Attributes.ARMOR_TOUGHNESS);
     }
+    public boolean shouldSendAttribute(Attribute attribute) { return true; } // Purpur
 
     @Override
     protected void checkFallDamage(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
@@ -347,8 +353,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
             this.tryAddSoulSpeed();
         }
 
-        if (!this.level.isClientSide && this.fallDistance > 3.0F && onGround) {
-            float f = (float) Mth.ceil(this.fallDistance - 3.0F);
+        if (!this.level.isClientSide && this.fallDistance > this.safeFallDistance && onGround) { // Purpur
+            float f = (float) Mth.ceil(this.fallDistance - this.safeFallDistance); // Purpur
 
             if (!state.isAir()) {
                 double d1 = Math.min((double) (0.2F + f / 15.0F), 2.5D);
@@ -387,7 +393,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
         }
 
         super.baseTick();
-        this.level.getProfiler().push("livingEntityBaseTick");
+        //this.level.getProfiler().push("livingEntityBaseTick"); // Purpur
         if (this.fireImmune() || this.level.isClientSide) {
             this.clearFire();
         }
@@ -405,6 +411,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
                         double d1 = this.level.getWorldBorder().getDamagePerBlock();
 
                         if (d1 > 0.0D) {
+                        if (level.purpurConfig.teleportIfOutsideBorder && this instanceof ServerPlayer) { ((ServerPlayer) this).teleport(io.papermc.paper.util.MCUtil.toLocation(level, ((ServerLevel) level).getSharedSpawnPos())); return; } // Purpur
                             this.hurt(this.damageSources().inWall(), (float) Math.max(1, Mth.floor(-d0 * d1)));
                         }
                     }
@@ -416,7 +423,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
 
                 if (flag1) {
                     this.setAirSupply(this.decreaseAirSupply(this.getAirSupply()));
-                    if (this.getAirSupply() == -20) {
+                    if (this.getAirSupply() == -this.level.purpurConfig.drowningDamageInterval) { // Purpur
                         this.setAirSupply(0);
                         Vec3 vec3d = this.getDeltaMovement();
 
@@ -428,7 +435,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
                             this.level.addParticle(ParticleTypes.BUBBLE, this.getX() + d2, this.getY() + d3, this.getZ() + d4, vec3d.x, vec3d.y, vec3d.z);
                         }
 
-                        this.hurt(this.damageSources().drown(), 2.0F);
+                        this.hurt(this.damageSources().drown(), (float) this.level.purpurConfig.damageFromDrowning); // Purpur
                     }
                 }
 
@@ -489,7 +496,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
         this.yHeadRotO = this.yHeadRot;
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
     }
 
     public boolean canSpawnSoulSpeedParticle() {
@@ -781,6 +788,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
         dataresult.resultOrPartial(logger::error).ifPresent((nbtbase) -> {
             nbt.put("Brain", nbtbase);
         });
+        nbt.putBoolean("Purpur.ShouldBurnInDay", shouldBurnInDay); // Purpur
     }
 
     @Override
@@ -865,6 +873,11 @@ public abstract class LivingEntity extends Entity implements Attackable {
             this.brain = this.makeBrain(new Dynamic(NbtOps.INSTANCE, nbt.get("Brain")));
         }
 
+        // Purpur start
+        if (nbt.contains("Purpur.ShouldBurnInDay")) {
+            shouldBurnInDay = nbt.getBoolean("Purpur.ShouldBurnInDay");
+        }
+        // Purpur end
     }
 
     // CraftBukkit start
@@ -1010,9 +1023,31 @@ public abstract class LivingEntity extends Entity implements Attackable {
             ItemStack itemstack = this.getItemBySlot(EquipmentSlot.HEAD);
             EntityType<?> entitytypes = entity.getType();
 
-            if (entitytypes == EntityType.SKELETON && itemstack.is(Items.SKELETON_SKULL) || entitytypes == EntityType.ZOMBIE && itemstack.is(Items.ZOMBIE_HEAD) || entitytypes == EntityType.PIGLIN && itemstack.is(Items.PIGLIN_HEAD) || entitytypes == EntityType.PIGLIN_BRUTE && itemstack.is(Items.PIGLIN_HEAD) || entitytypes == EntityType.CREEPER && itemstack.is(Items.CREEPER_HEAD)) {
-                d0 *= 0.5D;
+            // Purpur start
+            if (entitytypes == EntityType.SKELETON && itemstack.is(Items.SKELETON_SKULL)) {
+                d0 *= entity.level.purpurConfig.skeletonHeadVisibilityPercent;
             }
+            else if (entitytypes == EntityType.ZOMBIE && itemstack.is(Items.ZOMBIE_HEAD)) {
+                d0 *= entity.level.purpurConfig.zombieHeadVisibilityPercent;
+            }
+            else if (entitytypes == EntityType.CREEPER && itemstack.is(Items.CREEPER_HEAD)) {
+                d0 *= entity.level.purpurConfig.creeperHeadVisibilityPercent;
+            }
+            else if ((entitytypes == EntityType.PIGLIN || entitytypes == EntityType.PIGLIN_BRUTE) && itemstack.is(Items.PIGLIN_HEAD)) {
+                d0 *= entity.level.purpurConfig.piglinHeadVisibilityPercent;
+            }
+            // Purpur end
+
+            // Purpur start
+            if (entity instanceof LivingEntity entityliving) {
+                if (entityliving.hasEffect(MobEffects.BLINDNESS)) {
+                    int amplifier = entityliving.getEffect(MobEffects.BLINDNESS).getAmplifier();
+                    for (int i = 0; i < amplifier; i++) {
+                        d0 *= this.level.purpurConfig.mobsBlindnessMultiplier;
+                    }
+                }
+            }
+            // Purpur end
         }
 
         return d0;
@@ -1072,6 +1107,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
             for (flag = false; iterator.hasNext(); flag = true) {
                 // CraftBukkit start
                 MobEffectInstance effect = (MobEffectInstance) iterator.next();
+                if (cause == EntityPotionEffectEvent.Cause.MILK && !this.level.purpurConfig.milkClearsBeneficialEffects && effect.getEffect().isBeneficial()) continue; // Purpur
                 EntityPotionEffectEvent event = CraftEventFactory.callEntityPotionEffectChangeEvent(this, effect, null, cause, EntityPotionEffectEvent.Action.CLEARED);
                 if (event.isCancelled()) {
                     continue;
@@ -1428,13 +1464,13 @@ public abstract class LivingEntity extends Entity implements Attackable {
                 if (entity1 instanceof net.minecraft.world.entity.player.Player) {
                     net.minecraft.world.entity.player.Player entityhuman = (net.minecraft.world.entity.player.Player) entity1;
 
-                    this.lastHurtByPlayerTime = 100;
+                    this.lastHurtByPlayerTime = this.level.purpurConfig.mobLastHurtByPlayerTime; // Purpur
                     this.lastHurtByPlayer = entityhuman;
                 } else if (entity1 instanceof Wolf) {
                     Wolf entitywolf = (Wolf) entity1;
 
                     if (entitywolf.isTame()) {
-                        this.lastHurtByPlayerTime = 100;
+                        this.lastHurtByPlayerTime = this.level.purpurConfig.mobLastHurtByPlayerTime; // Purpur
                         LivingEntity entityliving2 = entitywolf.getOwner();
 
                         if (entityliving2 instanceof net.minecraft.world.entity.player.Player) {
@@ -1544,6 +1580,18 @@ public abstract class LivingEntity extends Entity implements Attackable {
                     break;
                 }
             }
+
+            // Purpur start
+            if (level.purpurConfig.totemOfUndyingWorksInInventory && this instanceof ServerPlayer player && (itemstack == null || itemstack.getItem() != Items.TOTEM_OF_UNDYING) && player.getBukkitEntity().hasPermission("purpur.inventory_totem")) {
+                for (ItemStack item : player.getInventory().items) {
+                    if (item.getItem() == Items.TOTEM_OF_UNDYING) {
+                        itemstack1 = item;
+                        itemstack = item.copy();
+                        break;
+                    }
+                }
+            }
+            // Purpur end
 
             org.bukkit.inventory.EquipmentSlot handSlot = (hand != null) ? org.bukkit.craftbukkit.CraftEquipmentSlot.getHand(hand) : null;
             EntityResurrectEvent event = new EntityResurrectEvent((org.bukkit.entity.LivingEntity) this.getBukkitEntity(), handSlot);
@@ -1705,7 +1753,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
             boolean flag = false;
 
             if (this.dead && adversary instanceof WitherBoss) { // Paper
-                if (this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                if (this.level.purpurConfig.witherBypassMobGriefing || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) { // Purpur
                     BlockPos blockposition = this.blockPosition();
                     BlockState iblockdata = Blocks.WITHER_ROSE.defaultBlockState();
 
@@ -1751,6 +1799,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
 
         this.dropEquipment(); // CraftBukkit - from below
         if (this.shouldDropLoot() && this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+            if (!(source.is(net.minecraft.world.damagesource.DamageTypes.CRAMMING) && level.purpurConfig.disableDropsOnCrammingDeath)) { // Purpur
             this.dropFromLootTable(source, flag);
             // Paper start
             final boolean prev = this.clearEquipmentSlots;
@@ -1759,6 +1808,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
             // Paper end
             this.dropCustomDeathLoot(source, i, flag);
             this.clearEquipmentSlots = prev; // Paper
+            } // Purpur
         }
         // CraftBukkit start - Call death event // Paper start - call advancement triggers with correct entity equipment
         org.bukkit.event.entity.EntityDeathEvent deathEvent = CraftEventFactory.callEntityDeathEvent(this, this.drops, () -> {
@@ -2014,7 +2064,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
             MobEffectInstance mobeffect = this.getEffect(MobEffects.JUMP);
             float f2 = mobeffect == null ? 0.0F : (float) (mobeffect.getAmplifier() + 1);
 
-            return Mth.ceil((fallDistance - 3.0F - f2) * damageMultiplier);
+            return Mth.ceil((fallDistance - this.safeFallDistance - f2) * damageMultiplier); // Purpur
         }
     }
 
@@ -2237,6 +2287,20 @@ public abstract class LivingEntity extends Entity implements Attackable {
                 }
             }
 
+           // Purpur start
+           if (damagesource.getEntity() instanceof net.minecraft.world.entity.player.Player player && damagesource.getEntity().level.purpurConfig.creativeOnePunch) {
+               if (player.isCreative()) {
+                   double attackDamage = 0;
+                   for (AttributeModifier modifier : player.getMainHandItem().getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE)) {
+                       attackDamage += modifier.getAmount();
+                   }
+                   if (attackDamage == 0) {
+                       this.setHealth(0);
+                   }
+               }
+           }
+           // Purpur end
+
             if (f > 0 || !human) {
                 if (human) {
                     // PAIL: Be sure to drag all this code from the EntityHuman subclass each update.
@@ -2455,7 +2519,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
 
     @Override
     protected void outOfWorld() {
-        this.hurt(this.damageSources().outOfWorld(), 4.0F);
+        this.hurt(this.damageSources().outOfWorld(), (float) level.purpurConfig.voidDamageDealt); // Purpur
     }
 
     protected void updateSwingTime() {
@@ -2652,7 +2716,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
     }
 
     protected long lastJumpTime = 0L; // Paper
-    protected void jumpFromGround() {
+    public void jumpFromGround() { // Purpur - protected -> public
         double d0 = (double) this.getJumpPower() + this.getJumpBoostPower();
         Vec3 vec3d = this.getDeltaMovement();
         // Paper start
@@ -2806,6 +2870,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
 
                     if (f3 > 0.0F) {
                         this.playSound(this.getFallDamageSound((int) f3), 1.0F, 1.0F);
+                        if (level.purpurConfig.elytraKineticDamage) // Purpur
                         this.hurt(this.damageSources().flyIntoWall(), f3);
                     }
                 }
@@ -3028,10 +3093,10 @@ public abstract class LivingEntity extends Entity implements Attackable {
         }
 
         this.run += (f3 - this.run) * 0.3F;
-        this.level.getProfiler().push("headTurn");
+        //this.level.getProfiler().push("headTurn"); // Purpur
         f2 = this.tickHeadTurn(f1, f2);
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("rangeChecks");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("rangeChecks"); // Purpur
 
         // Paper start - stop large pitch and yaw changes from crashing the server
         this.yRotO += Math.round((this.getYRot() - this.yRotO) / 360.0F) * 360.0F;
@@ -3043,7 +3108,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
         this.yHeadRotO += Math.round((this.yHeadRot - this.yHeadRotO) / 360.0F) * 360.0F;
         // Paper end
 
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         this.animStep += f2;
         if (this.isFallFlying()) {
             ++this.fallFlyTicks;
@@ -3332,19 +3397,19 @@ public abstract class LivingEntity extends Entity implements Attackable {
         }
 
         this.setDeltaMovement(d4, d5, d6);
-        this.level.getProfiler().push("ai");
+        //this.level.getProfiler().push("ai"); // Purpur
         if (this.isImmobile()) {
             this.jumping = false;
             this.xxa = 0.0F;
             this.zza = 0.0F;
         } else if (this.isEffectiveAi()) {
-            this.level.getProfiler().push("newAi");
+            //this.level.getProfiler().push("newAi"); // Purpur
             this.serverAiStep();
-            this.level.getProfiler().pop();
+            //this.level.getProfiler().pop(); // Purpur
         }
 
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("jump");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("jump"); // Purpur
         if (this.jumping && this.isAffectedByFluids()) {
             double d7;
 
@@ -3371,8 +3436,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
             this.noJumpDelay = 0;
         }
 
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("travel");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("travel"); // Purpur
         this.xxa *= 0.98F;
         this.zza *= 0.98F;
         this.updateFallFlying();
@@ -3388,8 +3453,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
         }
         //SpigotTimings.timerEntityAIMove.stopTiming(); // Spigot // Paper
 
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("freezing");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("freezing"); // Purpur
         if (!this.level.isClientSide && !this.isDeadOrDying() && !freezeLocked) { // Paper - Freeze Tick Lock API
             int i = this.getTicksFrozen();
 
@@ -3406,18 +3471,20 @@ public abstract class LivingEntity extends Entity implements Attackable {
             this.hurt(this.damageSources().freeze(), 1.0F);
         }
 
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("push");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("push"); // Purpur
         if (this.autoSpinAttackTicks > 0) {
             --this.autoSpinAttackTicks;
             this.checkAutoSpinAttack(axisalignedbb, this.getBoundingBox());
         }
 
         this.pushEntities();
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         // Paper start
-        if (((ServerLevel) this.level).hasEntityMoveEvent && !(this instanceof net.minecraft.world.entity.player.Player)) {
-            if (this.xo != getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
+        // Purpur start
+        if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
+            if (((ServerLevel) this.level).hasEntityMoveEvent && !(this instanceof net.minecraft.world.entity.player.Player)) {
+                // Purpur end
                 Location from = new Location(this.level.getWorld(), this.xo, this.yo, this.zo, this.yRotO, this.xRotO);
                 Location to = new Location (this.level.getWorld(), this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
                 io.papermc.paper.event.entity.EntityMoveEvent event = new io.papermc.paper.event.entity.EntityMoveEvent(this.getBukkitLivingEntity(), from, to.clone());
@@ -3427,12 +3494,48 @@ public abstract class LivingEntity extends Entity implements Attackable {
                     absMoveTo(event.getTo().getX(), event.getTo().getY(), event.getTo().getZ(), event.getTo().getYaw(), event.getTo().getPitch());
                 }
             }
+            // Purpur start
+            if (getRider() != null) {
+                getRider().resetLastActionTime();
+                if (((ServerLevel) level).hasRidableMoveEvent && this instanceof Mob) {
+                    Location from = new Location(level.getWorld(), xo, yo, zo, this.yRotO, this.xRotO);
+                    Location to = new Location(level.getWorld(), getX(), getY(), getZ(), this.getYRot(), this.getXRot());
+                    org.purpurmc.purpur.event.entity.RidableMoveEvent event = new org.purpurmc.purpur.event.entity.RidableMoveEvent((org.bukkit.entity.Mob) getBukkitLivingEntity(), (Player) getRider().getBukkitEntity(), from, to.clone());
+                    if (!event.callEvent()) {
+                        absMoveTo(from.getX(), from.getY(), from.getZ(), from.getYaw(), from.getPitch());
+                    } else if (!to.equals(event.getTo())) {
+                        absMoveTo(to.getX(), to.getY(), to.getZ(), to.getYaw(), to.getPitch());
+                    }
+                }
+            }
+            // Purpur end
         }
         // Paper end
         if (!this.level.isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
             this.hurt(this.damageSources().drown(), 1.0F);
         }
 
+        // Purpur start - copied from Zombie
+        if (this.isAlive()) {
+            boolean flag = this.shouldBurnInDay() && this.isSunBurnTick();
+            if (flag) {
+                ItemStack itemstack = this.getItemBySlot(EquipmentSlot.HEAD);
+                if (!itemstack.isEmpty()) {
+                    if (itemstack.isDamageableItem()) {
+                        itemstack.setDamageValue(itemstack.getDamageValue() + this.random.nextInt(2));
+                        if (itemstack.getDamageValue() >= itemstack.getMaxDamage()) {
+                            this.broadcastBreakEvent(EquipmentSlot.HEAD);
+                            this.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+                        }
+                    }
+                    flag = false;
+                }
+                if (flag) {
+                    this.setSecondsOnFire(8);
+                }
+            }
+        }
+        // Purpur end
     }
 
     public boolean isSensitiveToWater() {
@@ -3453,7 +3556,16 @@ public abstract class LivingEntity extends Entity implements Attackable {
                     int j = i / 10;
 
                     if (j % 2 == 0) {
-                        itemstack.hurtAndBreak(1, this, (entityliving) -> {
+                        // Purpur start
+                        int damage = level.purpurConfig.elytraDamagePerSecond;
+                        if (level.purpurConfig.elytraDamageMultiplyBySpeed > 0) {
+                            double speed = getDeltaMovement().lengthSqr();
+                            if (speed > level.purpurConfig.elytraDamageMultiplyBySpeed) {
+                                damage *= (int) speed;
+                            }
+                        }
+                        itemstack.hurtAndBreak(damage, this, (entityliving) -> {
+                        // Purpur end
                             entityliving.broadcastBreakEvent(EquipmentSlot.CHEST);
                         });
                     }

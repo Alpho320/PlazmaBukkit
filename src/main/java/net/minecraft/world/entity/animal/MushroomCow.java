@@ -63,6 +63,43 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
         super(type, world);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.mooshroomRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.mooshroomRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.mooshroomControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.mooshroomMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.mooshroomBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.mooshroomTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.mooshroomAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     public float getWalkTargetValue(BlockPos pos, LevelReader world) {
         return world.getBlockState(pos.below()).is(Blocks.MYCELIUM) ? 10.0F : world.getPathfindingCostFromLightLevels(pos);
@@ -124,10 +161,10 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
         } else if (itemstack.is(Items.SHEARS) && this.readyForShearing()) {
             // CraftBukkit start
             if (!CraftEventFactory.handlePlayerShearEntityEvent(player, this, itemstack, hand)) {
-                return InteractionResult.PASS;
+                return tryRide(player, hand); // Purpur
             }
             // CraftBukkit end
-            this.shear(SoundSource.PLAYERS);
+            this.shear(SoundSource.PLAYERS, net.minecraft.world.item.enchantment.EnchantmentHelper.getMobLooting(player)); // Purpur
             this.gameEvent(GameEvent.SHEAR, player);
             if (!this.level.isClientSide) {
                 itemstack.hurtAndBreak(1, player, (entityhuman1) -> {
@@ -145,7 +182,7 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
                 Optional<Pair<MobEffect, Integer>> optional = this.getEffectFromItemStack(itemstack);
 
                 if (!optional.isPresent()) {
-                    return InteractionResult.PASS;
+                    return tryRide(player, hand); // Purpur
                 }
 
                 Pair<MobEffect, Integer> pair = (Pair) optional.get();
@@ -170,7 +207,7 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
     }
 
     @Override
-    public void shear(SoundSource shearedSoundCategory) {
+    public void shear(SoundSource shearedSoundCategory, int looting) { // Purpur
         this.level.playSound((Player) null, (Entity) this, SoundEvents.MOOSHROOM_SHEAR, shearedSoundCategory, 1.0F, 1.0F);
         if (!this.level.isClientSide()) {
             Cow entitycow = (Cow) EntityType.COW.create(this.level);
@@ -180,7 +217,13 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
                 // this.discard(); // CraftBukkit - moved down
                 entitycow.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
                 entitycow.setHealth(this.getHealth());
+                // Purpur start
+                entitycow.copyPosition(this);
                 entitycow.yBodyRot = this.yBodyRot;
+                entitycow.setYHeadRot(this.getYHeadRot());
+                entitycow.yRotO = this.yRotO;
+                entitycow.xRotO = this.xRotO;
+                // Purpur end
                 if (this.hasCustomName()) {
                     entitycow.setCustomName(this.getCustomName());
                     entitycow.setCustomNameVisible(this.isCustomNameVisible());
@@ -200,7 +243,7 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
                 this.discard(); // CraftBukkit - from above
                 // CraftBukkit end
 
-                for (int i = 0; i < 5; ++i) {
+                for (int i = 0; i < 5 + (org.purpurmc.purpur.PurpurConfig.allowShearsLooting ? looting : 0); ++i) {
                     // CraftBukkit start
                     ItemEntity entityitem = new ItemEntity(this.level, this.getX(), this.getY(1.0D), this.getZ(), new ItemStack(this.getVariant().blockState.getBlock()));
                     EntityDropItemEvent event = new EntityDropItemEvent(this.getBukkitEntity(), (org.bukkit.entity.Item) entityitem.getBukkitEntity());

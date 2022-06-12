@@ -243,7 +243,7 @@ public class WalkNodeEvaluator extends NodeEvaluator {
             }
 
             if (blockPathTypes != BlockPathTypes.WALKABLE && (!this.isAmphibious() || blockPathTypes != BlockPathTypes.WATER)) {
-                if ((node == null || node.costMalus < 0.0F) && maxYStep > 0 && (blockPathTypes != BlockPathTypes.FENCE || this.canWalkOverFences()) && blockPathTypes != BlockPathTypes.UNPASSABLE_RAIL && blockPathTypes != BlockPathTypes.TRAPDOOR && blockPathTypes != BlockPathTypes.POWDER_SNOW) {
+                if ((node == null || node.costMalus < 0.0F) && maxYStep > 0 && (blockPathTypes != BlockPathTypes.FENCE || this.canWalkOverFences()) && (this.mob.level.purpurConfig.mobsIgnoreRails || blockPathTypes != BlockPathTypes.UNPASSABLE_RAIL) && blockPathTypes != BlockPathTypes.TRAPDOOR && blockPathTypes != BlockPathTypes.POWDER_SNOW) { // Purpur
                     node = this.findAcceptedNode(x, y + 1, z, maxYStep - 1, prevFeetY, direction, nodeType);
                     if (node != null && (node.type == BlockPathTypes.OPEN || node.type == BlockPathTypes.WALKABLE) && this.mob.getBbWidth() < 1.0F) {
                         double g = (double)(x - direction.getStepX()) + 0.5D;
@@ -463,7 +463,7 @@ public class WalkNodeEvaluator extends NodeEvaluator {
                             return BlockPathTypes.BLOCKED;
                         } else {
                         // Paper end
-                        if (blockState.is(Blocks.CACTUS) || blockState.is(Blocks.SWEET_BERRY_BUSH)) {
+                        if (blockState.is(Blocks.CACTUS) || blockState.is(Blocks.SWEET_BERRY_BUSH) || blockState.is(Blocks.STONECUTTER)) { // Purpur
                             return BlockPathTypes.DANGER_OTHER;
                         }
 
@@ -493,7 +493,7 @@ public class WalkNodeEvaluator extends NodeEvaluator {
         } else if (!blockState.is(BlockTags.TRAPDOORS) && !blockState.is(Blocks.LILY_PAD) && !blockState.is(Blocks.BIG_DRIPLEAF)) {
             if (blockState.is(Blocks.POWDER_SNOW)) {
                 return BlockPathTypes.POWDER_SNOW;
-            } else if (!blockState.is(Blocks.CACTUS) && !blockState.is(Blocks.SWEET_BERRY_BUSH)) {
+            } else if (!blockState.is(Blocks.CACTUS) && !blockState.is(Blocks.SWEET_BERRY_BUSH) && !blockState.is(Blocks.STONECUTTER)) { // Purpur
                 if (blockState.is(Blocks.HONEY_BLOCK)) {
                     return BlockPathTypes.STICKY_HONEY;
                 } else if (blockState.is(Blocks.COCOA)) {

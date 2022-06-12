@@ -534,10 +534,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public void setPlayerListName(String name) {
+        // Purpur start
+        setPlayerListName(name, false);
+    }
+    public void setPlayerListName(String name, boolean useMM) {
+        // Purpur end
         if (name == null) {
             name = getName();
         }
-        this.getHandle().listName = name.equals(getName()) ? null : CraftChatMessage.fromStringOrNull(name);
+        this.getHandle().listName = name.equals(getName()) ? null : useMM ? io.papermc.paper.adventure.PaperAdventure.asVanilla(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(name)) : CraftChatMessage.fromStringOrNull(name); // Purpur
         for (ServerPlayer player : (List<ServerPlayer>) server.getHandle().players) {
             if (player.getBukkitEntity().canSee(this)) {
                 player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, this.getHandle()));
@@ -1358,6 +1363,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
 
         if (entity.isVehicle() && !ignorePassengers) { // Paper - Teleport API
+            // Purpur start
+            if (new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, cause).callEvent())
+                return teleport(location, cause);
+            // Purpur end
             return false;
         }
 
@@ -2405,6 +2414,28 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         return this.getHandle().getAbilities().walkingSpeed * 2f;
     }
 
+    // Purpur start - OfflinePlayer API
+    @Override
+    public boolean teleportOffline(@NotNull Location destination) {
+        return this.teleport(destination);
+    }
+
+    @Override
+    public boolean teleportOffline(Location destination, PlayerTeleportEvent.TeleportCause cause) {
+        return this.teleport(destination, cause);
+    }
+
+    @Override
+    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(@NotNull Location destination) {
+        return this.teleportAsync(destination);
+    }
+
+    @Override
+    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(@NotNull Location destination, PlayerTeleportEvent.TeleportCause cause) {
+        return this.teleportAsync(destination, cause);
+    }
+    // Purpur end - OfflinePlayer API
+
     private void validateSpeed(float value) {
         if (value < 0) {
             if (value < -1f) {
@@ -3180,4 +3211,97 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         return this.spigot;
     }
     // Spigot end
+
+    // Purpur start
+    @Override
+    public boolean usesPurpurClient() {
+        return getHandle().purpurClient;
+    }
+
+    @Override
+    public boolean isAfk() {
+        return getHandle().isAfk();
+    }
+
+    @Override
+    public void setAfk(boolean setAfk) {
+        getHandle().setAfk(setAfk);
+    }
+
+    @Override
+    public void resetIdleTimer() {
+        getHandle().resetLastActionTime();
+    }
+
+    @Override
+    public boolean isSpawnInvulnerable() {
+        return getHandle().isSpawnInvulnerable();
+    }
+
+    @Override
+    public int getSpawnInvulnerableTicks() {
+        return getHandle().spawnInvulnerableTime;
+    }
+
+    @Override
+    public void setSpawnInvulnerableTicks(int spawnInvulnerableTime) {
+        getHandle().spawnInvulnerableTime = spawnInvulnerableTime;
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration) {
+        sendBlockHighlight(location, duration, "", 0x6400FF00);
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration, int argb) {
+        sendBlockHighlight(location, duration, "", argb);
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration, String text) {
+        sendBlockHighlight(location, duration, text, 0x6400FF00);
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration, String text, int argb) {
+        if (this.getHandle().connection == null) return;
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeBlockPos(io.papermc.paper.util.MCUtil.toBlockPosition(location));
+        buf.writeInt(argb);
+        buf.writeUtf(text);
+        buf.writeInt(duration);
+        this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.DEBUG_GAME_TEST_ADD_MARKER, buf));
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration, org.bukkit.Color color, int transparency) {
+        sendBlockHighlight(location, duration, "", color, transparency);
+    }
+
+    @Override
+    public void sendBlockHighlight(Location location, int duration, String text, org.bukkit.Color color, int transparency) {
+        if (transparency < 0 || transparency > 255) throw new IllegalArgumentException("transparency is outside of 0-255 range");
+        sendBlockHighlight(location, duration, text, transparency << 24 | color.asRGB());
+    }
+
+    @Override
+    public void clearBlockHighlights() {
+        if (this.getHandle().connection == null) return;
+        this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.DEBUG_GAME_TEST_CLEAR, new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer())));
+    }
+
+    @Override
+    public void sendDeathScreen(net.kyori.adventure.text.Component message) {
+        sendDeathScreen(message, null);
+    }
+
+    @Override
+    public void sendDeathScreen(net.kyori.adventure.text.Component message, org.bukkit.entity.Entity killer) {
+        if (this.getHandle().connection == null) return;
+        net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket packet = new net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket(getEntityId(), killer == null ? -1 : killer.getEntityId(), null);
+        packet.adventure$message = message;
+        this.getHandle().connection.send(packet);
+    }
+    // Purpur end
 }

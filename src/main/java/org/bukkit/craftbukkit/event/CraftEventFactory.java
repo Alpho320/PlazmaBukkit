@@ -563,6 +563,15 @@ public class CraftEventFactory {
         // Paper end
         craftServer.getPluginManager().callEvent(event);
 
+        // Purpur start
+        if (who != null) {
+            switch (action) {
+                case LEFT_CLICK_BLOCK, LEFT_CLICK_AIR -> who.processClick(InteractionHand.MAIN_HAND);
+                case RIGHT_CLICK_BLOCK, RIGHT_CLICK_AIR -> who.processClick(InteractionHand.OFF_HAND);
+            }
+        }
+        // Purpur end
+
         return event;
     }
 
@@ -1000,6 +1009,7 @@ public class CraftEventFactory {
                     damageCause = DamageCause.ENTITY_EXPLOSION;
                 }
                 event = new EntityDamageByEntityEvent(damager.getBukkitEntity(), entity.getBukkitEntity(), damageCause, modifiers, modifierFunctions, source.isCritical()); // Paper - add critical damage API
+                damager.processClick(InteractionHand.MAIN_HAND); // Purpur
             }
             event.setCancelled(cancelled);
 
@@ -1114,6 +1124,7 @@ public class CraftEventFactory {
             } else {
                 entity.lastDamageCancelled = true; // SPIGOT-5339, SPIGOT-6252, SPIGOT-6777: Keep track if the event was canceled
             }
+            damager.getHandle().processClick(InteractionHand.MAIN_HAND); // Purpur
             return event;
         }
 
@@ -1173,6 +1184,7 @@ public class CraftEventFactory {
         EntityDamageEvent event;
         if (damager != null) {
             event = new EntityDamageByEntityEvent(damager.getBukkitEntity(), damagee.getBukkitEntity(), cause, modifiers, modifierFunctions, critical); // Paper - add critical damage API
+            damager.processClick(InteractionHand.MAIN_HAND); // Purpur
         } else {
             event = new EntityDamageEvent(damagee.getBukkitEntity(), cause, modifiers, modifierFunctions);
         }

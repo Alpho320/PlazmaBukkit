@@ -209,6 +209,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         this.entity = entity;
     }
 
+    @Override
+    public boolean isInDaylight() {
+        return getHandle().isSunBurnTick();
+    }
+
     public static CraftEntity getEntity(CraftServer server, Entity entity) {
         /*
          * Order is *EXTREMELY* important -- keep it right! =D
@@ -586,6 +591,10 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         // Paper end
 
         if ((!ignorePassengers && this.entity.isVehicle()) || this.entity.isRemoved()) { // Paper - Teleport passenger API
+            // Purpur start
+            if (!entity.isRemoved() && new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, cause).callEvent())
+                return teleport(location, cause);
+            // Purpur end
             return false;
         }
 
@@ -1442,4 +1451,37 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         return !this.getHandle().level.noCollision(this.getHandle(), aabb);
     }
     // Paper End - Collision API
+
+    // Purpur start
+    @Override
+    public org.bukkit.entity.Player getRider() {
+        net.minecraft.world.entity.player.Player rider = getHandle().getRider();
+        return rider != null ? (org.bukkit.entity.Player) rider.getBukkitEntity() : null;
+    }
+
+    @Override
+    public boolean hasRider() {
+        return getHandle().getRider() != null;
+    }
+
+    @Override
+    public boolean isRidable() {
+        return getHandle().isRidable();
+    }
+
+    @Override
+    public boolean isRidableInWater() {
+        return !getHandle().dismountsUnderwater();
+    }
+
+    @Override
+    public boolean isImmuneToFire() {
+        return getHandle().fireImmune();
+    }
+
+    @Override
+    public void setImmuneToFire(Boolean fireImmune) {
+        getHandle().immuneToFire = fireImmune;
+    }
+    // Purpur end
 }

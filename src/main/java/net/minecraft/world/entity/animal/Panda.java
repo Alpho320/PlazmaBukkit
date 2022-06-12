@@ -108,6 +108,53 @@ public class Panda extends Animal {
 
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.pandaRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.pandaRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.pandaControllable;
+    }
+
+    @Override
+    public void onMount(Player rider) {
+        super.onMount(rider);
+        setForwardMot(0.0F);
+        sit(false);
+        eat(false);
+        setOnBack(false);
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.pandaMaxHealth);
+        setAttributes();
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.pandaBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.pandaTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.pandaAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     public boolean canTakeItem(ItemStack stack) {
         EquipmentSlot enumitemslot = Mob.getEquipmentSlotForItem(stack);
@@ -269,6 +316,7 @@ public class Panda extends Animal {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.goalSelector.addGoal(2, new Panda.PandaPanicGoal(this, 2.0D));
         this.goalSelector.addGoal(2, new Panda.PandaBreedGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new Panda.PandaAttackGoal(this, 1.2000000476837158D, true));
@@ -284,6 +332,7 @@ public class Panda extends Animal {
         this.goalSelector.addGoal(12, new Panda.PandaRollGoal(this));
         this.goalSelector.addGoal(13, new FollowParentGoal(this, 1.25D));
         this.goalSelector.addGoal(14, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.targetSelector.addGoal(1, (new Panda.PandaHurtByTargetGoal(this, new Class[0])).setAlertOthers(new Class[0]));
     }
 
@@ -607,7 +656,10 @@ public class Panda extends Animal {
 
     public void setAttributes() {
         if (this.isWeak()) {
-            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(10.0D);
+            // Purpur start
+            net.minecraft.world.entity.ai.attributes.AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+            maxHealth.setBaseValue(maxHealth.getValue() / 2);
+            // Purpur end
         }
 
         if (this.isLazy()) {
@@ -630,7 +682,7 @@ public class Panda extends Animal {
         ItemStack itemstack = player.getItemInHand(hand);
 
         if (this.isScared()) {
-            return InteractionResult.PASS;
+            return tryRide(player, hand); // Purpur
         } else if (this.isOnBack()) {
             this.setOnBack(false);
             return InteractionResult.sidedSuccess(this.level.isClientSide);
@@ -647,7 +699,7 @@ public class Panda extends Animal {
                 this.setInLove(player);
             } else {
                 if (this.level.isClientSide || this.isSitting() || this.isInWater()) {
-                    return InteractionResult.PASS;
+                    return tryRide(player, hand); // Purpur
                 }
 
                 this.tryToSit();
@@ -666,7 +718,7 @@ public class Panda extends Animal {
 
             return InteractionResult.SUCCESS;
         } else {
-            return InteractionResult.PASS;
+            return tryRide(player, hand); // Purpur
         }
     }
 
@@ -706,7 +758,7 @@ public class Panda extends Animal {
         return !this.isOnBack() && !this.isScared() && !this.isEating() && !this.isRolling() && !this.isSitting();
     }
 
-    private static class PandaMoveControl extends MoveControl {
+    private static class PandaMoveControl extends org.purpurmc.purpur.controller.MoveControllerWASD { // Purpur
 
         private final Panda panda;
 
@@ -716,9 +768,9 @@ public class Panda extends Animal {
         }
 
         @Override
-        public void tick() {
+        public void vanillaTick() { // Purpur
             if (this.panda.canPerformAction()) {
-                super.tick();
+                super.vanillaTick(); // Purpur
             }
         }
     }
