@@ -212,6 +212,21 @@ public class CommandSourceStack implements SharedSuggestionProvider, com.destroy
     }
     // CraftBukkit end
 
+    // Purpur start
+    public boolean testPermission(int i, String bukkitPermission) {
+        if (hasPermission(i, bukkitPermission)) {
+            return true;
+        }
+        String permissionMessage = getLevel().getServer().server.getPermissionMessage();
+        if (!permissionMessage.isBlank()) {
+            for (String line : permissionMessage.replace("<permission>", bukkitPermission).split("\n")) {
+                sendFailure(Component.literal(line));
+            }
+        }
+        return false;
+    }
+    // Purpur end
+
     public Vec3 getPosition() {
         return this.worldPosition;
     }
@@ -316,6 +331,30 @@ public class CommandSourceStack implements SharedSuggestionProvider, com.destroy
 
         }
     }
+
+    // Purpur start
+    public void sendSuccess(@Nullable String message) {
+        sendSuccess(message, false);
+    }
+
+    public void sendSuccess(@Nullable String message, boolean broadcastToOps) {
+        if (message == null) {
+            return;
+        }
+        sendSuccess(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message), broadcastToOps);
+    }
+
+    public void sendSuccess(@Nullable net.kyori.adventure.text.Component message) {
+        sendSuccess(message, false);
+    }
+
+    public void sendSuccess(@Nullable net.kyori.adventure.text.Component message, boolean broadcastToOps) {
+        if (message == null) {
+            return;
+        }
+        sendSuccess(io.papermc.paper.adventure.PaperAdventure.asVanilla(message), broadcastToOps);
+    }
+    // Purpur end
 
     public void sendSuccess(Component message, boolean broadcastToOps) {
         if (this.source.acceptsSuccess() && !this.silent) {

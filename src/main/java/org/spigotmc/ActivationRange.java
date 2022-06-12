@@ -15,6 +15,7 @@ import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.entity.boss.EnderDragonPart;
@@ -169,7 +170,7 @@ public class ActivationRange
      */
     public static void activateEntities(Level world)
     {
-        MinecraftTimings.entityActivationCheckTimer.startTiming();
+        //MinecraftTimings.entityActivationCheckTimer.startTiming(); // Purpur
         final int miscActivationRange = world.spigotConfig.miscActivationRange;
         final int raiderActivationRange = world.spigotConfig.raiderActivationRange;
         final int animalActivationRange = world.spigotConfig.animalActivationRange;
@@ -203,6 +204,7 @@ public class ActivationRange
                 continue;
             }
 
+            if (!player.level.purpurConfig.idleTimeoutTickNearbyEntities && player.isAfk()) continue; // Purpur
             // Paper start
             int worldHeight = world.getHeight();
             ActivationRange.maxBB = player.getBoundingBox().inflate( maxRange, worldHeight, maxRange );
@@ -243,7 +245,7 @@ public class ActivationRange
             }
             // Paper end
         }
-        MinecraftTimings.entityActivationCheckTimer.stopTiming();
+        //MinecraftTimings.entityActivationCheckTimer.stopTiming(); // Purpur
     }
 
     /**
@@ -396,6 +398,7 @@ public class ActivationRange
      */
     public static boolean checkIfActive(Entity entity)
     {
+        if (entity.level.purpurConfig.squidImmuneToEAR && entity instanceof Squid) return true; // Purpur
         // Never safe to skip fireworks or entities not yet added to chunk
         if ( entity instanceof FireworkRocketEntity ) {
             return true;

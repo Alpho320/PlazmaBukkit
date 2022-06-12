@@ -123,6 +123,10 @@ public class CrashReport {
         StringBuilder stringbuilder = new StringBuilder();
 
         stringbuilder.append("---- Minecraft Crash Report ----\n");
+        // Purpur start
+        stringbuilder.append("// ");
+        stringbuilder.append("// DO NOT REPORT THIS TO PAPER! REPORT TO PURPUR INSTEAD!");
+        // Purpur end
         stringbuilder.append("// ");
         stringbuilder.append(CrashReport.getErrorComment());
         stringbuilder.append("\n\n");

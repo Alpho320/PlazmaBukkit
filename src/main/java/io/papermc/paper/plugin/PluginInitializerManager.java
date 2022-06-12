@@ -102,6 +102,7 @@ public class PluginInitializerManager {
         java.util.List<File> files = (java.util.List<File>) optionSet.valuesOf("add-plugin");
         // Register plugins from the flag
         io.papermc.paper.plugin.util.EntrypointUtil.registerProvidersFromSource(io.papermc.paper.plugin.provider.source.PluginFlagProviderSource.INSTANCE, files);
+        io.papermc.paper.plugin.util.EntrypointUtil.registerProvidersFromSource(io.papermc.paper.plugin.provider.source.SparkProviderSource.INSTANCE, new File("cache", "spark.jar").toPath()); // Purpur
     }
 
     // This will be the end of me...

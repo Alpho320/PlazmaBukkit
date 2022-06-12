@@ -120,7 +120,31 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
         this.setPathfindingMalus(BlockPathTypes.LAVA, 8.0F);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
+        this.moveControl = new org.purpurmc.purpur.controller.MoveControllerWASD(this, 0.5F); // Purpur
     }
+
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.wardenRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.wardenRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.wardenControllable;
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
+        this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
+    }
+    // Purpur end
 
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -275,10 +299,10 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
     protected void customServerAiStep() {
         ServerLevel worldserver = (ServerLevel) this.level;
 
-        worldserver.getProfiler().push("wardenBrain");
+        //worldserver.getProfiler().push("wardenBrain"); // Purpur
         if (this.behaviorTick++ % this.activatedPriority == 0) // Pufferfish
         this.getBrain().tick(worldserver, this);
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         super.customServerAiStep();
         if ((this.tickCount + this.getId()) % 120 == 0) {
             Warden.applyDarknessAround(worldserver, this.position(), this, 20);
@@ -405,19 +429,16 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
 
     @Contract("null->false")
     public boolean canTargetEntity(@Nullable Entity entity) {
-        boolean flag;
-
+        if (getRider() != null && isControllable()) return false; // Purpur
         if (entity instanceof LivingEntity) {
             LivingEntity entityliving = (LivingEntity) entity;
 
             if (this.level == entity.level && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(entity) && !this.isAlliedTo(entity) && entityliving.getType() != EntityType.ARMOR_STAND && entityliving.getType() != EntityType.WARDEN && !entityliving.isInvulnerable() && !entityliving.isDeadOrDying() && this.level.getWorldBorder().isWithinBounds(entityliving.getBoundingBox())) {
-                flag = true;
-                return flag;
+                return true; // Purpur - wtf
             }
         }
 
-        flag = false;
-        return flag;
+        return false; // Purpur - wtf
     }
 
     public static void applyDarknessAround(ServerLevel world, Vec3 pos, @Nullable Entity entity, int range) {

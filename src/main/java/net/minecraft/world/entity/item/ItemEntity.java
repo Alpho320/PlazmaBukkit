@@ -55,6 +55,12 @@ public class ItemEntity extends Entity implements TraceableEntity {
     public boolean canMobPickup = true; // Paper
     private int despawnRate = -1; // Paper
     public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper
+    // Purpur start
+    public boolean immuneToCactus = false;
+    public boolean immuneToExplosion = false;
+    public boolean immuneToFire = false;
+    public boolean immuneToLightning = false;
+    // Purpur end
 
     public ItemEntity(EntityType<? extends ItemEntity> type, Level world) {
         super(type, world);
@@ -349,6 +355,15 @@ public class ItemEntity extends Entity implements TraceableEntity {
             return false;
         } else if (!this.getItem().getItem().canBeHurtBy(source)) {
             return false;
+        // Purpur start
+        } else if (
+                (immuneToCactus && source.is(net.minecraft.world.damagesource.DamageTypes.CACTUS)) ||
+                (immuneToFire && (source.is(DamageTypeTags.IS_FIRE) && source.is(net.minecraft.world.damagesource.DamageTypes.IN_FIRE)) ||
+                (immuneToLightning && source.is(net.minecraft.world.damagesource.DamageTypes.LIGHTNING_BOLT)) ||
+                (immuneToExplosion && source.is(DamageTypeTags.IS_EXPLOSION)))
+        ) {
+            return false;
+        // Purpur end
         } else if (this.level.isClientSide) {
             return true;
         } else {
@@ -547,6 +562,12 @@ public class ItemEntity extends Entity implements TraceableEntity {
         this.getEntityData().set(ItemEntity.DATA_ITEM, stack);
         this.getEntityData().markDirty(ItemEntity.DATA_ITEM); // CraftBukkit - SPIGOT-4591, must mark dirty
         this.despawnRate = level.paperConfig().entities.spawning.altItemDespawnRate.enabled ? level.paperConfig().entities.spawning.altItemDespawnRate.items.getOrDefault(stack.getItem(), level.spigotConfig.itemDespawnRate) : level.spigotConfig.itemDespawnRate; // Paper
+        // Purpur start
+        if (level.purpurConfig.itemImmuneToCactus.contains(stack.getItem())) immuneToCactus = true;
+        if (level.purpurConfig.itemImmuneToExplosion.contains(stack.getItem())) immuneToExplosion = true;
+        if (level.purpurConfig.itemImmuneToFire.contains(stack.getItem())) immuneToFire = true;
+        if (level.purpurConfig.itemImmuneToLightning.contains(stack.getItem())) immuneToLightning = true;
+        // level end
     }
 
     @Override

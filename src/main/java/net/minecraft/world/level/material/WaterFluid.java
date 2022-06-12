@@ -64,6 +64,13 @@ public abstract class WaterFluid extends FlowingFluid {
         return world.getGameRules().getBoolean(GameRules.RULE_WATER_SOURCE_CONVERSION);
     }
 
+    // Purpur start
+    @Override
+    protected int getRequiredSources(Level level) {
+        return level.purpurConfig.waterInfiniteRequiredSources;
+    }
+    // Purpur end
+
     // Paper start
     @Override
     protected void beforeDestroyingBlock(LevelAccessor world, BlockPos pos, BlockState state,  BlockPos source) {
@@ -109,7 +116,7 @@ public abstract class WaterFluid extends FlowingFluid {
 
     @Override
     protected float getExplosionResistance() {
-        return 100.0F;
+        return Blocks.WATER.getExplosionResistance(); // Purpur
     }
 
     @Override

@@ -37,8 +37,62 @@ public class StackedContents {
             int i = getStackingIndex(stack);
             int j = Math.min(maxCount, stack.getCount());
             this.put(i, j);
+            // PaperPR start
+            if (stack.hasTag()) {
+                this.put(getExactStackingIndex(stack), j);
+            }
         }
 
+    }
+    private static final net.minecraft.core.IdMap<ItemStack> EXACT_MATCHES_ID_MAP = new net.minecraft.core.IdMap<>() {
+        private final java.util.concurrent.atomic.AtomicInteger idCounter = new java.util.concurrent.atomic.AtomicInteger(BuiltInRegistries.ITEM.size());
+        private final it.unimi.dsi.fastutil.objects.Object2IntMap<ItemStack> itemstackToId = new it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap<>(new it.unimi.dsi.fastutil.Hash.Strategy<>() {
+            @Override
+            public int hashCode(ItemStack o) {
+                return java.util.Objects.hash(o.getItem(), o.getTag());
+            }
+
+            @Override
+            public boolean equals(@Nullable ItemStack a, @Nullable ItemStack b) {
+                if (a == null || b == null) {
+                    return false;
+                }
+                return ItemStack.tagMatches(a, b);
+            }
+        });
+        private final it.unimi.dsi.fastutil.ints.Int2ObjectMap<net.minecraft.world.item.ItemStack> idToItemstack = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
+
+        @Override
+        public int getId(ItemStack value) {
+            if (!this.itemstackToId.containsKey(value)) {
+                final int id = this.idCounter.incrementAndGet();
+                final ItemStack copy = value.copy();
+                this.itemstackToId.put(copy, id);
+                this.idToItemstack.put(id, copy);
+                return id;
+            }
+            return this.itemstackToId.getInt(value);
+        }
+
+        @Override
+        public @Nullable ItemStack byId(int index) {
+            return this.idToItemstack.get(index);
+        }
+
+        @Override
+        public int size() {
+            return this.itemstackToId.size();
+        }
+
+        @Override
+        public java.util.Iterator<net.minecraft.world.item.ItemStack> iterator() {
+            return this.idToItemstack.values().iterator();
+        }
+    };
+
+    public static int getExactStackingIndex(ItemStack stack) {
+        return EXACT_MATCHES_ID_MAP.getId(stack);
+        // PaperPR end
     }
 
     public static int getStackingIndex(ItemStack stack) {
@@ -80,6 +134,12 @@ public class StackedContents {
     }
 
     public static ItemStack fromStackingIndex(int itemId) {
+        // PaperPR start
+        if (itemId > BuiltInRegistries.ITEM.size()) {
+            final ItemStack stack = EXACT_MATCHES_ID_MAP.byId(itemId);
+            return stack == null ? ItemStack.EMPTY : stack.copy();
+        }
+        // PaperPR end
         return itemId == 0 ? ItemStack.EMPTY : new ItemStack(Item.byId(itemId));
     }
 

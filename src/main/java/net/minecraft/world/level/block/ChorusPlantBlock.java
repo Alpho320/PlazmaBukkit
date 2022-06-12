@@ -21,6 +21,7 @@ public class ChorusPlantBlock extends PipeBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        if (org.purpurmc.purpur.PurpurConfig.disableChorusPlantUpdates) return this.defaultBlockState(); // Purpur
         return this.getStateForPlacement(ctx.getLevel(), ctx.getClickedPos());
     }
 
@@ -36,6 +37,7 @@ public class ChorusPlantBlock extends PipeBlock {
 
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+        if (org.purpurmc.purpur.PurpurConfig.disableChorusPlantUpdates) return state; // Purpur
         if (!state.canSurvive(world, pos)) {
             world.scheduleTick(pos, this, 1);
             return super.updateShape(state, direction, neighborState, world, pos, neighborPos);

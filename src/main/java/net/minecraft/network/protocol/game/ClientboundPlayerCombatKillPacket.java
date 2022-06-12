@@ -9,6 +9,7 @@ public class ClientboundPlayerCombatKillPacket implements Packet<ClientGamePacke
     private final int playerId;
     private final int killerId;
     private final Component message;
+    public net.kyori.adventure.text.Component adventure$message; // Purpur
 
     public ClientboundPlayerCombatKillPacket(CombatTracker damageTracker, Component message) {
         this(damageTracker.getMob().getId(), damageTracker.getKillerId(), message);
@@ -30,6 +31,12 @@ public class ClientboundPlayerCombatKillPacket implements Packet<ClientGamePacke
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.playerId);
         buf.writeInt(this.killerId);
+        // Purpur start
+        if (this.adventure$message != null) {
+            buf.writeComponent(this.adventure$message);
+            return;
+        }
+        // Purpur end
         buf.writeComponent(this.message);
     }
 

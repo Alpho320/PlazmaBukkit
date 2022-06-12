@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class NetherWartBlock extends BushBlock {
+public class NetherWartBlock extends BushBlock implements BonemealableBlock { // Purpur
 
     public static final int MAX_AGE = 3;
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
@@ -60,4 +60,32 @@ public class NetherWartBlock extends BushBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(NetherWartBlock.AGE);
     }
+
+    // Purpur start
+    @Override
+    public void playerDestroy(net.minecraft.world.level.Level world, net.minecraft.world.entity.player.Player player, BlockPos pos, BlockState state, @javax.annotation.Nullable net.minecraft.world.level.block.entity.BlockEntity blockEntity, ItemStack itemInHand) {
+        if (world.purpurConfig.hoeReplantsNetherWarts && itemInHand.getItem() instanceof net.minecraft.world.item.HoeItem) {
+            super.playerDestroyAndReplant(world, player, pos, state, blockEntity, itemInHand, Items.NETHER_WART);
+        } else {
+            super.playerDestroy(world, player, pos, state, blockEntity, itemInHand);
+        }
+    }
+
+    @Override
+    public boolean isValidBonemealTarget(net.minecraft.world.level.LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+        return ((net.minecraft.world.level.Level) world).purpurConfig.netherWartAffectedByBonemeal && state.getValue(NetherWartBlock.AGE) < 3;
+    }
+
+    @Override
+    public boolean isBonemealSuccess(net.minecraft.world.level.Level world, RandomSource random, BlockPos pos, BlockState state) {
+        return true;
+    }
+
+    @Override
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+        int i = Math.min(3, state.getValue(NetherWartBlock.AGE) + 1);
+        state = state.setValue(NetherWartBlock.AGE, i);
+        org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, pos, state, 2); // CraftBukkit
+    }
+    // Purpur end
 }

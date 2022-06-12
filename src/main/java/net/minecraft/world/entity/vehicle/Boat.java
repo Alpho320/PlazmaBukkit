@@ -223,7 +223,13 @@ public class Boat extends Entity implements VariantHolder<Boat.Type> {
     }
 
     protected void destroy(DamageSource source) {
-        this.spawnAtLocation((ItemLike) this.getDropItem());
+        // Purpur start
+        final ItemStack boat = new ItemStack(this.getDropItem());
+        if (this.level.purpurConfig.persistentDroppableEntityDisplayNames && this.hasCustomName()) {
+            boat.setHoverName(this.getCustomName());
+        }
+        this.spawnAtLocation(boat);
+        // Purpur end
     }
 
     @Override
@@ -541,6 +547,7 @@ public class Boat extends Entity implements VariantHolder<Boat.Type> {
 
             if (f > 0.0F) {
                 this.landFriction = f;
+                if (level.purpurConfig.boatEjectPlayersOnLand) ejectPassengers(); // Purpur
                 return Boat.Status.ON_LAND;
             } else {
                 return Boat.Status.IN_AIR;

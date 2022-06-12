@@ -83,6 +83,13 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Rider
         groundPathNavigation.setCanWalkOverFences(true);
     }
 
+    // Purpur start
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.camelBreedingTicks;
+    }
+    // Purpur end
+
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
@@ -149,13 +156,13 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Rider
 
     @Override
     protected void customServerAiStep() {
-        this.level.getProfiler().push("camelBrain");
+        //this.level.getProfiler().push("camelBrain"); // Purpur
         Brain<Camel> brain = (Brain<Camel>) this.getBrain(); // Paper - decompile fix
         brain.tick((ServerLevel)this.level, this);
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("camelActivityUpdate");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("camelActivityUpdate"); // Purpur
         CamelAi.updateActivity(this);
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         super.customServerAiStep();
     }
 
@@ -313,6 +320,23 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Rider
     public int getJumpCooldown() {
         return this.dashCooldown;
     }
+
+    // Purpur start
+    @Override
+    public float generateMaxHealth(net.minecraft.util.RandomSource random) {
+        return (float) generateMaxHealth(this.level.purpurConfig.camelMaxHealthMin, this.level.purpurConfig.camelMaxHealthMax);
+    }
+
+    @Override
+    public double generateJumpStrength(net.minecraft.util.RandomSource random) {
+        return generateJumpStrength(this.level.purpurConfig.camelJumpStrengthMin, this.level.purpurConfig.camelJumpStrengthMax);
+    }
+
+    @Override
+    public double generateSpeed(net.minecraft.util.RandomSource random) {
+        return generateSpeed(this.level.purpurConfig.camelMovementSpeedMin, this.level.purpurConfig.camelMovementSpeedMax);
+    }
+    // Purpur end
 
     @Override
     protected SoundEvent getAmbientSound() {

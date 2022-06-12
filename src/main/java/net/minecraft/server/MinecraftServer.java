@@ -250,7 +250,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     private boolean allowFlight;
     @Nullable
     private String motd;
-    @Nullable private net.kyori.adventure.text.Component cachedMotd; // Paper
+    private net.kyori.adventure.text.Component cachedMotd = net.kyori.adventure.text.Component.empty(); // Paper // Purpur
     private int playerIdleTimeout;
     public final long[] tickTimes;
     // Paper start
@@ -296,6 +296,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public org.bukkit.command.RemoteConsoleCommandSender remoteConsole;
     //public ConsoleReader reader; // Paper
     public static int currentTick = 0; // Paper - Further improve tick loop
+    public static final long startTimeMillis = System.currentTimeMillis();
     public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
     public int autosavePeriod;
     public Commands vanillaCommandDispatcher;
@@ -305,10 +306,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public static final int TPS = 20;
     public static final int TICK_TIME = 1000000000 / MinecraftServer.TPS;
     private static final int SAMPLE_INTERVAL = 20; // Paper
-    public final double[] recentTps = new double[ 3 ];
+    public final double[] recentTps = new double[ 4 ]; // Purpur
     // Spigot end
     public final io.papermc.paper.configuration.PaperConfigurations paperConfigurations;
     public static long currentTickLong = 0L; // Paper
+    public boolean lagging = false; // Purpur
+    protected boolean upnp = false; // Purpur
 
     public volatile Thread shutdownThread; // Paper
     public volatile boolean abnormalExit = false; // Paper
@@ -340,13 +343,13 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public MinecraftServer(OptionSet options, WorldLoader.DataLoadContext worldLoader, Thread thread, LevelStorageSource.LevelStorageAccess convertable_conversionsession, PackRepository resourcepackrepository, WorldStem worldstem, Proxy proxy, DataFixer datafixer, Services services, ChunkProgressListenerFactory worldloadlistenerfactory) {
         super("Server");
         SERVER = this; // Paper - better singleton
-        this.metricsRecorder = InactiveMetricsRecorder.INSTANCE;
-        this.profiler = this.metricsRecorder.getProfiler();
-        this.onMetricsRecordingStopped = (methodprofilerresults) -> {
+        //this.metricsRecorder = InactiveMetricsRecorder.INSTANCE; // Purpur
+        //this.profiler = this.metricsRecorder.getProfiler(); // Purpur
+        /*this.onMetricsRecordingStopped = (methodprofilerresults) -> { // Purpur
             this.stopRecordingMetrics();
-        };
-        this.onMetricsRecordingFinished = (path) -> {
-        };
+        };*/ // Purpur
+        //this.onMetricsRecordingFinished = (path) -> { // Purpur
+        //}; // Purpur
         this.random = RandomSource.create();
         this.port = -1;
         this.levels = Maps.newLinkedHashMap();
@@ -927,7 +930,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         shutdownThread = Thread.currentThread();
         org.spigotmc.WatchdogThread.doStop(); // Paper
         if (!isSameThread()) {
-            MinecraftServer.LOGGER.info("Stopping main thread (Ignore any thread death message you see! - DO NOT REPORT THREAD DEATH TO PAPER)");
+            MinecraftServer.LOGGER.info("Stopping main thread (Ignore any thread death message you see! - DO NOT REPORT THREAD DEATH TO PURPUR)"); // Purpur
             while (this.getRunningThread().isAlive()) {
                 this.getRunningThread().stop();
                 try {
@@ -937,13 +940,21 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
         // Paper end
         // CraftBukkit end
-        if (this.metricsRecorder.isRecording()) {
+        /*if (this.metricsRecorder.isRecording()) { // Purpur
             this.cancelRecordingMetrics();
-        }
+        }*/ // Purpur
 
         MinecraftServer.LOGGER.info("Stopping server");
         Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Shutdown and don't bother finishing
         MinecraftTimings.stopServer(); // Paper
+        // Purpur start
+        if (upnp) {
+            if (dev.omega24.upnp4j.UPnP4J.close(this.getPort(), dev.omega24.upnp4j.util.Protocol.TCP)) {
+                LOGGER.info("[UPnP] Port {} closed", this.getPort());
+            } else {
+                LOGGER.error("[UPnP] Failed to close port {}", this.getPort());
+            }
+        }
         // CraftBukkit start
         if (this.server != null) {
             this.server.disablePlugins();
@@ -1025,6 +1036,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         this.safeShutdown(waitForShutdown, false);
     }
     public void safeShutdown(boolean waitForShutdown, boolean isRestarting) {
+        org.purpurmc.purpur.task.BossBarTask.stopAll(); // Purpur
+        org.purpurmc.purpur.task.BeehiveTask.instance().unregister(); // Purpur
         this.isRestarting = isRestarting;
         this.hasLoggedStop = true; // Paper
         if (isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper
@@ -1051,6 +1064,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     private static final long MAX_CATCHUP_BUFFER = TICK_TIME * TPS * 60L;
     private long lastTick = 0;
     private long catchupTime = 0;
+    public final RollingAverage tps5s = new RollingAverage(5); // Purpur
     public final RollingAverage tps1 = new RollingAverage(60);
     public final RollingAverage tps5 = new RollingAverage(60 * 5);
     public final RollingAverage tps15 = new RollingAverage(60 * 15);
@@ -1151,35 +1165,46 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 {
                     final long diff = curTime - tickSection;
                     java.math.BigDecimal currentTps = TPS_BASE.divide(new java.math.BigDecimal(diff), 30, java.math.RoundingMode.HALF_UP);
+                        tps5s.add(currentTps, diff); // Purpur
                     tps1.add(currentTps, diff);
                     tps5.add(currentTps, diff);
                     tps15.add(currentTps, diff);
                     // Backwards compat with bad plugins
-                    this.recentTps[0] = tps1.getAverage();
-                    this.recentTps[1] = tps5.getAverage();
-                    this.recentTps[2] = tps15.getAverage();
+                        // Purpur start
+                        this.recentTps[0] = tps5s.getAverage();
+                        this.recentTps[1] = tps1.getAverage();
+                        this.recentTps[2] = tps5.getAverage();
+                        this.recentTps[3] = tps15.getAverage();
+                        // Purpur end
                     // Paper end
+                        lagging = recentTps[0] < org.purpurmc.purpur.PurpurConfig.laggingThreshold; // Purpur
                     tickSection = curTime;
                 }
                 // Spigot end
 
-                if (this.debugCommandProfilerDelayStart) {
+                /*if (this.debugCommandProfilerDelayStart) { // Purpur
                     this.debugCommandProfilerDelayStart = false;
                     this.debugCommandProfiler = new MinecraftServer.TimeProfiler(Util.getNanos(), this.tickCount);
-                }
+                }*/ // Purpur
 
                 //MinecraftServer.currentTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit // Paper - don't overwrite current tick time
                 lastTick = curTime;
                 this.nextTickTime += 50L;
-                this.startMetricsRecordingTick();
-                this.profiler.push("tick");
+                //this.startMetricsRecordingTick(); // Purpur
+                //this.profiler.push("tick"); // Purpur
                 this.tickServer(this::haveTime);
-                this.profiler.popPush("nextTickWait");
+                //this.profiler.popPush("nextTickWait"); // Purpur
                 this.mayHaveDelayedTasks = true;
-                this.delayedTasksMaxNextTickTime = Math.max(Util.getMillis() + 50L, this.nextTickTime);
+                    // Purpur start - tps catchup
+                    if (org.purpurmc.purpur.PurpurConfig.tpsCatchup) {
+                        this.delayedTasksMaxNextTickTime = Math.max(Util.getMillis() + 50L, this.nextTickTime);
+                    } else {
+                        this.delayedTasksMaxNextTickTime = this.nextTickTime = curTime / 1000000L + 50L;
+                    }
+                    // Purpur end - tps catchup
                 this.waitUntilNextTick();
-                this.profiler.pop();
-                this.endMetricsRecordingTick();
+                //this.profiler.pop(); // Purpur
+                //this.endMetricsRecordingTick(); // Purpur
                 this.isReady = true;
                 JvmProfiler.INSTANCE.onServerTick(this.averageTickTime);
             }
@@ -1340,7 +1365,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public void doRunTask(TickTask ticktask) { // CraftBukkit - decompile error
-        this.getProfiler().incrementCounter("runTask");
+        //this.getProfiler().incrementCounter("runTask"); // Purpur
         super.doRunTask(ticktask);
     }
 
@@ -1383,15 +1408,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public void onServerExit() {}
 
     public void tickServer(BooleanSupplier shouldKeepTicking) {
-        co.aikar.timings.TimingsManager.FULL_SERVER_TICK.startTiming(); // Paper
+        //co.aikar.timings.TimingsManager.FULL_SERVER_TICK.startTiming(); // Paper // Purpur
         long i = Util.getNanos();
 
         // Paper start - move oversleep into full server tick
-        isOversleep = true;MinecraftTimings.serverOversleep.startTiming();
+        //isOversleep = true;MinecraftTimings.serverOversleep.startTiming(); // Purpur
         this.managedBlock(() -> {
             return !this.canOversleep();
         });
-        isOversleep = false;MinecraftTimings.serverOversleep.stopTiming();
+        //isOversleep = false;MinecraftTimings.serverOversleep.stopTiming(); // Purpur
         // Paper end
         new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper
 
@@ -1407,7 +1432,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         if (playerSaveInterval < 0) {
             playerSaveInterval = autosavePeriod;
         }
-        this.profiler.push("save");
+        //this.profiler.push("save"); // Purpur
         final boolean fullSave = autosavePeriod > 0 && this.tickCount % autosavePeriod == 0;
         try {
             this.isSaving = true;
@@ -1422,20 +1447,20 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         } finally {
             this.isSaving = false;
         }
-        this.profiler.pop();
+        //this.profiler.pop(); // Purpur
         // Paper end
         io.papermc.paper.util.CachedLists.reset(); // Paper
         // Paper start - move executeAll() into full server tick timing
-        try (co.aikar.timings.Timing ignored = MinecraftTimings.processTasksTimer.startTiming()) {
+        //try (co.aikar.timings.Timing ignored = MinecraftTimings.processTasksTimer.startTiming()) { // Purpur
             this.runAllTasks();
-        }
+        //} // Purpur
         // Paper end
         // Paper start
         long endTime = System.nanoTime();
         long remaining = (TICK_TIME - (endTime - lastTick)) - catchupTime;
         new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - lastTick) / 1000000D), remaining).callEvent();
         // Paper end
-        this.profiler.push("tallying");
+        //this.profiler.push("tallying"); // Purpur
         long j = this.tickTimes[this.tickCount % 100] = Util.getNanos() - i;
 
         this.averageTickTime = this.averageTickTime * 0.8F + (float) j / 1000000.0F * 0.19999999F;
@@ -1447,9 +1472,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         tickTimes60s.add(this.tickCount, j);
         // Paper end
         this.frameTimer.logFrameDuration(k - i);
-        this.profiler.pop();
+        //this.profiler.pop(); // Purpur
         org.spigotmc.WatchdogThread.tick(); // Spigot
-        co.aikar.timings.TimingsManager.FULL_SERVER_TICK.stopTiming(); // Paper
+        //co.aikar.timings.TimingsManager.FULL_SERVER_TICK.stopTiming(); // Paper // Purpur
     }
 
     private ServerStatus buildServerStatus() {
@@ -1481,26 +1506,26 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public void tickChildren(BooleanSupplier shouldKeepTicking) {
-        MinecraftTimings.bukkitSchedulerTimer.startTiming(); // Spigot // Paper
+        //MinecraftTimings.bukkitSchedulerTimer.startTiming(); // Spigot // Paper // Purpur
         this.server.getScheduler().mainThreadHeartbeat(this.tickCount); // CraftBukkit
-        MinecraftTimings.bukkitSchedulerTimer.stopTiming(); // Spigot // Paper
+        //MinecraftTimings.bukkitSchedulerTimer.stopTiming(); // Spigot // Paper // Purpur
         io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper
-        this.profiler.push("commandFunctions");
-        MinecraftTimings.commandFunctionsTimer.startTiming(); // Spigot // Paper
+        //this.profiler.push("commandFunctions"); // Purpur
+        //MinecraftTimings.commandFunctionsTimer.startTiming(); // Spigot // Paper // Purpur
         this.getFunctions().tick();
-        MinecraftTimings.commandFunctionsTimer.stopTiming(); // Spigot // Paper
-        this.profiler.popPush("levels");
+        //MinecraftTimings.commandFunctionsTimer.stopTiming(); // Spigot // Paper // Purpur
+        //this.profiler.popPush("levels"); // Purpur
         //Iterator iterator = this.getAllLevels().iterator(); // Paper - moved down
 
         // CraftBukkit start
         // Run tasks that are waiting on processing
-        MinecraftTimings.processQueueTimer.startTiming(); // Spigot
+        //MinecraftTimings.processQueueTimer.startTiming(); // Spigot // Purpur
         while (!this.processQueue.isEmpty()) {
             this.processQueue.remove().run();
         }
-        MinecraftTimings.processQueueTimer.stopTiming(); // Spigot
+        //MinecraftTimings.processQueueTimer.stopTiming(); // Spigot // Purpur
 
-        MinecraftTimings.timeUpdateTimer.startTiming(); // Spigot // Paper
+        //MinecraftTimings.timeUpdateTimer.startTiming(); // Spigot // Paper // Purpur
         // Send time updates to everyone, it will get the right time from the world the player is in.
         // Paper start - optimize time updates
         for (final ServerLevel world : this.getAllLevels()) {
@@ -1509,7 +1534,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             long worldTime = world.getGameTime();
             final ClientboundSetTimePacket worldPacket = new ClientboundSetTimePacket(worldTime, dayTime, doDaylight);
             for (Player entityhuman : world.players()) {
-                if (!(entityhuman instanceof ServerPlayer) || (tickCount + entityhuman.getId()) % 20 != 0) {
+                if (!(entityhuman instanceof ServerPlayer) || (!world.isForceTime() && (tickCount + entityhuman.getId()) % 20 != 0)) { // Purpur
                     continue;
                 }
                 ServerPlayer entityplayer = (ServerPlayer) entityhuman;
@@ -1520,38 +1545,40 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             }
         }
         // Paper end
-        MinecraftTimings.timeUpdateTimer.stopTiming(); // Spigot // Paper
+        //MinecraftTimings.timeUpdateTimer.stopTiming(); // Spigot // Paper // Purpur
 
         this.isIteratingOverLevels = true; // Paper
+        net.minecraft.network.FriendlyByteBuf.hasItemSerializeEvent = org.purpurmc.purpur.event.packet.NetworkItemSerializeEvent.getHandlerList().getRegisteredListeners().length > 0; // Purpur
         Iterator iterator = this.getAllLevels().iterator(); // Paper - move down
         while (iterator.hasNext()) {
             ServerLevel worldserver = (ServerLevel) iterator.next();
             worldserver.hasPhysicsEvent =  org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
             net.minecraft.world.level.block.entity.HopperBlockEntity.skipHopperEvents = worldserver.paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0; // Paper
             worldserver.hasEntityMoveEvent =  io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
+            worldserver.hasRidableMoveEvent = org.purpurmc.purpur.event.entity.RidableMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Purpur
 
-            this.profiler.push(() -> {
+            /*this.profiler.push(() -> { // Purpur
                 return worldserver + " " + worldserver.dimension().location();
-            });
+            });*/ // Purpur
             /* Drop global time updates
             if (this.tickCount % 20 == 0) {
-                this.profiler.push("timeSync");
+                //this.profiler.push("timeSync"); // Purpur
                 this.synchronizeTime(worldserver);
-                this.profiler.pop();
+                //this.profiler.pop(); // Purpur
             }
             // CraftBukkit end */
 
-            this.profiler.push("tick");
+            //this.profiler.push("tick"); // Purpur
 
             try {
-                worldserver.timings.doTick.startTiming(); // Spigot
+                //worldserver.timings.doTick.startTiming(); // Spigot // Purpur
                 worldserver.tick(shouldKeepTicking);
                 // Paper start
                 for (final io.papermc.paper.chunk.SingleThreadChunkRegionManager regionManager : worldserver.getChunkSource().chunkMap.regionManagers) {
                     regionManager.recalculateRegions();
                 }
                 // Paper end
-                worldserver.timings.doTick.stopTiming(); // Spigot
+                //worldserver.timings.doTick.stopTiming(); // Spigot // Purpur
             } catch (Throwable throwable) {
                 // Spigot Start
                 CrashReport crashreport;
@@ -1567,33 +1594,33 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 throw new ReportedException(crashreport);
             }
 
-            this.profiler.pop();
-            this.profiler.pop();
+            //this.profiler.pop(); // Purpur
+            //this.profiler.pop(); // Purpur
             worldserver.explosionDensityCache.clear(); // Paper - Optimize explosions
         }
         this.isIteratingOverLevels = false; // Paper
 
-        this.profiler.popPush("connection");
-        MinecraftTimings.connectionTimer.startTiming(); // Spigot
+        //this.profiler.popPush("connection"); // Purpur
+        //MinecraftTimings.connectionTimer.startTiming(); // Spigot // Purpur
         this.getConnection().tick();
-        MinecraftTimings.connectionTimer.stopTiming(); // Spigot
-        this.profiler.popPush("players");
-        MinecraftTimings.playerListTimer.startTiming(); // Spigot // Paper
+        //MinecraftTimings.connectionTimer.stopTiming(); // Spigot // Purpur
+        //this.profiler.popPush("players"); // Purpur
+        //MinecraftTimings.playerListTimer.startTiming(); // Spigot // Paper // Purpur
         this.playerList.tick();
-        MinecraftTimings.playerListTimer.stopTiming(); // Spigot // Paper
+        //MinecraftTimings.playerListTimer.stopTiming(); // Spigot // Paper // Purpur
         if (SharedConstants.IS_RUNNING_IN_IDE) {
             GameTestTicker.SINGLETON.tick();
         }
 
-        this.profiler.popPush("server gui refresh");
+        //this.profiler.popPush("server gui refresh"); // Purpur
 
-        MinecraftTimings.tickablesTimer.startTiming(); // Spigot // Paper
+        //MinecraftTimings.tickablesTimer.startTiming(); // Spigot // Paper // Purpur
         for (int i = 0; i < this.tickables.size(); ++i) {
             ((Runnable) this.tickables.get(i)).run();
         }
-        MinecraftTimings.tickablesTimer.stopTiming(); // Spigot // Paper
+        //MinecraftTimings.tickablesTimer.stopTiming(); // Spigot // Paper // Purpur
 
-        this.profiler.pop();
+        //this.profiler.pop(); // Purpur
     }
 
     private void synchronizeTime(ServerLevel world) {
@@ -1601,7 +1628,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public void forceTimeSynchronization() {
-        this.profiler.push("timeSync");
+        //this.profiler.push("timeSync"); // Purpur
         Iterator iterator = this.getAllLevels().iterator();
 
         while (iterator.hasNext()) {
@@ -1610,7 +1637,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             this.synchronizeTime(worldserver);
         }
 
-        this.profiler.pop();
+        //this.profiler.pop(); // Purpur
     }
 
     public boolean isNetherEnabled() {
@@ -1684,7 +1711,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
     @DontObfuscate
     public String getServerModName() {
-        return "Pufferfish"; // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+        return org.purpurmc.purpur.PurpurConfig.serverModName; // Purpur - Purpur > // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
     }
 
     public SystemReport fillSystemReport(SystemReport details) {
@@ -1877,17 +1904,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public net.kyori.adventure.text.Component getComponentMotd() {
-        net.kyori.adventure.text.Component component = cachedMotd;
-        if (this.motd != null && this.cachedMotd == null) {
-            component = cachedMotd = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(this.motd);
-        }
-
-        return component != null ? component : net.kyori.adventure.text.Component.empty();
+        return this.cachedMotd; // Purpur
     }
 
     public void setMotd(String motd) {
         this.motd = motd;
-        this.cachedMotd = null; // Paper
+        this.cachedMotd = motd == null ? net.kyori.adventure.text.Component.empty() : net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(motd); // Paper // Purpur
     }
 
     public boolean isStopped() {
@@ -2269,7 +2291,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public ProfilerFiller getProfiler() {
-        if (gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE;
+        if (true || gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE;
         return this.profiler;
     }
 
@@ -2509,7 +2531,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     // CraftBukkit end
 
     private void startMetricsRecordingTick() {
-        if (this.willStartRecordingMetrics) {
+        if (false && this.willStartRecordingMetrics) { // Purpur
             this.metricsRecorder = ActiveMetricsRecorder.createStarted(new ServerMetricsSamplersProvider(Util.timeSource, this.isDedicatedServer()), Util.timeSource, Util.ioPool(), new MetricsPersister("server"), this.onMetricsRecordingStopped, (path) -> {
                 this.executeBlocking(() -> {
                     this.saveDebugReport(path.resolve("server"));
@@ -2519,40 +2541,40 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             this.willStartRecordingMetrics = false;
         }
 
-        this.profiler = SingleTickProfiler.decorateFiller(this.metricsRecorder.getProfiler(), SingleTickProfiler.createTickProfiler("Server"));
-        this.metricsRecorder.startTick();
-        this.profiler.startTick();
+        //this.profiler = SingleTickProfiler.decorateFiller(this.metricsRecorder.getProfiler(), SingleTickProfiler.createTickProfiler("Server")); // Purpur
+        //this.metricsRecorder.startTick(); // Purpur
+        //this.profiler.startTick(); // Purpur
     }
 
     private void endMetricsRecordingTick() {
-        this.profiler.endTick();
-        this.metricsRecorder.endTick();
+        //this.profiler.endTick(); // Purpur
+        //this.metricsRecorder.endTick(); // Purpur
     }
 
     public boolean isRecordingMetrics() {
-        return this.metricsRecorder.isRecording();
+        return false; //this.metricsRecorder.isRecording(); // Purpur
     }
 
     public void startRecordingMetrics(Consumer<ProfileResults> resultConsumer, Consumer<Path> dumpConsumer) {
-        this.onMetricsRecordingStopped = (methodprofilerresults) -> {
+        /*this.onMetricsRecordingStopped = (methodprofilerresults) -> { // Purpur
             this.stopRecordingMetrics();
             resultConsumer.accept(methodprofilerresults);
         };
         this.onMetricsRecordingFinished = dumpConsumer;
-        this.willStartRecordingMetrics = true;
+        this.willStartRecordingMetrics = true;*/ // Purpur
     }
 
     public void stopRecordingMetrics() {
-        this.metricsRecorder = InactiveMetricsRecorder.INSTANCE;
+        //this.metricsRecorder = InactiveMetricsRecorder.INSTANCE; // Purpur
     }
 
     public void finishRecordingMetrics() {
-        this.metricsRecorder.end();
+        //this.metricsRecorder.end(); // Purpur
     }
 
     public void cancelRecordingMetrics() {
-        this.metricsRecorder.cancel();
-        this.profiler = this.metricsRecorder.getProfiler();
+        //this.metricsRecorder.cancel(); // Purpur
+        //this.profiler = this.metricsRecorder.getProfiler(); // Purpur
     }
 
     public Path getWorldPath(LevelResource worldSavePath) {
@@ -2601,15 +2623,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public boolean isTimeProfilerRunning() {
-        return this.debugCommandProfilerDelayStart || this.debugCommandProfiler != null;
+        return false; //this.debugCommandProfilerDelayStart || this.debugCommandProfiler != null; // Purpur
     }
 
     public void startTimeProfiler() {
-        this.debugCommandProfilerDelayStart = true;
+        //this.debugCommandProfilerDelayStart = true; // Purpur
     }
 
     public ProfileResults stopTimeProfiler() {
-        if (this.debugCommandProfiler == null) {
+        if (true || this.debugCommandProfiler == null) { // Purpur
             return EmptyProfileResults.EMPTY;
         } else {
             ProfileResults methodprofilerresults = this.debugCommandProfiler.stop(Util.getNanos(), this.tickCount);
@@ -2641,6 +2663,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Chat Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(net.minecraft.server.MinecraftServer.LOGGER)).build()); // Paper
 
     public ChatDecorator getChatDecorator() {
+        // Purpur start
+        return this.chatDecorator;
+    }
+    public void setChatDecorator(ChatDecorator chatDecorator) {
+        this.chatDecorator = chatDecorator;
+    }
+    private ChatDecorator chatDecorator = getPaperHardcodedChatDecorator();
+    public ChatDecorator getPaperHardcodedChatDecorator() {
+        // Purpur end
         // Paper start - moved to ChatPreviewProcessor
         return ChatDecorator.create((sender, commandSourceStack, message) -> {
             final io.papermc.paper.adventure.ChatDecorationProcessor processor = new io.papermc.paper.adventure.ChatDecorationProcessor(this, sender, commandSourceStack, message);
@@ -2775,7 +2806,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             return;
         }
 
-        co.aikar.timings.MinecraftTimings.midTickChunkTasks.startTiming();
+        //co.aikar.timings.MinecraftTimings.midTickChunkTasks.startTiming(); // Purpur
         try {
             for (;;) {
                 boolean moreTasks = this.tickMidTickTasks();
@@ -2802,7 +2833,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 }
             }
         } finally {
-            co.aikar.timings.MinecraftTimings.midTickChunkTasks.stopTiming();
+            //co.aikar.timings.MinecraftTimings.midTickChunkTasks.stopTiming(); // Purpur
         }
     }
     // Paper end - execute chunk tasks mid tick

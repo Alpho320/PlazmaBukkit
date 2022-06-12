@@ -64,4 +64,11 @@ public class KelpBlock extends GrowingPlantHeadBlock implements LiquidBlockConta
     public FluidState getFluidState(BlockState state) {
         return Fluids.WATER.getSource(false);
     }
+
+    // Purpur start
+    @Override
+    public int getMaxGrowthAge() {
+        return org.purpurmc.purpur.PurpurConfig.kelpMaxGrowthAge;
+    }
+    // Purpur end
 }

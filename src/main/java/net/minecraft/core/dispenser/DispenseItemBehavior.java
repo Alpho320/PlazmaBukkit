@@ -52,6 +52,7 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.BeehiveBlock;
 import net.minecraft.world.level.block.Block;
@@ -1168,6 +1169,23 @@ public interface DispenseItemBehavior {
                 }
             }
         });
+        // Purpur start
+        DispenserBlock.registerBehavior(Items.ANVIL, (new OptionalDispenseItemBehavior() {
+            @Override
+            public ItemStack execute(BlockSource dispenser, ItemStack stack) {
+                Level level = dispenser.getLevel();
+                if (!level.purpurConfig.dispenserPlaceAnvils) return super.execute(dispenser, stack);
+                Direction facing = dispenser.getBlockState().getValue(DispenserBlock.FACING);
+                BlockPos pos = dispenser.getPos().relative(facing);
+                BlockState state = level.getBlockState(pos);
+                if (state.isAir()) {
+                    level.setBlockAndUpdate(pos, Blocks.ANVIL.defaultBlockState().setValue(AnvilBlock.FACING, facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : facing.getClockWise()));
+                    stack.shrink(1);
+                }
+                return stack;
+            }
+        }));
+        // Purpur end
     }
 
     static void setEntityPokingOutOfBlock(BlockSource pointer, Entity entity, Direction direction) {

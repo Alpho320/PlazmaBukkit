@@ -85,6 +85,27 @@ public class EnderChestBlock extends AbstractChestBlock<EnderChestBlockEntity> i
                 EnderChestBlockEntity enderChestBlockEntity = (EnderChestBlockEntity)blockEntity;
                 playerEnderChestContainer.setActiveChest(enderChestBlockEntity);
                 player.openMenu(new SimpleMenuProvider((syncId, inventory, playerx) -> {
+                    // Purpur start
+                    if (org.purpurmc.purpur.PurpurConfig.enderChestSixRows) {
+                        if (org.purpurmc.purpur.PurpurConfig.enderChestPermissionRows) {
+                            org.bukkit.craftbukkit.entity.CraftHumanEntity bukkitPlayer = player.getBukkitEntity();
+                            if (bukkitPlayer.hasPermission("purpur.enderchest.rows.six")) {
+                                return ChestMenu.sixRows(syncId, inventory, playerEnderChestContainer);
+                            } else if (bukkitPlayer.hasPermission("purpur.enderchest.rows.five")) {
+                                return ChestMenu.fiveRows(syncId, inventory, playerEnderChestContainer);
+                            } else if (bukkitPlayer.hasPermission("purpur.enderchest.rows.four")) {
+                                return ChestMenu.fourRows(syncId, inventory, playerEnderChestContainer);
+                            } else if (bukkitPlayer.hasPermission("purpur.enderchest.rows.three")) {
+                                return ChestMenu.threeRows(syncId, inventory, playerEnderChestContainer);
+                            } else if (bukkitPlayer.hasPermission("purpur.enderchest.rows.two")) {
+                                return ChestMenu.twoRows(syncId, inventory, playerEnderChestContainer);
+                            } else if (bukkitPlayer.hasPermission("purpur.enderchest.rows.one")) {
+                                return ChestMenu.oneRow(syncId, inventory, playerEnderChestContainer);
+                            }
+                        }
+                        return ChestMenu.sixRows(syncId, inventory, playerEnderChestContainer);
+                    }
+                    // Purpur end
                     return ChestMenu.threeRows(syncId, inventory, playerEnderChestContainer);
                 }, CONTAINER_TITLE));
                 player.awardStat(Stats.OPEN_ENDERCHEST);

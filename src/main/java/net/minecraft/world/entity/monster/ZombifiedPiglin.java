@@ -63,6 +63,53 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
         this.setPathfindingMalus(BlockPathTypes.LAVA, 8.0F);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.zombifiedPiglinRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zombifiedPiglinRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.zombifiedPiglinControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.zombifiedPiglinMaxHealth);
+    }
+
+    @Override
+    public boolean jockeyOnlyBaby() {
+        return level.purpurConfig.zombifiedPiglinJockeyOnlyBaby;
+    }
+
+    @Override
+    public double jockeyChance() {
+        return level.purpurConfig.zombifiedPiglinJockeyChance;
+    }
+
+    @Override
+    public boolean jockeyTryExistingChickens() {
+        return level.purpurConfig.zombifiedPiglinJockeyTryExistingChickens;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.zombifiedPiglinTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.zombifiedPiglinAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     public void setPersistentAngerTarget(@Nullable UUID angryAt) {
         this.persistentAngerTarget = angryAt;
@@ -115,7 +162,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
             this.maybeAlertOthers();
         }
 
-        if (this.isAngry()) {
+        if (this.isAngry() && this.level.purpurConfig.zombifiedPiglinCountAsPlayerKillWhenAngry) { // Purpur
             this.lastHurtByPlayerTime = this.tickCount;
         }
 
@@ -170,7 +217,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
             this.ticksUntilNextAlert = ZombifiedPiglin.ALERT_INTERVAL.sample(this.random);
         }
 
-        if (entityliving instanceof Player) {
+        if (entityliving instanceof Player && this.level.purpurConfig.zombifiedPiglinCountAsPlayerKillWhenAngry) { // Purpur
             this.setLastHurtByPlayer((Player) entityliving);
         }
 
@@ -250,7 +297,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
 
     @Override
     protected void randomizeReinforcementsChance() {
-        this.getAttribute(Attributes.SPAWN_REINFORCEMENTS_CHANCE).setBaseValue(0.0D);
+        this.getAttribute(Attributes.SPAWN_REINFORCEMENTS_CHANCE).setBaseValue(this.random.nextDouble() * this.level.purpurConfig.zombifiedPiglinSpawnReinforcements); // Purpur
     }
 
     @Nullable

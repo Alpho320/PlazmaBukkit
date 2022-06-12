@@ -1750,7 +1750,7 @@ public final class NewChunkHolder {
         boolean canSavePOI = !(chunk instanceof LevelChunk levelChunk && levelChunk.mustNotSave) && (poi != null && poi.isDirty());
         boolean canSaveEntities = entities != null;
 
-        try (co.aikar.timings.Timing ignored = this.world.timings.chunkSave.startTiming()) { // Paper
+        //try (co.aikar.timings.Timing ignored = this.world.timings.chunkSave.startTiming()) { // Paper // Purpur
             if (canSaveChunk) {
                 canSaveChunk = this.saveChunk(chunk, unloading);
             }
@@ -1764,7 +1764,7 @@ public final class NewChunkHolder {
                     this.lastEntityUnload = null;
                 }
             }
-        }
+        //} // Purpur
 
         return executedUnloadTask | canSaveChunk | canSaveEntities | canSavePOI ? new SaveStat(executedUnloadTask || canSaveChunk, canSaveEntities, canSavePOI): null;
     }

@@ -60,16 +60,16 @@ public class MobEffect {
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (this == MobEffects.REGENERATION) {
             if (entity.getHealth() < entity.getMaxHealth()) {
-                entity.heal(1.0F, RegainReason.MAGIC_REGEN); // CraftBukkit
+                entity.heal(entity.level.purpurConfig.entityHealthRegenAmount, RegainReason.MAGIC_REGEN); // CraftBukkit // Purpur
             }
         } else if (this == MobEffects.POISON) {
-            if (entity.getHealth() > 1.0F) {
-                entity.hurt(entity.damageSources().poison, 1.0F);  // CraftBukkit - DamageSource.MAGIC -> CraftEventFactory.POISON
+            if (entity.getHealth() > entity.level.purpurConfig.entityMinimalHealthPoison) { // Purpur
+                entity.hurt(entity.damageSources().poison, entity.level.purpurConfig.entityPoisonDegenerationAmount);  // CraftBukkit - DamageSource.MAGIC -> CraftEventFactory.POISON // Purpur
             }
         } else if (this == MobEffects.WITHER) {
-            entity.hurt(entity.damageSources().wither(), 1.0F);
+            entity.hurt(entity.damageSources().wither(), entity.level.purpurConfig.entityWitherDegenerationAmount); // Purpur
         } else if (this == MobEffects.HUNGER && entity instanceof Player) {
-            ((Player) entity).causeFoodExhaustion(0.005F * (float) (amplifier + 1), org.bukkit.event.entity.EntityExhaustionEvent.ExhaustionReason.HUNGER_EFFECT); // CraftBukkit - EntityExhaustionEvent
+            ((Player) entity).causeFoodExhaustion(entity.level.purpurConfig.humanHungerExhaustionAmount * (float) (amplifier + 1), org.bukkit.event.entity.EntityExhaustionEvent.ExhaustionReason.HUNGER_EFFECT); // CraftBukkit - EntityExhaustionEvent // Purpur
         } else if (this == MobEffects.SATURATION && entity instanceof Player) {
             if (!entity.level.isClientSide) {
                 // CraftBukkit start
@@ -79,7 +79,7 @@ public class MobEffect {
                 org.bukkit.event.entity.FoodLevelChangeEvent event = CraftEventFactory.callFoodLevelChangeEvent(entityhuman, amplifier + 1 + oldFoodLevel);
 
                 if (!event.isCancelled()) {
-                    entityhuman.getFoodData().eat(event.getFoodLevel() - oldFoodLevel, 1.0F);
+                    entityhuman.getFoodData().eat(event.getFoodLevel() - oldFoodLevel, entity.level.purpurConfig.humanSaturationRegenAmount); // Purpur
                 }
 
                 ((ServerPlayer) entityhuman).connection.send(new ClientboundSetHealthPacket(((ServerPlayer) entityhuman).getBukkitEntity().getScaledHealth(), entityhuman.getFoodData().foodLevel, entityhuman.getFoodData().saturationLevel));

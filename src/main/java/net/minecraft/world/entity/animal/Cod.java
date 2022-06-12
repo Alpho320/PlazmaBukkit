@@ -13,6 +13,33 @@ public class Cod extends AbstractSchoolingFish {
         super(type, world);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.codRidable;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.codControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.codMaxHealth);
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.codTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.codAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     public ItemStack getBucketItemStack() {
         return new ItemStack(Items.COD_BUCKET);

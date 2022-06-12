@@ -58,6 +58,7 @@ public class GiveCommand {
                     boolean flag = entityplayer.getInventory().add(itemstack);
                     ItemEntity entityitem;
 
+                    if (org.purpurmc.purpur.PurpurConfig.disableGiveCommandDrops) continue; // Purpur - add config option for toggling give command dropping
                     if (flag && itemstack.isEmpty()) {
                         itemstack.setCount(1);
                         entityitem = entityplayer.drop(itemstack, false, false, false); // SPIGOT-2942: Add boolean to call event

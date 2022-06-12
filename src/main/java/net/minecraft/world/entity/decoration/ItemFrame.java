@@ -272,7 +272,13 @@ public class ItemFrame extends HangingEntity {
                 }
 
                 if (alwaysDrop) {
-                    this.spawnAtLocation(this.getFrameItemStack());
+                    // Purpur start
+                    final ItemStack itemFrame = this.getFrameItemStack();
+                    if (this.level.purpurConfig.persistentDroppableEntityDisplayNames && this.hasCustomName()) {
+                        itemFrame.setHoverName(this.getCustomName());
+                    }
+                    this.spawnAtLocation(itemFrame);
+                    // Purpur end
                 }
 
                 if (!itemstack.isEmpty()) {
@@ -286,6 +292,13 @@ public class ItemFrame extends HangingEntity {
             }
         }
     }
+
+    // Purpur start
+    @Nullable
+    public net.minecraft.world.entity.item.ItemEntity spawnAtLocation(ItemStack stack) {
+        return this.spawnAtLocation(stack, getDirection().equals(Direction.DOWN) ? -0.6F : 0.0F);
+    }
+    // Purpur end
 
     private void removeFramedMap(ItemStack itemstack) {
         // Paper start - fix MC-252817 (green map markers do not disappear)

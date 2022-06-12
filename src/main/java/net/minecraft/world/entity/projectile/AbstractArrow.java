@@ -72,6 +72,7 @@ public abstract class AbstractArrow extends Projectile {
     private IntOpenHashSet piercingIgnoreEntityIds;
     @Nullable
     private List<Entity> piercedAndKilledEntities;
+    public int lootingLevel; // Purpur
 
     // Spigot Start
     @Override
@@ -312,7 +313,7 @@ public abstract class AbstractArrow extends Projectile {
         Vec3 vec3d = this.getDeltaMovement();
 
         this.setDeltaMovement(vec3d.multiply((double) (this.random.nextFloat() * 0.2F), (double) (this.random.nextFloat() * 0.2F), (double) (this.random.nextFloat() * 0.2F)));
-        this.life = 0;
+        if (this.level.purpurConfig.arrowMovementResetsDespawnCounter) this.life = 0; // Purpur - do not reset despawn counter
     }
 
     @Override
@@ -611,6 +612,12 @@ public abstract class AbstractArrow extends Projectile {
     public void setKnockback(int punch) {
         this.knockback = punch;
     }
+
+    // Purpur start
+    public void setLootingLevel(int looting) {
+        this.lootingLevel = looting;
+    }
+    // Purpur end
 
     public int getKnockback() {
         return this.knockback;

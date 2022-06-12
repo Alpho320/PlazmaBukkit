@@ -34,7 +34,7 @@ public class ShovelItem extends DiggerItem {
             return InteractionResult.PASS;
         } else {
             Player player = context.getPlayer();
-            BlockState blockState2 = FLATTENABLES.get(blockState.getBlock());
+            BlockState blockState2 = level.purpurConfig.shovelTurnsBlockToGrassPath.contains(blockState.getBlock()) ? Blocks.DIRT_PATH.defaultBlockState() : null; // Purpur
             BlockState blockState3 = null;
             Runnable afterAction = null; // Paper
             if (blockState2 != null && level.getBlockState(blockPos.above()).isAir()) {

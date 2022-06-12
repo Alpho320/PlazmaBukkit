@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
@@ -95,7 +96,7 @@ public class InventoryMenu extends RecipeBookMenu<CraftingContainer> {
                 public boolean mayPickup(Player playerEntity) {
                     ItemStack itemstack = this.getItem();
 
-                    return !itemstack.isEmpty() && !playerEntity.isCreative() && EnchantmentHelper.hasBindingCurse(itemstack) ? false : super.mayPickup(playerEntity);
+                    return !itemstack.isEmpty() && !playerEntity.isCreative() && EnchantmentHelper.hasBindingCurse(itemstack) ? playerEntity.level.purpurConfig.playerRemoveBindingWithWeakness && playerEntity.hasEffect(MobEffects.WEAKNESS) : super.mayPickup(playerEntity); // Purpur
                 }
 
                 @Override

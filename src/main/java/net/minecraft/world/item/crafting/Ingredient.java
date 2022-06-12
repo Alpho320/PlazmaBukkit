@@ -39,6 +39,7 @@ public final class Ingredient implements Predicate<ItemStack> {
     @Nullable
     private IntList stackingIds;
     public boolean exact; // CraftBukkit
+    public Predicate<org.bukkit.inventory.ItemStack> predicate;
 
     public Ingredient(Stream<? extends Ingredient.Value> entries) {
         this.values = (Ingredient.Value[]) entries.toArray((i) -> {
@@ -50,7 +51,11 @@ public final class Ingredient implements Predicate<ItemStack> {
         if (this.itemStacks == null) {
             this.itemStacks = (ItemStack[]) Arrays.stream(this.values).flatMap((recipeitemstack_provider) -> {
                 return recipeitemstack_provider.getItems().stream();
-            }).distinct().toArray((i) -> {
+                // PaperPR start
+            }).distinct().peek(stack -> {
+                stack.isExactRecipeIngredient = this.exact;
+            }).toArray((i) -> {
+                // PaperPR end
                 return new ItemStack[i];
             });
         }
@@ -64,6 +69,12 @@ public final class Ingredient implements Predicate<ItemStack> {
         } else if (this.isEmpty()) {
             return itemstack.isEmpty();
         } else {
+            // Purpur start
+            if (predicate != null) {
+                return predicate.test(itemstack.asBukkitCopy());
+            }
+            // Purpur end
+
             ItemStack[] aitemstack = this.getItems();
             int i = aitemstack.length;
 
@@ -99,7 +110,13 @@ public final class Ingredient implements Predicate<ItemStack> {
             for (int j = 0; j < i; ++j) {
                 ItemStack itemstack = aitemstack1[j];
 
+                // PaperPR start
+                if (itemstack.isExactRecipeIngredient) {
+                    this.stackingIds.add(StackedContents.getExactStackingIndex(itemstack));
+                } else {
+                // PaperPR end
                 this.stackingIds.add(StackedContents.getStackingIndex(itemstack));
+                } // PaperPR
             }
 
             this.stackingIds.sort(IntComparators.NATURAL_COMPARATOR);

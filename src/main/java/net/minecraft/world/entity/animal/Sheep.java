@@ -116,10 +116,48 @@ public class Sheep extends Animal implements Shearable {
         super(type, world);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.sheepRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.sheepRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.sheepControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.sheepMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.sheepBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.sheepTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.sheepAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     protected void registerGoals() {
         this.eatBlockGoal = new EatBlockGoal(this);
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.25D));
         this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new TemptGoal(this, 1.1D, Ingredient.of(Items.WHEAT), false));
@@ -254,7 +292,7 @@ public class Sheep extends Animal implements Shearable {
                     return InteractionResult.PASS;
                 }
                 // CraftBukkit end
-                this.shear(SoundSource.PLAYERS);
+                this.shear(SoundSource.PLAYERS, net.minecraft.world.item.enchantment.EnchantmentHelper.getMobLooting(player)); // Purpur
                 this.gameEvent(GameEvent.SHEAR, player);
                 itemstack.hurtAndBreak(1, player, (entityhuman1) -> {
                     entityhuman1.broadcastBreakEvent(hand);
@@ -269,14 +307,15 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    public void shear(SoundSource shearedSoundCategory) {
+    public void shear(SoundSource shearedSoundCategory, int looting) { // Purpur
         this.level.playSound((Player) null, (Entity) this, SoundEvents.SHEEP_SHEAR, shearedSoundCategory, 1.0F, 1.0F);
         this.setSheared(true);
         int i = 1 + this.random.nextInt(3);
+        if (org.purpurmc.purpur.PurpurConfig.allowShearsLooting) i += looting; // Purpur
 
         for (int j = 0; j < i; ++j) {
             this.forceDrops = true; // CraftBukkit
-            ItemEntity entityitem = this.spawnAtLocation((ItemLike) Sheep.ITEM_BY_DYE.get(this.getColor()), 1);
+            ItemEntity entityitem = this.spawnAtLocation((ItemLike) Sheep.ITEM_BY_DYE.get(this.level.purpurConfig.sheepShearJebRandomColor && hasCustomName() && getCustomName().getString().equals("jeb_") ? DyeColor.random(this.level.random) : this.getColor()), 1); // Purpur
             this.forceDrops = false; // CraftBukkit
 
             if (entityitem != null) {
