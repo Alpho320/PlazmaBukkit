@@ -27,12 +27,12 @@ public class CraftEndermite extends CraftMonster implements Endermite {
 
     @Override
     public boolean isPlayerSpawned() {
-        return false;
+        return getHandle().isPlayerSpawned(); // Purpur
     }
 
     @Override
     public void setPlayerSpawned(boolean playerSpawned) {
-        // Nop
+        getHandle().setPlayerSpawned(playerSpawned); // Purpur
     }
     // Paper start
     @Override

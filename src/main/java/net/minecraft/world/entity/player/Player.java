@@ -186,6 +186,8 @@ public abstract class Player extends LivingEntity {
     public boolean affectsSpawning = true;
     public net.kyori.adventure.util.TriState flyingFallDamage = net.kyori.adventure.util.TriState.NOT_SET;
     // Paper end
+    public int sixRowEnderchestSlotCount = -1; // Purpur
+    public boolean canPortalInstant = false; // Purpur
 
     // CraftBukkit start
     public boolean fauxSleeping;
@@ -196,6 +198,28 @@ public abstract class Player extends LivingEntity {
         return (CraftHumanEntity) super.getBukkitEntity();
     }
     // CraftBukkit end
+
+    // Purpur start
+    public int burpDelay = 0;
+
+    public abstract void resetLastActionTime();
+
+    public void setAfk(boolean afk) {
+    }
+
+    public boolean isAfk() {
+        return false;
+    }
+
+    @Override
+    public boolean processClick(InteractionHand hand) {
+        Entity vehicle = getRootVehicle();
+        if (vehicle != null && vehicle.getRider() == this) {
+            return vehicle.onClick(hand);
+        }
+        return false;
+    }
+    // Purpur end
 
     public Player(Level world, BlockPos pos, float yaw, GameProfile gameProfile) {
         super(EntityType.PLAYER, world);
@@ -241,6 +265,12 @@ public abstract class Player extends LivingEntity {
 
     @Override
     public void tick() {
+        // Purpur start
+        if (this.burpDelay > 0 && --this.burpDelay == 0) {
+            this.level.playSound(null, getX(), getY(), getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 1.0F, this.level.random.nextFloat() * 0.1F + 0.9F);
+        }
+        // Purpur end
+
         this.noPhysics = this.isSpectator();
         if (this.isSpectator()) {
             this.onGround = false;
@@ -344,6 +374,16 @@ public abstract class Player extends LivingEntity {
             this.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 200, 0, false, false, true), org.bukkit.event.entity.EntityPotionEffectEvent.Cause.TURTLE_HELMET); // CraftBukkit
         }
 
+        // Purpur start
+        if (this.level.purpurConfig.playerNetheriteFireResistanceDuration > 0 && this.level.getGameTime() % 20 == 0) {
+            if (itemstack.is(Items.NETHERITE_HELMET)
+                    && this.getItemBySlot(EquipmentSlot.CHEST).is(Items.NETHERITE_CHESTPLATE)
+                    && this.getItemBySlot(EquipmentSlot.LEGS).is(Items.NETHERITE_LEGGINGS)
+                    && this.getItemBySlot(EquipmentSlot.FEET).is(Items.NETHERITE_BOOTS)) {
+                this.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, this.level.purpurConfig.playerNetheriteFireResistanceDuration, this.level.purpurConfig.playerNetheriteFireResistanceAmplifier, this.level.purpurConfig.playerNetheriteFireResistanceAmbient, this.level.purpurConfig.playerNetheriteFireResistanceShowParticles, this.level.purpurConfig.playerNetheriteFireResistanceShowIcon), org.bukkit.event.entity.EntityPotionEffectEvent.Cause.NETHERITE_ARMOR);
+            }
+        }
+        // Purpur end
     }
 
     protected ItemCooldowns createItemCooldowns() {
@@ -430,7 +470,7 @@ public abstract class Player extends LivingEntity {
 
     @Override
     public int getPortalWaitTime() {
-        return this.abilities.invulnerable ? 1 : 80;
+        return canPortalInstant ? 1 : this.abilities.invulnerable ? this.level.purpurConfig.playerCreativePortalWaitTime : this.level.purpurConfig.playerPortalWaitTime; // Purpur
     }
 
     @Override
@@ -590,7 +630,7 @@ public abstract class Player extends LivingEntity {
             for (int i = 0; i < list.size(); ++i) {
                 Entity entity = (Entity) list.get(i);
 
-                if (entity.getType() == EntityType.EXPERIENCE_ORB) {
+                if (entity.getType() == EntityType.EXPERIENCE_ORB && entity.level.purpurConfig.playerExpPickupDelay >= 0) { // Purpur
                     list1.add(entity);
                 } else if (!entity.isRemoved()) {
                     this.touch(entity);
@@ -1281,7 +1321,7 @@ public abstract class Player extends LivingEntity {
                     flag2 = flag2 && !level.paperConfig().entities.behavior.disablePlayerCrits; // Paper
                     flag2 = flag2 && !this.isSprinting();
                     if (flag2) {
-                        f *= 1.5F;
+                        f *= this.level.purpurConfig.playerCriticalDamageMultiplier; // Purpur
                     }
 
                     f += f1;
@@ -1950,9 +1990,19 @@ public abstract class Player extends LivingEntity {
     @Override
     public int getExperienceReward() {
         if (!this.level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && !this.isSpectator()) {
-            int i = this.experienceLevel * 7;
-
-            return i > 100 ? 100 : i;
+            // Purpur start
+            int toDrop;
+            try {
+                toDrop = Math.round(((Number) scriptEngine.eval("let expLevel = " + experienceLevel + "; " +
+                        "let expTotal = " + totalExperience + "; " +
+                        "let exp = " + experienceProgress + "; " +
+                        level.purpurConfig.playerDeathExpDropEquation)).floatValue());
+            } catch (javax.script.ScriptException e) {
+                e.printStackTrace();
+                toDrop = experienceLevel * 7;
+            }
+            return Math.min(toDrop, level.purpurConfig.playerDeathExpDropMax);
+            // Purpur end
         } else {
             return 0;
         }
@@ -2026,6 +2076,11 @@ public abstract class Player extends LivingEntity {
     @Override
     public Iterable<ItemStack> getArmorSlots() {
         return this.inventory.armor;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return !level.purpurConfig.playerRidableInWater;
     }
 
     public boolean setEntityOnShoulder(CompoundTag entityNbt) {
@@ -2311,7 +2366,7 @@ public abstract class Player extends LivingEntity {
     public ItemStack eat(Level world, ItemStack stack) {
         this.getFoodData().eat(stack.getItem(), stack);
         this.awardStat(Stats.ITEM_USED.get(stack.getItem()));
-        world.playSound((Player) null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5F, world.random.nextFloat() * 0.1F + 0.9F);
+        // world.playSound((Player) null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5F, world.random.nextFloat() * 0.1F + 0.9F); // Purpur - moved to tick()
         if (this instanceof ServerPlayer) {
             CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayer) this, stack);
         }

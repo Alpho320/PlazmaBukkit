@@ -9,11 +9,11 @@ public interface ResourceManagerReloadListener extends PreparableReloadListener 
     @Override
     default CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier synchronizer, ResourceManager manager, ProfilerFiller prepareProfiler, ProfilerFiller applyProfiler, Executor prepareExecutor, Executor applyExecutor) {
         return synchronizer.wait(Unit.INSTANCE).thenRunAsync(() -> {
-            applyProfiler.startTick();
-            applyProfiler.push("listener");
+            //applyProfiler.startTick(); // Purpur
+            //applyProfiler.push("listener"); // Purpur
             this.onResourceManagerReload(manager);
-            applyProfiler.pop();
-            applyProfiler.endTick();
+            //applyProfiler.pop(); // Purpur
+            //applyProfiler.endTick(); // Purpur
         }, applyExecutor);
     }
 

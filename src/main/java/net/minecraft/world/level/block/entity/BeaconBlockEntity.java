@@ -84,6 +84,16 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
 
     public double getEffectRange() {
         if (this.effectRange < 0) {
+            // Purpur Start
+            if (this.level != null) {
+                switch (this.levels) {
+                    case 1: return this.level.purpurConfig.beaconLevelOne;
+                    case 2: return this.level.purpurConfig.beaconLevelTwo;
+                    case 3: return this.level.purpurConfig.beaconLevelThree;
+                    case 4: return this.level.purpurConfig.beaconLevelFour;
+                }
+            }
+            // Purpur End
             return this.levels * 10 + 10;
         } else {
             return effectRange;
@@ -155,6 +165,7 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
         int j = pos.getY();
         int k = pos.getZ();
         BlockPos blockposition1;
+        boolean isTintedGlass = false;
 
         if (blockEntity.lastCheckY < j) {
             blockposition1 = pos;
@@ -188,6 +199,9 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
                     }
                 }
             } else {
+                if (world.purpurConfig.beaconAllowEffectsWithTintedGlass && block.equals(Blocks.TINTED_GLASS)) {
+                    isTintedGlass = true;
+                }
                 if (tileentitybeacon_beaconcolortracker == null || iblockdata1.getLightBlock(world, blockposition1) >= 15 && !iblockdata1.is(Blocks.BEDROCK)) {
                     blockEntity.checkingBeamSections.clear();
                     blockEntity.lastCheckY = l;
@@ -207,7 +221,7 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
                 blockEntity.levels = BeaconBlockEntity.updateBase(world, i, j, k);
             }
 
-            if (blockEntity.levels > 0 && !blockEntity.beamSections.isEmpty()) {
+            if (blockEntity.levels > 0 && (!blockEntity.beamSections.isEmpty() || (world.purpurConfig.beaconAllowEffectsWithTintedGlass && isTintedGlass))) {
                 BeaconBlockEntity.applyEffects(world, pos, blockEntity.levels, blockEntity.primaryPower, blockEntity.secondaryPower, blockEntity); // Paper
                 BeaconBlockEntity.playSound(world, pos, SoundEvents.BEACON_AMBIENT);
             }

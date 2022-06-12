@@ -53,4 +53,14 @@ public class BuddingAmethystBlock extends AmethystBlock {
     public static boolean canClusterGrowAtState(BlockState state) {
         return state.isAir() || state.is(Blocks.WATER) && state.getFluidState().getAmount() == 8;
     }
+
+    // Purpur start
+    @Override
+    public void playerDestroy(net.minecraft.world.level.Level level, net.minecraft.world.entity.player.Player player, BlockPos pos, BlockState state, net.minecraft.world.level.block.entity.BlockEntity blockEntity, net.minecraft.world.item.ItemStack stack) {
+        if (level.purpurConfig.buddingAmethystSilkTouch && net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH, stack) > 0) {
+            popResource(level, pos, net.minecraft.world.item.Items.BUDDING_AMETHYST.getDefaultInstance());
+        }
+        super.playerDestroy(level, player, pos, state, blockEntity, stack);
+    }
+    // Purpur end
 }

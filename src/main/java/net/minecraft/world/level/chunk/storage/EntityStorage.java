@@ -112,6 +112,7 @@ public class EntityStorage implements EntityPersistentStorage<Entity> {
         ListTag listTag = new ListTag();
         final java.util.Map<net.minecraft.world.entity.EntityType<?>, Integer> savedEntityCounts = new java.util.HashMap<>(); // Paper
         entities.forEach((entity) -> { // diff here: use entities parameter
+            if (!entity.canSaveToDisk()) return; // Purpur
             // Paper start
             final EntityType<?> entityType = entity.getType();
             final int saveLimit = level.paperConfig().chunks.entityPerChunkSaveLimit.getOrDefault(entityType, -1);

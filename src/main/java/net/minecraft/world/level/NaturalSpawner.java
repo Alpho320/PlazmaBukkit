@@ -132,8 +132,8 @@ public final class NaturalSpawner {
     }
 
     public static void spawnForChunk(ServerLevel world, LevelChunk chunk, NaturalSpawner.SpawnState info, boolean spawnAnimals, boolean spawnMonsters, boolean rareSpawn) {
-        world.getProfiler().push("spawner");
-        world.timings.mobSpawn.startTiming(); // Spigot
+        //world.getProfiler().push("spawner"); // Purpur
+        //world.timings.mobSpawn.startTiming(); // Spigot // Purpur
         MobCategory[] aenumcreaturetype = NaturalSpawner.SPAWNING_CATEGORIES;
         int i = aenumcreaturetype.length;
 
@@ -188,8 +188,8 @@ public final class NaturalSpawner {
             }
         }
 
-        world.timings.mobSpawn.stopTiming(); // Spigot
-        world.getProfiler().pop();
+        //world.timings.mobSpawn.stopTiming(); // Spigot // Purpur
+        //world.getProfiler().pop(); // Purpur
     }
 
     // Paper start
@@ -260,7 +260,7 @@ public final class NaturalSpawner {
                             blockposition_mutableblockposition.set(l, i, i1);
                             double d0 = (double) l + 0.5D;
                             double d1 = (double) i1 + 0.5D;
-                            Player entityhuman = (chunk instanceof LevelChunk) ? ((LevelChunk)chunk).findNearestPlayer(d0, i, d1, 576.0D, net.minecraft.world.entity.EntitySelector.NO_SPECTATORS) : world.getNearestPlayer(d0, (double) i, d1, -1.0D, false); // Paper - use chunk's player cache to optimize search in range
+                            Player entityhuman = (chunk instanceof LevelChunk) ? ((LevelChunk)chunk).findNearestPlayer(d0, i, d1, 576.0D, world.purpurConfig.mobSpawningIgnoreCreativePlayers ? net.minecraft.world.entity.EntitySelector.NO_CREATIVE_OR_SPECTATOR : net.minecraft.world.entity.EntitySelector.NO_SPECTATORS) : world.getNearestPlayer(d0, (double) i, d1, -1.0D, world.purpurConfig.mobSpawningIgnoreCreativePlayers); // Paper - use chunk's player cache to optimize search in range // Purpur
 
                             if (entityhuman != null) {
                                 double d2 = entityhuman.distanceToSqr(d0, (double) i, d1);

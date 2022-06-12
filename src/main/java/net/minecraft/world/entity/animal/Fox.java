@@ -35,6 +35,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -88,6 +89,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 
@@ -141,6 +143,64 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         this.setCanPickUpLoot(true);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.foxRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.foxRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.foxControllable;
+    }
+
+    @Override
+    public float getJumpPower() {
+        return getRider() != null && this.isControllable() ? 0.5F : super.getJumpPower();
+    }
+
+    @Override
+    public void onMount(Player rider) {
+        super.onMount(rider);
+        setCanPickUpLoot(false);
+        clearStates();
+        setIsPouncing(false);
+        spitOutItem(getItemBySlot(EquipmentSlot.MAINHAND));
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+    }
+
+    @Override
+    public void onDismount(Player rider) {
+        super.onDismount(rider);
+        setCanPickUpLoot(true);
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.foxMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.foxBreedingTicks;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.foxTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.foxAlwaysDropExp;
+    }
+    // Purpur end
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -160,6 +220,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
             return entityliving instanceof AbstractSchoolingFish;
         });
         this.goalSelector.addGoal(0, new Fox.FoxFloatGoal());
+        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.goalSelector.addGoal(0, new ClimbOnTopOfPowderSnowGoal(this, this.level));
         this.goalSelector.addGoal(1, new Fox.FaceplantGoal());
         this.goalSelector.addGoal(2, new Fox.FoxPanicGoal(2.2D));
@@ -186,6 +247,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         this.goalSelector.addGoal(11, new Fox.FoxSearchForItemsGoal());
         this.goalSelector.addGoal(12, new Fox.FoxLookAtPlayerGoal(this, Player.class, 24.0F));
         this.goalSelector.addGoal(13, new Fox.PerchAndSearchGoal());
+        this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.targetSelector.addGoal(3, new Fox.DefendTrustedTargetGoal(LivingEntity.class, false, false, (entityliving) -> {
             return Fox.TRUSTED_TARGET_SELECTOR.test(entityliving) && !this.trusts(entityliving.getUUID());
         }));
@@ -342,6 +404,11 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
     }
 
     private void setTargetGoals() {
+        // Purpur start - do not add duplicate goals
+        this.targetSelector.removeGoal(this.landTargetGoal);
+        this.targetSelector.removeGoal(this.turtleEggTargetGoal);
+        this.targetSelector.removeGoal(this.fishTargetGoal);
+        // Purpur end
         if (this.getVariant() == Fox.Type.RED) {
             this.targetSelector.addGoal(4, this.landTargetGoal);
             this.targetSelector.addGoal(4, this.turtleEggTargetGoal);
@@ -375,6 +442,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
 
     public void setVariant(Fox.Type variant) {
         this.entityData.set(Fox.DATA_TYPE_ID, variant.getId());
+        this.setTargetGoals(); // Purpur - fix API bug not updating pathfinders on type change
     }
 
     List<UUID> getTrustedUUIDs() {
@@ -711,6 +779,29 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         return this.getTrustedUUIDs().contains(uuid);
     }
 
+    // Purpur start
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (level.purpurConfig.foxTypeChangesWithTulips) {
+            ItemStack itemstack = player.getItemInHand(hand);
+            if (getVariant() == Type.RED && itemstack.getItem() == Items.WHITE_TULIP) {
+                setVariant(Type.SNOW);
+                if (!player.getAbilities().instabuild) {
+                    itemstack.shrink(1);
+                }
+                return InteractionResult.SUCCESS;
+            } else if (getVariant() == Type.SNOW && itemstack.getItem() == Items.ORANGE_TULIP) {
+                setVariant(Type.RED);
+                if (!player.getAbilities().instabuild) {
+                    itemstack.shrink(1);
+                }
+                return InteractionResult.SUCCESS;
+            }
+        }
+        return super.mobInteract(player, hand);
+    }
+    // Purpur end
+
     @Override
     // Paper start - Cancellable death event
     protected org.bukkit.event.entity.EntityDeathEvent dropAllDeathLoot(DamageSource source) {
@@ -758,16 +849,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         return new Vec3(0.0D, (double) (0.55F * this.getEyeHeight()), (double) (this.getBbWidth() * 0.4F));
     }
 
-    public class FoxLookControl extends LookControl {
+    public class FoxLookControl extends org.purpurmc.purpur.controller.LookControllerWASD { // Purpur
 
         public FoxLookControl() {
             super(Fox.this);
         }
 
         @Override
-        public void tick() {
+        public void vanillaTick() { // Purpur
             if (!Fox.this.isSleeping()) {
-                super.tick();
+                super.vanillaTick(); // Purpur
             }
 
         }
@@ -778,16 +869,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         }
     }
 
-    private class FoxMoveControl extends MoveControl {
+    private class FoxMoveControl extends org.purpurmc.purpur.controller.MoveControllerWASD { // Purpur
 
         public FoxMoveControl() {
             super(Fox.this);
         }
 
         @Override
-        public void tick() {
+        public void vanillaTick() { // Purpur
             if (Fox.this.canMove()) {
-                super.tick();
+                super.vanillaTick(); // Purpur
             }
 
         }
@@ -905,8 +996,10 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
                     CriteriaTriggers.BRED_ANIMALS.trigger(entityplayer2, this.animal, this.partner, entityfox);
                 }
 
-                this.animal.setAge(6000);
-                this.partner.setAge(6000);
+                // Purpur start
+                this.animal.setAge(this.animal.getPurpurBreedTime());
+                this.partner.setAge(this.partner.getPurpurBreedTime());
+                // Purpur end
                 this.animal.resetLove();
                 this.partner.resetLove();
                 worldserver.addFreshEntityWithPassengers(entityfox, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason
@@ -1294,7 +1387,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
         }
 
         protected void onReachedTarget() {
-            if (Fox.this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+            if (Fox.this.level.purpurConfig.foxBypassMobGriefing || Fox.this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) { // Purpur
                 BlockState iblockdata = Fox.this.level.getBlockState(this.blockPos);
 
                 if (iblockdata.is(Blocks.SWEET_BERRY_BUSH)) {

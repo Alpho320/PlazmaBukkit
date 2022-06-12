@@ -68,6 +68,15 @@ public class SpawnEggItem extends Item {
                     SpawnerBlockEntity tileentitymobspawner = (SpawnerBlockEntity) tileentity;
                     EntityType<?> entitytypes = this.getType(itemstack.getTag());
 
+                    // Purpur start
+                    org.bukkit.block.Block bukkitBlock = world.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
+                    org.purpurmc.purpur.event.PlayerSetSpawnerTypeWithEggEvent event = new  org.purpurmc.purpur.event.PlayerSetSpawnerTypeWithEggEvent((org.bukkit.entity.Player) context.getPlayer().getBukkitEntity(), bukkitBlock, (org.bukkit.block.CreatureSpawner) bukkitBlock.getState(), org.bukkit.entity.EntityType.fromName(entitytypes.getName()));
+                    if (!event.callEvent()) {
+                        return InteractionResult.FAIL;
+                    }
+                    entitytypes = EntityType.getFromBukkitType(event.getEntityType());
+                    // Purpur end
+
                     tileentitymobspawner.setEntityId(entitytypes, world.getRandom());
                     tileentity.setChanged();
                     world.sendBlockUpdated(blockposition, iblockdata, iblockdata, 3);

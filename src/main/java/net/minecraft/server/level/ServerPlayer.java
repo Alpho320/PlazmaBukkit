@@ -277,6 +277,11 @@ public class ServerPlayer extends Player {
     public final com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> cachedSingleHashSet; // Paper
     public PlayerNaturallySpawnCreaturesEvent playerNaturallySpawnedEvent; // Paper
     public org.bukkit.event.player.PlayerQuitEvent.QuitReason quitReason = null; // Paper - there are a lot of changes to do if we change all methods leading to the event
+    public boolean purpurClient = false; // Purpur
+    public boolean acceptingResourcePack = false; // Purpur
+    private boolean ramBar = false; // Purpur
+    private boolean tpsBar = false; // Purpur
+    private boolean compassBar = false; // Purpur
 
     public ServerPlayer(MinecraftServer server, ServerLevel world, GameProfile profile) {
         super(world, world.getSharedSpawnPos(), world.getSharedSpawnAngle(), profile);
@@ -376,6 +381,7 @@ public class ServerPlayer extends Player {
         this.bukkitPickUpLoot = true;
         this.maxHealthCache = this.getMaxHealth();
         this.cachedSingleMobDistanceMap = new com.destroystokyo.paper.util.PooledHashSets.PooledObjectLinkedOpenHashSet<>(this); // Paper
+        this.spawnInvulnerableTime = world.purpurConfig.playerSpawnInvulnerableTicks; // Purpur
     }
 
     // Yes, this doesn't match Vanilla, but it's the best we can do for now.
@@ -515,6 +521,9 @@ public class ServerPlayer extends Player {
             }
         }
 
+        if (nbt.contains("Purpur.RamBar")) { this.ramBar = nbt.getBoolean("Purpur.RamBar"); } // Purpur
+        if (nbt.contains("Purpur.TPSBar")) { this.tpsBar = nbt.getBoolean("Purpur.TPSBar"); } // Purpur
+        if (nbt.contains("Purpur.CompassBar")) { this.compassBar = nbt.getBoolean("Purpur.CompassBar"); } // Purpur
     }
 
     @Override
@@ -581,6 +590,9 @@ public class ServerPlayer extends Player {
         }
         this.getBukkitEntity().setExtraData(nbt); // CraftBukkit
 
+        nbt.putBoolean("Purpur.RamBar", this.ramBar); // Purpur
+        nbt.putBoolean("Purpur.TPSBar", this.tpsBar); // Purpur
+        nbt.putBoolean("Purpur.CompassBar", this.compassBar); // Purpur
     }
 
     // CraftBukkit start - World fallback code, either respawn location or global spawn
@@ -709,6 +721,15 @@ public class ServerPlayer extends Player {
         this.trackStartFallingPosition();
         this.trackEnteredOrExitedLavaOnVehicle();
         this.advancements.flushDirty(this);
+
+        // Purpur start
+        if (this.level.purpurConfig.useNightVisionWhenRiding && this.getVehicle() != null && this.getVehicle().getRider() == this && this.level.getGameTime() % 100 == 0) { // 5 seconds
+            MobEffectInstance nightVision = this.getEffect(MobEffects.NIGHT_VISION);
+            if (nightVision == null || nightVision.getDuration() <= 300) { // 15 seconds
+                this.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 400, 0)); // 20 seconds
+            }
+        }
+        // Purpur end
     }
 
     public void doTick() {
@@ -947,6 +968,7 @@ public class ServerPlayer extends Player {
             }));
             Team scoreboardteambase = this.getTeam();
 
+            if (org.purpurmc.purpur.PurpurConfig.deathMessageOnlyBroadcastToAffectedPlayer) this.sendSystemMessage(ichatbasecomponent); else // Purpur
             if (scoreboardteambase != null && scoreboardteambase.getDeathMessageVisibility() != Team.Visibility.ALWAYS) {
                 if (scoreboardteambase.getDeathMessageVisibility() == Team.Visibility.HIDE_FOR_OTHER_TEAMS) {
                     this.server.getPlayerList().broadcastSystemToTeam(this, ichatbasecomponent);
@@ -1048,14 +1070,30 @@ public class ServerPlayer extends Player {
 
     }
 
+    // Purpur start
+    public boolean isSpawnInvulnerable() {
+        return spawnInvulnerableTime > 0 || frozen;
+    }
+    // Purpur end
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
             return false;
         } else {
+            // Purpur start
+            if (source.is(DamageTypeTags.IS_FALL)) { // Purpur
+                if (getRootVehicle() instanceof net.minecraft.world.entity.vehicle.AbstractMinecart && level.purpurConfig.minecartControllable && !level.purpurConfig.minecartControllableFallDamage) {
+                    return false;
+                }
+                if (getRootVehicle() instanceof net.minecraft.world.entity.vehicle.Boat && !level.purpurConfig.boatsDoFallDamage) {
+                    return false;
+                }
+            }
+            // Purpur end
             boolean flag = this.server.isDedicatedServer() && this.isPvpAllowed() && source.is(DamageTypeTags.IS_FALL);
 
-            if (!flag && this.spawnInvulnerableTime > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (!flag && isSpawnInvulnerable() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) { // Purpur
                 return false;
             } else {
                 Entity entity = source.getEntity();
@@ -1164,7 +1202,7 @@ public class ServerPlayer extends Player {
             PortalInfo shapedetectorshape = this.findDimensionEntryPoint(worldserver);
 
             if (shapedetectorshape != null) {
-                worldserver1.getProfiler().push("moving");
+                //worldserver1.getProfiler().push("moving"); // Purpur
                 worldserver = shapedetectorshape.world; // CraftBukkit
                 if (worldserver == null) { } else // CraftBukkit - empty to fall through to null to event
                 if (resourcekey == LevelStem.OVERWORLD && worldserver.getTypeKey() == LevelStem.NETHER) { // CraftBukkit
@@ -1187,8 +1225,8 @@ public class ServerPlayer extends Player {
             worldserver = ((CraftWorld) exit.getWorld()).getHandle();
             // CraftBukkit end
 
-            worldserver1.getProfiler().pop();
-            worldserver1.getProfiler().push("placing");
+            //worldserver1.getProfiler().pop(); // Purpur
+            //worldserver1.getProfiler().push("placing"); // Purpur
             if (true) { // CraftBukkit
                 this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
 
@@ -1199,6 +1237,7 @@ public class ServerPlayer extends Player {
                 playerlist.sendPlayerPermissionLevel(this);
                 worldserver1.removePlayerImmediately(this, Entity.RemovalReason.CHANGED_DIMENSION);
                 this.unsetRemoved();
+                this.portalPos = io.papermc.paper.util.MCUtil.toBlockPosition(exit); // Purpur
 
                 // CraftBukkit end
                 this.setLevel(worldserver);
@@ -1206,7 +1245,7 @@ public class ServerPlayer extends Player {
                 this.connection.teleport(exit); // CraftBukkit - use internal teleport without event
                 this.connection.resetPosition();
                 worldserver.addDuringPortalTeleport(this);
-                worldserver1.getProfiler().pop();
+                //worldserver1.getProfiler().pop(); // Purpur
                 this.triggerDimensionChangeTriggers(worldserver1);
                 this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
                 playerlist.sendLevelInfo(this, worldserver);
@@ -1235,6 +1274,7 @@ public class ServerPlayer extends Player {
             }
             // Paper end
 
+            this.spawnInvulnerableTime = worldserver.purpurConfig.playerSpawnInvulnerableTicks; // Purpur
             return this;
         }
     }
@@ -1356,7 +1396,7 @@ public class ServerPlayer extends Player {
                             return entitymonster.isPreventingPlayerRest(this);
                         });
 
-                        if (!list.isEmpty()) {
+                        if (!this.level.purpurConfig.playerSleepNearMonsters && !list.isEmpty()) { // Purpur
                             return Either.left(Player.BedSleepingProblem.NOT_SAFE);
                         }
                     }
@@ -1492,6 +1532,7 @@ public class ServerPlayer extends Player {
 
     @Override
     public void openTextEdit(SignBlockEntity sign) {
+        if (level.purpurConfig.signAllowColors) this.connection.send(sign.getTranslatedUpdatePacket(textFilteringEnabled)); // Purpur
         sign.setAllowedPlayerEditor(this.getUUID());
         this.connection.send(new ClientboundBlockUpdatePacket(this.level, sign.getBlockPos()));
         this.connection.send(new ClientboundOpenSignEditorPacket(sign.getBlockPos()));
@@ -1727,6 +1768,26 @@ public class ServerPlayer extends Player {
         this.lastSentHealth = -1.0E8F;
         this.lastSentExp = -1; // CraftBukkit - Added to reset
     }
+
+    // Purpur start
+    public void sendActionBarMessage(@Nullable String message) {
+        if (message != null && !message.isEmpty()) {
+            sendActionBarMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message));
+        }
+    }
+
+    public void sendActionBarMessage(@Nullable net.kyori.adventure.text.Component message) {
+        if (message != null) {
+            sendActionBarMessage(io.papermc.paper.adventure.PaperAdventure.asVanilla(message));
+        }
+    }
+
+    public void sendActionBarMessage(@Nullable Component message) {
+        if (message != null) {
+            displayClientMessage(message, true);
+        }
+    }
+    // Purpur end
 
     @Override
     public void displayClientMessage(Component message, boolean overlay) {
@@ -2027,6 +2088,7 @@ public class ServerPlayer extends Player {
     }
 
     public void sendTexturePack(String url, String hash, boolean required, @Nullable Component resourcePackPrompt) {
+        this.acceptingResourcePack = true; // Purpur
         this.connection.send(new ClientboundResourcePackPacket(url, hash, required, resourcePackPrompt));
     }
 
@@ -2041,7 +2103,67 @@ public class ServerPlayer extends Player {
 
     public void resetLastActionTime() {
         this.lastActionTime = Util.getMillis();
+        this.setAfk(false); // Purpur
     }
+
+    // Purpur Start
+    private boolean isAfk = false;
+
+    @Override
+    public void setAfk(boolean afk) {
+        if (this.isAfk == afk) {
+            return;
+        }
+
+        String msg = afk ? org.purpurmc.purpur.PurpurConfig.afkBroadcastAway : org.purpurmc.purpur.PurpurConfig.afkBroadcastBack;
+
+        org.purpurmc.purpur.event.PlayerAFKEvent event = new org.purpurmc.purpur.event.PlayerAFKEvent(this.getBukkitEntity(), afk, this.level.purpurConfig.idleTimeoutKick, msg, !Bukkit.isPrimaryThread());
+        if (!event.callEvent() || event.shouldKick()) {
+            return;
+        }
+
+        this.isAfk = afk;
+
+        if (!afk) {
+            resetLastActionTime();
+        }
+
+        msg = event.getBroadcastMsg();
+        if (msg != null && !msg.isEmpty()) {
+            String playerName = this.getGameProfile().getName();
+            if (org.purpurmc.purpur.PurpurConfig.afkBroadcastUseDisplayName) {
+                net.kyori.adventure.text.Component playerDisplayNameComponent = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(this.getBukkitEntity().getDisplayName());
+                playerName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(playerDisplayNameComponent);
+            }
+            server.getPlayerList().broadcastMiniMessage(String.format(msg, playerName), false);
+        }
+
+        if (this.level.purpurConfig.idleTimeoutUpdateTabList) {
+            String scoreboardName = getScoreboardName();
+            String playerListName = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(getBukkitEntity().playerListName());
+            String[] split = playerListName.split(scoreboardName);
+            String prefix = (split.length > 0 ? split[0] : "").replace(org.purpurmc.purpur.PurpurConfig.afkTabListPrefix, "");
+            String suffix = (split.length > 1 ? split[1] : "").replace(org.purpurmc.purpur.PurpurConfig.afkTabListSuffix, "");
+            if (afk) {
+                getBukkitEntity().setPlayerListName(org.purpurmc.purpur.PurpurConfig.afkTabListPrefix + prefix + scoreboardName + suffix + org.purpurmc.purpur.PurpurConfig.afkTabListSuffix, true);
+            } else {
+                getBukkitEntity().setPlayerListName(prefix + scoreboardName + suffix);
+            }
+        }
+
+        ((ServerLevel) this.level).updateSleepingPlayerList();
+    }
+
+    @Override
+    public boolean isAfk() {
+        return this.isAfk;
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return !this.isAfk() && super.canBeCollidedWith();
+    }
+    // Purpur End
 
     public ServerStatsCounter getStats() {
         return this.stats;
@@ -2514,8 +2636,16 @@ public class ServerPlayer extends Player {
 
     @Override
     public boolean isImmobile() {
-        return super.isImmobile() || (this.connection != null && this.connection.isDisconnected()); // Paper
+        return super.isImmobile() || frozen || (this.connection != null && this.connection.isDisconnected()); // Paper // Purpur
     }
+
+    // Purpur start
+    private boolean frozen = false;
+
+    public void setFrozen(boolean frozen) {
+        this.frozen = frozen;
+    }
+    // Purpur end
 
     @Override
     public Scoreboard getScoreboard() {
@@ -2564,4 +2694,50 @@ public class ServerPlayer extends Player {
         return (CraftPlayer) super.getBukkitEntity();
     }
     // CraftBukkit end
+
+    // Purpur start
+    public void teleport(Location to) {
+        this.ejectPassengers();
+        this.stopRiding(true);
+
+        if (this.isSleeping()) {
+            this.stopSleepInBed(true, false);
+        }
+
+        if (this.containerMenu != this.inventoryMenu) {
+            this.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.TELEPORT);
+        }
+
+        ServerLevel toLevel = ((CraftWorld) to.getWorld()).getHandle();
+        if (this.level == toLevel) {
+            this.connection.internalTeleport(to.getX(), to.getY(), to.getZ(), to.getYaw(), to.getPitch(), java.util.EnumSet.noneOf(net.minecraft.world.entity.RelativeMovement.class));
+        } else {
+            this.server.getPlayerList().respawn(this, toLevel, true, to, !toLevel.paperConfig().environment.disableTeleportationSuffocationCheck, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.DEATH);
+        }
+    }
+
+    public boolean ramBar() {
+        return this.ramBar;
+    }
+
+    public void ramBar(boolean ramBar) {
+        this.ramBar = ramBar;
+    }
+
+    public boolean tpsBar() {
+        return this.tpsBar;
+    }
+
+    public void tpsBar(boolean tpsBar) {
+        this.tpsBar = tpsBar;
+    }
+
+    public boolean compassBar() {
+        return this.compassBar;
+    }
+
+    public void compassBar(boolean compassBar) {
+        this.compassBar = compassBar;
+    }
+    // Purpur end
 }

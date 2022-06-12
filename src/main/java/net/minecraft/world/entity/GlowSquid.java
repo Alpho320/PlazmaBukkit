@@ -18,10 +18,44 @@ import net.minecraft.world.level.block.Blocks;
 
 public class GlowSquid extends Squid {
     private static final EntityDataAccessor<Integer> DATA_DARK_TICKS_REMAINING = SynchedEntityData.defineId(GlowSquid.class, EntityDataSerializers.INT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<String> SQUID_COLOR = net.minecraft.network.syncher.SynchedEntityData.defineId(GlowSquid.class, net.minecraft.network.syncher.EntityDataSerializers.STRING); // Purpur
 
     public GlowSquid(EntityType<? extends GlowSquid> type, Level world) {
         super(type, world);
     }
+
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.glowSquidRidable;
+    }
+
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.glowSquidControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.glowSquidMaxHealth);
+    }
+
+    @Override
+    public boolean canFly() {
+        return this.level.purpurConfig.glowSquidsCanFly;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return this.level.purpurConfig.glowSquidTakeDamageFromWater;
+    }
+
+    @Override
+    protected boolean isAlwaysExperienceDropper() {
+        return this.level.purpurConfig.glowSquidAlwaysDropExp;
+    }
+    // Purpur end
 
     @Override
     protected ParticleOptions getInkParticle() {
@@ -32,6 +66,7 @@ public class GlowSquid extends Squid {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_DARK_TICKS_REMAINING, 0);
+        this.entityData.define(SQUID_COLOR, this.level.purpurConfig.glowSquidColorMode.getRandom(this.random).toString()); // Purpur
     }
 
     @Override
@@ -58,12 +93,14 @@ public class GlowSquid extends Squid {
     public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("DarkTicksRemaining", this.getDarkTicksRemaining());
+        nbt.putString("Colour", this.entityData.get(SQUID_COLOR)); // Purpur - key must match rainglow
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setDarkTicks(nbt.getInt("DarkTicksRemaining"));
+        if (nbt.contains("Colour")) this.entityData.set(SQUID_COLOR, nbt.getString("Colour")); // Purpur - key must match rainglow
     }
 
     @Override

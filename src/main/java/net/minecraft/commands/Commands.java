@@ -149,7 +149,7 @@ public class Commands {
         DamageCommand.register(this.dispatcher, commandRegistryAccess);
         DataCommands.register(this.dispatcher);
         DataPackCommand.register(this.dispatcher);
-        DebugCommand.register(this.dispatcher);
+        //DebugCommand.register(this.dispatcher); // Purpur
         DefaultGameModeCommands.register(this.dispatcher);
         DifficultyCommand.register(this.dispatcher);
         EffectCommands.register(this.dispatcher, commandRegistryAccess);
@@ -222,6 +222,14 @@ public class Commands {
             SetPlayerIdleTimeoutCommand.register(this.dispatcher);
             StopCommand.register(this.dispatcher);
             WhitelistCommand.register(this.dispatcher);
+            org.purpurmc.purpur.command.CreditsCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.DemoCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.PingCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.UptimeCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.TPSBarCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.CompassCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.RamBarCommand.register(this.dispatcher); // Purpur
+            org.purpurmc.purpur.command.RamCommand.register(this.dispatcher); // Purpur
         }
 
         if (environment.includeIntegrated) {
@@ -309,9 +317,9 @@ public class Commands {
     public int performCommand(ParseResults<CommandSourceStack> parseresults, String s, String label) { // CraftBukkit
         CommandSourceStack commandlistenerwrapper = (CommandSourceStack) parseresults.getContext().getSource();
 
-        commandlistenerwrapper.getServer().getProfiler().push(() -> {
+        /*commandlistenerwrapper.getServer().getProfiler().push(() -> { // Purpur
             return "/" + s;
-        });
+        });*/ // Purpur
 
         byte b0;
 
@@ -394,7 +402,7 @@ public class Commands {
                 b0 = 0;
             }
         } finally {
-            commandlistenerwrapper.getServer().getProfiler().pop();
+            //commandlistenerwrapper.getServer().getProfiler().pop(); // Purpur
         }
 
         return b0;
@@ -454,6 +462,7 @@ public class Commands {
     private void runSync(ServerPlayer player, Collection<String> bukkit, RootCommandNode<SharedSuggestionProvider> rootcommandnode) {
         // Paper end - Async command map building
         new com.destroystokyo.paper.event.brigadier.AsyncPlayerSendCommandsEvent<CommandSourceStack>(player.getBukkitEntity(), (RootCommandNode) rootcommandnode, false).callEvent(); // Paper
+        if (PlayerCommandSendEvent.getHandlerList().getRegisteredListeners().length > 0) { // Purpur - skip all this crap if there's nothing listening
         PlayerCommandSendEvent event = new PlayerCommandSendEvent(player.getBukkitEntity(), new LinkedHashSet<>(bukkit));
         event.getPlayer().getServer().getPluginManager().callEvent(event);
 
@@ -464,6 +473,7 @@ public class Commands {
             }
         }
         // CraftBukkit end
+        } // Purpur - skip event
         player.connection.send(new ClientboundCommandsPacket(rootcommandnode));
     }
 

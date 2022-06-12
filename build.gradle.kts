@@ -7,12 +7,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":pufferfish-api")) // Pufferfish // Paper
-    // Pufferfish start
-    implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
-        exclude("io.papermc.paper", "paper-api")
-    }
-    // Pufferfish end
+    implementation(project(":purpur-api")) // Purpur
+    implementation("io.papermc.paper:paper-mojangapi:1.19.4-R0.1-SNAPSHOT") // Purpur
     // Paper start
     implementation("org.jline:jline-terminal-jansi:3.21.0")
     implementation("net.minecrell:terminalconsoleappender:1.3.0")
@@ -41,6 +37,10 @@ dependencies {
         isTransitive = false
     }
     // Paper end
+
+    implementation("org.mozilla:rhino-runtime:1.7.14") // Purpur
+    implementation("org.mozilla:rhino-engine:1.7.14") // Purpur
+    implementation("dev.omega24:upnp4j:1.0") // Purpur
 
     runtimeOnly("org.apache.maven:maven-resolver-provider:3.8.5")
     runtimeOnly("org.apache.maven.resolver:maven-resolver-connector-basic:1.7.3")
@@ -81,7 +81,7 @@ tasks.jar {
         attributes(
             "Main-Class" to "org.bukkit.craftbukkit.Main",
             "Implementation-Title" to "CraftBukkit",
-            "Implementation-Version" to "git-Pufferfish-$implementationVersion", // Pufferfish
+            "Implementation-Version" to "git-Purpur-$implementationVersion", // Pufferfish // Purpur
             "Implementation-Vendor" to date, // Paper
             "Specification-Title" to "Bukkit",
             "Specification-Version" to project.version,
@@ -153,7 +153,7 @@ fun TaskContainer.registerRunTask(
     name: String,
     block: JavaExec.() -> Unit
 ): TaskProvider<JavaExec> = register<JavaExec>(name) {
-    group = "paper"
+    group = "paperweight" // Purpur
     mainClass.set("org.bukkit.craftbukkit.Main")
     standardInput = System.`in`
     workingDir = rootProject.layout.projectDirectory

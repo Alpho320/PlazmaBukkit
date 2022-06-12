@@ -156,7 +156,7 @@ import org.bukkit.plugin.PluginManager;
 // CraftBukkit end
 
 public abstract class Entity implements Nameable, EntityAccess, CommandSource {
-
+    public static javax.script.ScriptEngine scriptEngine = new javax.script.ScriptEngineManager().getEngineByName("rhino"); // Purpur
     // CraftBukkit start
     private static final int CURRENT_LEVEL = 2;
     public boolean preserveMotion = true; // Paper - keep initial motion on first setPositionRotation
@@ -320,7 +320,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     public double xOld;
     public double yOld;
     public double zOld;
-    private float maxUpStep;
+    public float maxUpStep; // Purpur - private -> public
     public boolean noPhysics;
     protected final RandomSource random;
     public int tickCount;
@@ -362,7 +362,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     private final Set<String> tags;
     private final double[] pistonDeltas;
     private long pistonDeltasGameTime;
-    private EntityDimensions dimensions;
+    protected EntityDimensions dimensions; // Purpur - private -> protected
     private float eyeHeight;
     public boolean isInPowderSnow;
     public boolean wasInPowderSnow;
@@ -401,6 +401,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     private UUID originWorld;
     public boolean freezeLocked = false; // Paper - Freeze Tick Lock API
     public boolean collidingWithWorldBorder; // Paper
+    public @Nullable Boolean immuneToFire = null; // Purpur - Fire immune API
 
     public void setOrigin(@javax.annotation.Nonnull Location location) {
         this.origin = location.toVector();
@@ -580,7 +581,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         this.bb = Entity.INITIAL_AABB;
         this.stuckSpeedMultiplier = Vec3.ZERO;
         this.nextStep = 1.0F;
-        this.random = SHARED_RANDOM; // Paper
+        this.random = world == null || world.purpurConfig.entitySharedRandom ? SHARED_RANDOM : RandomSource.create(); // Paper // Purpur
         this.remainingFireTicks = -this.getFireImmuneTicks();
         this.fluidHeight = new Object2DoubleArrayMap(2);
         this.fluidOnEyes = new HashSet();
@@ -825,7 +826,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             return;
         }
         // Pufferfish end - entity TTL
-        this.level.getProfiler().push("entityBaseTick");
+        //this.level.getProfiler().push("entityBaseTick"); // Purpur
         if (firstTick && this instanceof net.minecraft.world.entity.NeutralMob neutralMob) neutralMob.tickInitialPersistentAnger(level); // Paper - Update last hurt when ticking
         this.feetBlockState = null;
         if (this.isPassenger() && this.getVehicle().isRemoved()) {
@@ -886,7 +887,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         }
 
         this.firstTick = false;
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
     }
 
     public void setSharedFlagOnFire(boolean onFire) {
@@ -895,10 +896,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
 
     public void checkOutOfWorld() {
         // Paper start - Configurable nether ceiling damage
-        if (this.getY() < (double) (this.level.getMinBuildHeight() - 64) || (this.level.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER
+        if (this.getY() < (double) (this.level.getMinBuildHeight() + level.purpurConfig.voidDamageHeight) || (this.level.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER // Purpur
             && this.level.paperConfig().environment.netherCeilingVoidDamageHeight.test(v -> this.getY() >= v)
             && (!(this instanceof Player player) || !player.getAbilities().invulnerable))) {
             // Paper end
+            if (this.level.purpurConfig.teleportOnNetherCeilingDamage && this.level.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER && this instanceof ServerPlayer player) player.teleport(MCUtil.toLocation(this.level, this.level.getSharedSpawnPos())); else // Purpur
             this.outOfWorld();
         }
 
@@ -1060,7 +1062,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 }
             }
 
-            this.level.getProfiler().push("move");
+            //this.level.getProfiler().push("move"); // Purpur
             if (this.stuckSpeedMultiplier.lengthSqr() > 1.0E-7D) {
                 movement = movement.multiply(this.stuckSpeedMultiplier);
                 this.stuckSpeedMultiplier = Vec3.ZERO;
@@ -1069,7 +1071,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             // Paper start - ignore movement changes while inactive.
             if (isTemporarilyActive && !(this instanceof ItemEntity || this instanceof net.minecraft.world.entity.vehicle.AbstractMinecart) && movement == getDeltaMovement() && movementType == MoverType.SELF) {
                 setDeltaMovement(Vec3.ZERO);
-                this.level.getProfiler().pop();
+                //this.level.getProfiler().pop(); // Purpur
                 return;
             }
             // Paper end
@@ -1090,8 +1092,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 this.setPos(this.getX() + vec3d1.x, this.getY() + vec3d1.y, this.getZ() + vec3d1.z);
             }
 
-            this.level.getProfiler().pop();
-            this.level.getProfiler().push("rest");
+            //this.level.getProfiler().pop(); // Purpur
+            //this.level.getProfiler().push("rest"); // Purpur
             boolean flag = !Mth.equal(movement.x, vec3d1.x);
             boolean flag1 = !Mth.equal(movement.z, vec3d1.z);
 
@@ -1110,7 +1112,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
 
             this.checkFallDamage(vec3d1.y, this.onGround, iblockdata, blockposition);
             if (this.isRemoved()) {
-                this.level.getProfiler().pop();
+                //this.level.getProfiler().pop(); // Purpur
             } else {
                 if (this.horizontalCollision) {
                     Vec3 vec3d2 = this.getDeltaMovement();
@@ -1251,7 +1253,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                     this.setRemainingFireTicks(-this.getFireImmuneTicks());
                 }
 
-                this.level.getProfiler().pop();
+                //this.level.getProfiler().pop(); // Purpur
             }
         }
         // Paper start - detailed watchdog information
@@ -1678,7 +1680,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     }
 
     public boolean fireImmune() {
-        return this.getType().fireImmune();
+        return this.immuneToFire != null ? immuneToFire : this.getType().fireImmune(); // Purpur - add fire immune API
     }
 
     public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
@@ -1747,7 +1749,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         return this.isInWater() || flag;
     }
 
-    void updateInWaterStateAndDoWaterCurrentPushing() {
+    public void updateInWaterStateAndDoWaterCurrentPushing() { // Purpur - package-private -> public
         Entity entity = this.getVehicle();
 
         if (entity instanceof Boat) {
@@ -2340,6 +2342,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 nbt.putBoolean("Paper.FreezeLock", true);
             }
             // Paper end
+            // Purpur start
+            if (immuneToFire != null) {
+                nbt.putBoolean("Purpur.FireImmune", immuneToFire);
+            }
+            // Purpur end
             return nbt;
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Saving entity NBT");
@@ -2508,6 +2515,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 freezeLocked = nbt.getBoolean("Paper.FreezeLock");
             }
             // Paper end
+            // Purpur start
+            if (nbt.contains("Purpur.FireImmune")) {
+                immuneToFire = nbt.getBoolean("Purpur.FireImmune");
+            }
+            // Purpur end
 
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Loading entity NBT");
@@ -2824,6 +2836,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 this.passengers = ImmutableList.copyOf(list);
             }
 
+            // Purpur start
+            if (isRidable() && this.passengers.get(0) == entity && entity instanceof Player player) {
+                onMount(player);
+                this.rider = player;
+            }
+            // Purpur end
+
             this.gameEvent(GameEvent.ENTITY_MOUNT, entity);
         }
         return true; // CraftBukkit
@@ -2865,6 +2884,14 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 return false;
             }
             // Spigot end
+
+            // Purpur start
+            if (this.rider != null && this.passengers.get(0) == this.rider) {
+                onDismount(this.rider);
+                this.rider = null;
+            }
+            // Purpur end
+
             if (this.passengers.size() == 1 && this.passengers.get(0) == entity) {
                 this.passengers = ImmutableList.of();
             } else {
@@ -2924,12 +2951,15 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         return Vec3.directionFromRotation(this.getRotationVector());
     }
 
+    public BlockPos portalPos = BlockPos.ZERO; // Purpur
     public void handleInsidePortal(BlockPos pos) {
         if (this.isOnPortalCooldown()) {
+            if (!(level.purpurConfig.playerFixStuckPortal && this instanceof Player && !pos.equals(portalPos))) // Purpur
             this.setPortalCooldown();
-        } else {
+        } else if (level.purpurConfig.entitiesCanUsePortals || this instanceof ServerPlayer) { // Purpur
             if (!this.level.isClientSide && !pos.equals(this.portalEntrancePos)) {
                 this.portalEntrancePos = pos.immutable();
+                portalPos = BlockPos.ZERO; // Purpur
             }
 
             this.isInsidePortal = true;
@@ -2947,7 +2977,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 ServerLevel worldserver1 = minecraftserver.getLevel(resourcekey);
 
                 if (true && !this.isPassenger() && this.portalTime++ >= i) { // CraftBukkit
-                    this.level.getProfiler().push("portal");
+                    //this.level.getProfiler().push("portal"); // Purpur
                     this.portalTime = i;
                     // Paper start
                     io.papermc.paper.event.entity.EntityPortalReadyEvent event = new io.papermc.paper.event.entity.EntityPortalReadyEvent(this.getBukkitEntity(), worldserver1 == null ? null : worldserver1.getWorld(), org.bukkit.PortalType.NETHER);
@@ -2965,7 +2995,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                     }
                     } // Paper
                     // CraftBukkit end
-                    this.level.getProfiler().pop();
+                    //this.level.getProfiler().pop(); // Purpur
                 }
 
                 this.isInsidePortal = false;
@@ -2980,7 +3010,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             }
 
             this.processPortalCooldown();
-            this.tickEndPortal(); // Paper - make end portalling safe
+            if (this.level.purpurConfig.endPortalSafeTeleporting) this.tickEndPortal(); // Paper - make end portalling safe // Purpur
         }
     }
 
@@ -3162,7 +3192,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     }
 
     public int getMaxAirSupply() {
-        return this.maxAirTicks; // CraftBukkit - SPIGOT-6907: re-implement LivingEntity#setMaximumAir()
+        return this.level == null? this.maxAirTicks : this.level.purpurConfig.drowningAirTicks; // CraftBukkit - SPIGOT-6907: re-implement LivingEntity#setMaximumAir() // Purpur
     }
 
     public int getAirSupply() {
@@ -3432,14 +3462,14 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         }
         // Paper end
         if (this.level instanceof ServerLevel && !this.isRemoved()) {
-            this.level.getProfiler().push("changeDimension");
+            //this.level.getProfiler().push("changeDimension"); // Purpur
             // CraftBukkit start
             // this.decouple();
             if (worldserver == null) {
                 return null;
             }
             // CraftBukkit end
-            this.level.getProfiler().push("reposition");
+            //this.level.getProfiler().push("reposition"); // Purpur
             PortalInfo shapedetectorshape = (location == null) ? this.findDimensionEntryPoint(worldserver) : new PortalInfo(new Vec3(location.x(), location.y(), location.z()), Vec3.ZERO, this.yRot, this.xRot, worldserver, null); // CraftBukkit
 
             if (shapedetectorshape == null) {
@@ -3473,7 +3503,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 this.unRide();
                 // CraftBukkit end
 
-                this.level.getProfiler().popPush("reloading");
+                //this.level.getProfiler().popPush("reloading"); // Purpur
                 // Paper start - Change lead drop timing to prevent dupe
                 if (this instanceof Mob) {
                     ((Mob) this).dropLeash(true, true); // Paper drop lead
@@ -3496,10 +3526,10 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 }
 
                 this.removeAfterChangingDimensions();
-                this.level.getProfiler().pop();
+                //this.level.getProfiler().pop(); // Purpur
                 ((ServerLevel) this.level).resetEmptyTime();
                 worldserver.resetEmptyTime();
-                this.level.getProfiler().pop();
+                //this.level.getProfiler().pop(); // Purpur
                 return entity;
             }
         } else {
@@ -3619,7 +3649,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     }
 
     public boolean canChangeDimensions() {
-        return !this.isPassenger() && !this.isVehicle() && isAlive() && valid; // Paper
+        return !this.isPassenger() && !this.isVehicle() && isAlive() && valid && (level.purpurConfig.entitiesCanUsePortals || this instanceof ServerPlayer); // Paper // Purpur
     }
 
     public float getBlockExplosionResistance(Explosion explosion, BlockGetter world, BlockPos pos, BlockState blockState, FluidState fluidState, float max) {
@@ -3916,6 +3946,20 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         return SlotAccess.NULL;
     }
 
+    // Purpur Start
+    public void sendMiniMessage(@Nullable String message) {
+        if (message != null && !message.isEmpty()) {
+            this.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message));
+        }
+    }
+
+    public void sendMessage(@Nullable net.kyori.adventure.text.Component message) {
+        if (message != null) {
+            this.sendSystemMessage(io.papermc.paper.adventure.PaperAdventure.asVanilla(message));
+        }
+    }
+    // Purpur end
+
     @Override
     public void sendSystemMessage(Component message) {}
 
@@ -4196,6 +4240,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         this.xRotO = this.getXRot();
         this.yRotO = this.getYRot();
     }
+
+    // Purpur start
+    public AABB getAxisForFluidCheck() {
+        return this.getBoundingBox().deflate(0.001D);
+    }
+    // Purpur end
 
     public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> tag, double speed) {
         if (false && this.touchingUnloadedChunk()) { // Pufferfish - cost of a lookup here is the same cost as below, so skip
@@ -4725,4 +4775,64 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         return ((net.minecraft.server.level.ServerChunkCache) level.getChunkSource()).isPositionTicking(this);
     }
     // Paper end
+
+    // Purpur start
+    @Nullable
+    private Player rider = null;
+
+    @Nullable
+    public Player getRider() {
+        return rider;
+    }
+
+    public boolean isRidable() {
+        return false;
+    }
+
+    public boolean isControllable() {
+        return true;
+    }
+
+    public void onMount(Player rider) {
+        if (this instanceof Mob) {
+            ((Mob) this).setTarget(null, null, false);
+            ((Mob) this).getNavigation().stop();
+        }
+        rider.setJumping(false); // fixes jump on mount
+    }
+
+    public void onDismount(Player player) {
+    }
+
+    public boolean onSpacebar() {
+        return false;
+    }
+
+    public boolean onClick(InteractionHand hand) {
+        return false;
+    }
+
+    public boolean processClick(InteractionHand hand) {
+        return false;
+    }
+
+    public boolean canSaveToDisk() {
+        return true;
+    }
+
+    // Purpur start - copied from Mob
+    public boolean isSunBurnTick() {
+        if (this.level.isDay() && !this.level.isClientSide) {
+            float f = this.getLightLevelDependentMagicValue();
+            BlockPos blockposition = BlockPos.containing(this.getX(), this.getEyeY(), this.getZ());
+            boolean flag = this.isInWaterRainOrBubble() || this.isInPowderSnow || this.wasInPowderSnow;
+
+            if (f > 0.5F && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F && !flag && this.level.canSeeSky(blockposition)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    // Purpur end
 }

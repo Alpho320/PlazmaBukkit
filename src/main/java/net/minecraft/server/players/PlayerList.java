@@ -469,6 +469,7 @@ public abstract class PlayerList {
             scoreboard.addPlayerToTeam(player.getScoreboardName(), collideRuleTeam);
         }
         // Paper end
+        org.purpurmc.purpur.task.BossBarTask.addToAll(player); // Purpur
         // CraftBukkit - Moved from above, added world
         PlayerList.LOGGER.info("{}[{}] logged in with entity id {} at ([{}]{}, {}, {})", player.getName().getString(), s1, player.getId(), worldserver1.serverLevelData.getLevelName(), player.getX(), player.getY(), player.getZ());
     }
@@ -578,6 +579,8 @@ public abstract class PlayerList {
     }
     public net.kyori.adventure.text.Component remove(ServerPlayer entityplayer, net.kyori.adventure.text.Component leaveMessage) {
         // Paper end
+        org.purpurmc.purpur.task.BossBarTask.removeFromAll(entityplayer.getBukkitEntity()); // Purpur
+
         ServerLevel worldserver = entityplayer.getLevel();
 
         entityplayer.awardStat(Stats.LEAVE_GAME);
@@ -731,7 +734,7 @@ public abstract class PlayerList {
             event.disallow(PlayerLoginEvent.Result.KICK_BANNED, PaperAdventure.asAdventure(ichatmutablecomponent)); // Paper - Adventure
         } else {
             // return this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameprofile) ? IChatBaseComponent.translatable("multiplayer.disconnect.server_full") : null;
-            if (this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameprofile)) {
+            if (this.players.size() >= this.maxPlayers && !(player.hasPermission("purpur.joinfullserver") || this.canBypassPlayerLimit(gameprofile))) { // Purpur
                 event.disallow(PlayerLoginEvent.Result.KICK_FULL, net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(org.spigotmc.SpigotConfig.serverFullMessage)); // Spigot // Paper - Adventure
             }
         }
@@ -969,6 +972,8 @@ public abstract class PlayerList {
         }
         // Paper end
 
+        entityplayer1.spawnInvulnerableTime = entityplayer1.level.purpurConfig.playerSpawnInvulnerableTicks; // Purpur
+
         // CraftBukkit end
         return entityplayer1;
     }
@@ -1028,6 +1033,20 @@ public abstract class PlayerList {
 
     }
     // CraftBukkit end
+
+    // Purpur Start
+    public void broadcastMiniMessage(@Nullable String message, boolean overlay) {
+        if (message != null && !message.isEmpty()) {
+            this.broadcastMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message), overlay);
+        }
+    }
+
+    public void broadcastMessage(@Nullable net.kyori.adventure.text.Component message, boolean overlay) {
+        if (message != null) {
+            this.broadcastSystemMessage(io.papermc.paper.adventure.PaperAdventure.asVanilla(message), overlay);
+        }
+    }
+    // Purpur end
 
     public void broadcastAll(Packet<?> packet, ResourceKey<Level> dimension) {
         Iterator iterator = this.players.iterator();
@@ -1132,6 +1151,7 @@ public abstract class PlayerList {
             } else {
                 b0 = (byte) (24 + permissionLevel);
             }
+            if (b0 < 28 && player.getBukkitEntity().hasPermission("purpur.debug.f3n")) b0 = 28; // Purpur
 
             player.connection.send(new ClientboundEntityEventPacket(player, b0));
         }
@@ -1140,6 +1160,27 @@ public abstract class PlayerList {
         player.getBukkitEntity().recalculatePermissions(); // CraftBukkit
         this.server.getCommands().sendCommands(player);
         } // Paper
+
+        // Purpur start
+        if (org.purpurmc.purpur.PurpurConfig.enderChestSixRows && org.purpurmc.purpur.PurpurConfig.enderChestPermissionRows) {
+            org.bukkit.craftbukkit.entity.CraftHumanEntity bukkit = player.getBukkitEntity();
+            if (bukkit.hasPermission("purpur.enderchest.rows.six")) {
+                player.sixRowEnderchestSlotCount = 54;
+            } else if (bukkit.hasPermission("purpur.enderchest.rows.five")) {
+                player.sixRowEnderchestSlotCount = 45;
+            } else if (bukkit.hasPermission("purpur.enderchest.rows.four")) {
+                player.sixRowEnderchestSlotCount = 36;
+            } else if (bukkit.hasPermission("purpur.enderchest.rows.three")) {
+                player.sixRowEnderchestSlotCount = 27;
+            } else if (bukkit.hasPermission("purpur.enderchest.rows.two")) {
+                player.sixRowEnderchestSlotCount = 18;
+            } else if (bukkit.hasPermission("purpur.enderchest.rows.one")) {
+                player.sixRowEnderchestSlotCount = 9;
+            }
+        } else {
+            player.sixRowEnderchestSlotCount = -1;
+        }
+        //Purpur end
     }
 
     public boolean isWhiteListed(GameProfile profile) {
@@ -1201,7 +1242,7 @@ public abstract class PlayerList {
 
     public void saveAll(int interval) {
         io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
-        MinecraftTimings.savePlayers.startTiming(); // Paper
+        //MinecraftTimings.savePlayers.startTiming(); // Paper // Purpur
         int numSaved = 0;
         long now = MinecraftServer.currentTick;
         for (int i = 0; i < this.players.size(); ++i) {
@@ -1212,7 +1253,7 @@ public abstract class PlayerList {
             }
             // Paper end
         }
-        MinecraftTimings.savePlayers.stopTiming(); // Paper
+        //MinecraftTimings.savePlayers.stopTiming(); // Paper // Purpur
         return null; }); // Paper - ensure main
     }
 

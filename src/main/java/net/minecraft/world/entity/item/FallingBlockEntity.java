@@ -131,7 +131,7 @@ public class FallingBlockEntity extends Entity {
     @Override
     public void tick() {
         // Paper start - fix sand duping
-        if (this.isRemoved()) {
+        if (this.level.purpurConfig.fixSandDuping && this.isRemoved()) { // Purpur
             return;
         }
         // Paper end - fix sand duping
@@ -148,7 +148,7 @@ public class FallingBlockEntity extends Entity {
             this.move(MoverType.SELF, this.getDeltaMovement());
 
             // Paper start - fix sand duping
-            if (this.isRemoved()) {
+            if (this.level.purpurConfig.fixSandDuping && this.isRemoved()) { // Purpur
                 return;
             }
             // Paper end - fix sand duping

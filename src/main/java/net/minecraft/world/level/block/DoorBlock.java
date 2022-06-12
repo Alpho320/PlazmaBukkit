@@ -165,6 +165,7 @@ public class DoorBlock extends Block {
     public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (this.material == Material.METAL) {
             return InteractionResult.PASS;
+        } else if (requiresRedstone(world, state, pos)) { return InteractionResult.CONSUME; // Purpur
         } else {
             state = (BlockState) state.cycle(DoorBlock.OPEN);
             world.setBlock(pos, state, 10);
@@ -260,4 +261,18 @@ public class DoorBlock extends Block {
     public static boolean isWoodenDoor(BlockState state) {
         return state.getBlock() instanceof DoorBlock && (state.getMaterial() == Material.WOOD || state.getMaterial() == Material.NETHER_WOOD);
     }
+
+    // Purpur start
+    public static boolean requiresRedstone(Level level, BlockState state, BlockPos pos) {
+        if (level.purpurConfig.doorRequiresRedstone.contains(state.getBlock())) {
+            // force update client
+            BlockPos otherPos = pos.relative(state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN);
+            BlockState otherState = level.getBlockState(otherPos);
+            level.sendBlockUpdated(pos, state, state, 3);
+            level.sendBlockUpdated(otherPos, otherState, otherState, 3);
+            return true;
+        }
+        return false;
+    }
+    // Purpur end
 }

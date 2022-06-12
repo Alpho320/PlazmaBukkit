@@ -57,10 +57,10 @@ public class ServerFunctionManager {
     }
 
     private void executeTagFunctions(Collection<CommandFunction> functions, ResourceLocation label) {
-        ProfilerFiller gameprofilerfiller = this.server.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.server.getProfiler(); // Purpur
 
         Objects.requireNonNull(label);
-        gameprofilerfiller.push(label::toString);
+        //gameprofilerfiller.push(label::toString); // Purpur
         Iterator iterator = functions.iterator();
 
         while (iterator.hasNext()) {
@@ -69,7 +69,7 @@ public class ServerFunctionManager {
             this.execute(customfunction, this.getGameLoopSender());
         }
 
-        this.server.getProfiler().pop();
+        //this.server.getProfiler().pop(); // Purpur
     }
 
     public int execute(CommandFunction function, CommandSourceStack source) {
@@ -88,7 +88,7 @@ public class ServerFunctionManager {
         } else {
             int i;
 
-            try (co.aikar.timings.Timing timing = function.getTiming().startTiming()) { // Paper
+            try /*(co.aikar.timings.Timing timing = function.getTiming().startTiming())*/ { // Paper // Purpur
                 this.context = new ServerFunctionManager.ExecutionContext(tracer);
                 i = this.context.runTopCommand(function, source);
             } finally {
@@ -177,10 +177,10 @@ public class ServerFunctionManager {
 
                 try {
                     ServerFunctionManager.QueuedCommand customfunctiondata_b = (ServerFunctionManager.QueuedCommand) this.commandQueue.removeFirst();
-                    ProfilerFiller gameprofilerfiller = ServerFunctionManager.this.server.getProfiler();
+                    //ProfilerFiller gameprofilerfiller = ServerFunctionManager.this.server.getProfiler(); // Purpur
 
                     Objects.requireNonNull(customfunctiondata_b);
-                    gameprofilerfiller.push(customfunctiondata_b::toString);
+                    //gameprofilerfiller.push(customfunctiondata_b::toString); // Purpur
                     this.depth = customfunctiondata_b.depth;
                     customfunctiondata_b.execute(ServerFunctionManager.this, this.commandQueue, i, this.tracer);
                     if (!this.nestedCalls.isEmpty()) {
@@ -192,7 +192,7 @@ public class ServerFunctionManager {
                         this.nestedCalls.clear();
                     }
                 } finally {
-                    ServerFunctionManager.this.server.getProfiler().pop();
+                    //ServerFunctionManager.this.server.getProfiler().pop(); // Purpur
                 }
 
                 ++j;

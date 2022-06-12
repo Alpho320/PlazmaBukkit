@@ -129,7 +129,7 @@ public class LevelChunk extends ChunkAccess {
         this.blockTicks = blockTickScheduler;
         this.fluidTicks = fluidTickScheduler;
 
-        this.lightningTick = this.level.getThreadUnsafeRandom().nextInt(100000) << 1; // Pufferfish - initialize lightning tick
+        this.lightningTick = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000) << 1; // Pufferfish - initialize lightning tick // Purpur - any random will do
     }
 
     // CraftBukkit start
@@ -925,7 +925,7 @@ public class LevelChunk extends ChunkAccess {
             this.chunkHolder.getEntityChunk().callEntitiesLoadEvent(); // Paper - rewrite chunk system
 
             if (this.needsDecoration) {
-                try (co.aikar.timings.Timing ignored = this.level.timings.chunkLoadPopulate.startTiming()) { // Paper
+                //try (co.aikar.timings.Timing ignored = this.level.timings.chunkLoadPopulate.startTiming()) { // Paper // Purpur
                 this.needsDecoration = false;
                 java.util.Random random = new java.util.Random();
                 random.setSeed(this.level.getSeed());
@@ -945,7 +945,7 @@ public class LevelChunk extends ChunkAccess {
                     }
                 }
                 server.getPluginManager().callEvent(new org.bukkit.event.world.ChunkPopulateEvent(bukkitChunk));
-                } // Paper
+                //} // Paper // Purpur
             }
         }
     }
@@ -1315,10 +1315,10 @@ public class LevelChunk extends ChunkAccess {
 
                 if (LevelChunk.this.isTicking(blockposition)) {
                     try {
-                        ProfilerFiller gameprofilerfiller = LevelChunk.this.level.getProfiler();
+                        //ProfilerFiller gameprofilerfiller = LevelChunk.this.level.getProfiler(); // Purpur
 
-                        gameprofilerfiller.push(this::getType);
-                        this.blockEntity.tickTimer.startTiming(); // Spigot
+                        //gameprofilerfiller.push(this::getType); // Purpur
+                        //this.blockEntity.tickTimer.startTiming(); // Spigot // Purpur
                         BlockState iblockdata = LevelChunk.this.getBlockState(blockposition);
 
                         if (this.blockEntity.getType().isValid(iblockdata)) {
@@ -1329,7 +1329,7 @@ public class LevelChunk extends ChunkAccess {
                             LevelChunk.LOGGER.warn("Block entity {} @ {} state {} invalid for ticking:", new Object[]{LogUtils.defer(this::getType), LogUtils.defer(this::getPos), iblockdata});
                         }
 
-                        gameprofilerfiller.pop();
+                        //gameprofilerfiller.pop(); // Purpur
                     } catch (Throwable throwable) {
                         if (throwable instanceof ThreadDeath) throw throwable; // Paper
                         // Paper start - Prevent tile entity and entity crashes
@@ -1340,7 +1340,7 @@ public class LevelChunk extends ChunkAccess {
                         // Paper end
                         // Spigot start
                     } finally {
-                        this.blockEntity.tickTimer.stopTiming();
+                        //this.blockEntity.tickTimer.stopTiming(); // Purpur
                         // Spigot end
                     }
                 }

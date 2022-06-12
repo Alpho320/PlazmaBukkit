@@ -138,7 +138,7 @@ public class ShulkerBoxBlock extends BaseEntityBlock {
     public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof ShulkerBoxBlockEntity shulkerBoxBlockEntity) {
-            if (!world.isClientSide && player.isCreative() && !shulkerBoxBlockEntity.isEmpty()) {
+            if (world.purpurConfig.shulkerBoxAllowOversizedStacks || (!world.isClientSide && player.isCreative() && !shulkerBoxBlockEntity.isEmpty())) { // Purpur
                 ItemStack itemStack = getColoredItemStack(this.getColor());
                 blockEntity.saveToItem(itemStack);
                 if (shulkerBoxBlockEntity.hasCustomName()) {

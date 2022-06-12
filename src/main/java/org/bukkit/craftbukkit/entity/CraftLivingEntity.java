@@ -444,7 +444,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         net.minecraft.server.level.ServerPlayer entityPlayer = killer == null ? null : ((CraftPlayer) killer).getHandle();
         getHandle().lastHurtByPlayer = entityPlayer;
         getHandle().lastHurtByMob = entityPlayer;
-        getHandle().lastHurtByPlayerTime = entityPlayer == null ? 0 : 100; // 100 value taken from EntityLiving#damageEntity
+        getHandle().lastHurtByPlayerTime = entityPlayer == null ? 0 : getHandle().level.purpurConfig.mobLastHurtByPlayerTime; // 100 value taken from EntityLiving#damageEntity // Purpur
     }
     // Paper end
 
@@ -456,7 +456,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     @Override
     public boolean addPotionEffect(PotionEffect effect, boolean force) {
         org.spigotmc.AsyncCatcher.catchOp("effect add"); // Paper
-        this.getHandle().addEffect(new MobEffectInstance(MobEffect.byId(effect.getType().getId()), effect.getDuration(), effect.getAmplifier(), effect.isAmbient(), effect.hasParticles(), effect.hasIcon()), EntityPotionEffectEvent.Cause.PLUGIN); // Paper - Don't ignore icon
+        this.getHandle().addEffect(new MobEffectInstance(MobEffect.byId(effect.getType().getId()), effect.getDuration(), effect.getAmplifier(), effect.isAmbient(), effect.hasParticles(), effect.hasIcon(), effect.getKey()), EntityPotionEffectEvent.Cause.PLUGIN); // Purpur - add key // Paper - Don't ignore icon
         return true;
     }
 
@@ -477,7 +477,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     @Override
     public PotionEffect getPotionEffect(PotionEffectType type) {
         MobEffectInstance handle = this.getHandle().getEffect(MobEffect.byId(type.getId()));
-        return (handle == null) ? null : new PotionEffect(PotionEffectType.getById(MobEffect.getId(handle.getEffect())), handle.getDuration(), handle.getAmplifier(), handle.isAmbient(), handle.isVisible());
+        return (handle == null) ? null : new PotionEffect(PotionEffectType.getById(MobEffect.getId(handle.getEffect())), handle.getDuration(), handle.getAmplifier(), handle.isAmbient(), handle.isVisible(), handle.getKey()); // Purpur - add key
     }
 
     @Override
@@ -489,7 +489,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     public Collection<PotionEffect> getActivePotionEffects() {
         List<PotionEffect> effects = new ArrayList<PotionEffect>();
         for (MobEffectInstance handle : this.getHandle().activeEffects.values()) {
-            effects.add(new PotionEffect(PotionEffectType.getById(MobEffect.getId(handle.getEffect())), handle.getDuration(), handle.getAmplifier(), handle.isAmbient(), handle.isVisible()));
+            effects.add(new PotionEffect(PotionEffectType.getById(MobEffect.getId(handle.getEffect())), handle.getDuration(), handle.getAmplifier(), handle.isAmbient(), handle.isVisible(), handle.getKey())); // Purpur - add key
         }
         return effects;
     }
@@ -884,7 +884,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             return EntityCategory.WATER;
         }
 
-        throw new UnsupportedOperationException("Unsupported monster type: " + type + ". This is a bug, report this to Spigot.");
+        throw new UnsupportedOperationException("Unsupported monster type: " + type + ". This is a bug, report this to Purpur."); // Purpur
     }
 
     @Override
@@ -1071,4 +1071,32 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         getHandle().knockback(strength, directionX, directionZ);
     };
     // Paper end
+
+    // Purpur start
+    @Override
+    public float getSafeFallDistance() {
+        return getHandle().safeFallDistance;
+    }
+
+    @Override
+    public void setSafeFallDistance(float safeFallDistance) {
+        getHandle().safeFallDistance = safeFallDistance;
+    }
+
+    @Override
+    public void broadcastItemBreak(org.bukkit.inventory.EquipmentSlot slot) {
+        if (slot == null) return;
+        getHandle().broadcastBreakEvent(org.bukkit.craftbukkit.CraftEquipmentSlot.getNMS(slot));
+    }
+
+    @Override
+    public boolean shouldBurnInDay() {
+        return getHandle().shouldBurnInDay();
+    }
+
+    @Override
+    public void setShouldBurnInDay(boolean shouldBurnInDay) {
+        getHandle().setShouldBurnInDay(shouldBurnInDay);
+    }
+    // Purpur end
 }

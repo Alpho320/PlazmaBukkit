@@ -256,6 +256,7 @@ public final class CraftLegacy {
     }
 
     static {
+        if (!org.purpurmc.purpur.PurpurConfig.loggerSuppressInitLegacyMaterialError) // Purpur
         LOGGER.warn("Initializing Legacy Material Support. Unless you have legacy plugins and/or data this is a bug!"); // Paper - doesn't need to be an error
         if (MinecraftServer.getServer() != null && MinecraftServer.getServer().isDebugging()) {
             new Exception().printStackTrace();

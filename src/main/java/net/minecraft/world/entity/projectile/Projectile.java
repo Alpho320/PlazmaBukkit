@@ -318,6 +318,6 @@ public abstract class Projectile extends Entity implements TraceableEntity {
     public boolean mayInteract(Level world, BlockPos pos) {
         Entity entity = this.getOwner();
 
-        return entity instanceof Player ? entity.mayInteract(world, pos) : entity == null || world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+        return entity instanceof Player ? entity.mayInteract(world, pos) : entity == null || world.purpurConfig.projectilesBypassMobGriefing || world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
     }
 }

@@ -33,29 +33,32 @@ public class AxeItem extends DiggerItem {
         BlockPos blockPos = context.getClickedPos();
         Player player = context.getPlayer();
         BlockState blockState = level.getBlockState(blockPos);
-        Optional<BlockState> optional = this.getStripped(blockState);
-        Optional<BlockState> optional2 = WeatheringCopper.getPrevious(blockState);
-        Optional<BlockState> optional3 = Optional.ofNullable(HoneycombItem.WAX_OFF_BY_BLOCK.get().get(blockState.getBlock())).map((block) -> {
-            return block.withPropertiesOf(blockState);
-        });
+        // Purpur start
+        Block clickedBlock = level.getBlockState(blockPos).getBlock();
+        Optional<org.purpurmc.purpur.tool.Actionable> optional = Optional.ofNullable(level.purpurConfig.axeStrippables.get(blockState.getBlock()));
+        Optional<org.purpurmc.purpur.tool.Actionable> optional2 = Optional.ofNullable(level.purpurConfig.axeWeatherables.get(blockState.getBlock()));
+        Optional<org.purpurmc.purpur.tool.Actionable> optional3 = Optional.ofNullable(level.purpurConfig.axeWaxables.get(blockState.getBlock()));
+        // Purpur end
         ItemStack itemStack = context.getItemInHand();
-        Optional<BlockState> optional4 = Optional.empty();
+        Optional<org.purpurmc.purpur.tool.Actionable> optional4 = Optional.empty(); // Purpur
         if (optional.isPresent()) {
-            level.playSound(player, blockPos, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (!STRIPPABLES.containsKey(clickedBlock)) level.playSound(null, blockPos, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.0F, 1.0F); // Purpur - force sound
             optional4 = optional;
         } else if (optional2.isPresent()) {
-            level.playSound(player, blockPos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (!HoneycombItem.WAXABLES.get().containsKey(clickedBlock)) level.playSound(null, blockPos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F); // Purpur - force sound
             level.levelEvent(player, 3005, blockPos, 0);
             optional4 = optional2;
         } else if (optional3.isPresent()) {
-            level.playSound(player, blockPos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (!HoneycombItem.WAX_OFF_BY_BLOCK.get().containsKey(clickedBlock)) level.playSound(null, blockPos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F); // Purpur - force sound
             level.levelEvent(player, 3004, blockPos, 0);
             optional4 = optional3;
         }
 
         if (optional4.isPresent()) {
+            org.purpurmc.purpur.tool.Actionable actionable = optional4.get();
+            BlockState state = actionable.into().withPropertiesOf(blockState); // Purpur
             // Paper start - EntityChangeBlockEvent
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityChangeBlockEvent(player, blockPos, optional4.get()).isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityChangeBlockEvent(player, blockPos, state).isCancelled()) { // Purpur
                 return InteractionResult.PASS;
             }
             // Paper end
@@ -63,15 +66,22 @@ public class AxeItem extends DiggerItem {
                 CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger((ServerPlayer)player, blockPos, itemStack);
             }
 
-            level.setBlock(blockPos, optional4.get(), 11);
-            level.gameEvent(GameEvent.BLOCK_CHANGE, blockPos, GameEvent.Context.of(player, optional4.get()));
+            // Purpur start
+            level.setBlock(blockPos, state, 11);
+            actionable.drops().forEach((drop, chance) -> {
+                if (level.random.nextDouble() < chance) {
+                    Block.popResourceFromFace(level, blockPos, context.getClickedFace(), new ItemStack(drop));
+                }
+            });
+            level.gameEvent(GameEvent.BLOCK_CHANGE, blockPos, GameEvent.Context.of(player, state));
+            // Purpur end
             if (player != null) {
                 itemStack.hurtAndBreak(1, player, (p) -> {
                     p.broadcastBreakEvent(context.getHand());
                 });
             }
 
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.SUCCESS; // Purpur - force arm swing
         } else {
             return InteractionResult.PASS;
         }

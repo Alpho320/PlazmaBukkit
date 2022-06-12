@@ -81,6 +81,33 @@ public class Sniffer extends Animal {
         this.setPathfindingMalus(BlockPathTypes.WATER, -2.0F);
     }
 
+    // Purpur start
+    @Override
+    public boolean isRidable() {
+        return level.purpurConfig.snifferRidable;
+    }
+
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.snifferRidableInWater;
+    }
+
+    @Override
+    public boolean isControllable() {
+        return level.purpurConfig.snifferControllable;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.level.purpurConfig.snifferMaxHealth);
+    }
+
+    @Override
+    public int getPurpurBreedTime() {
+        return this.level.purpurConfig.snifferBreedingTicks;
+    }
+    // Purpur end
+
     // CraftBukkit start - SPIGOT-7295: moved from constructor to appropriate location
     @Override
     protected void defineSynchedData() {
@@ -303,7 +330,7 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    protected void jumpFromGround() {
+    public void jumpFromGround() { // Purpur - protected -> public
         super.jumpFromGround();
         double d0 = this.moveControl.getSpeedModifier();
 
@@ -443,11 +470,11 @@ public class Sniffer extends Animal {
 
     @Override
     protected void customServerAiStep() {
-        this.level.getProfiler().push("snifferBrain");
+        //this.level.getProfiler().push("snifferBrain"); // Purpur
         this.getBrain().tick((ServerLevel) this.level, this);
-        this.level.getProfiler().popPush("snifferActivityUpdate");
+        //this.level.getProfiler().popPush("snifferActivityUpdate"); // Purpur
         SnifferAi.updateActivity(this);
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         super.customServerAiStep();
     }
 

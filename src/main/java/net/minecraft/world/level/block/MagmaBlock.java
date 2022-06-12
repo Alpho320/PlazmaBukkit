@@ -27,7 +27,7 @@ public class MagmaBlock extends Block {
 
     @Override
     public void stepOn(Level world, BlockPos pos, BlockState state, Entity entity) {
-        if (!entity.isSteppingCarefully() && entity instanceof LivingEntity && !EnchantmentHelper.hasFrostWalker((LivingEntity) entity)) {
+        if ((!entity.isSteppingCarefully() || world.purpurConfig.magmaBlockDamageWhenSneaking) && entity instanceof LivingEntity && (world.purpurConfig.magmaBlockDamageWithFrostWalker || !EnchantmentHelper.hasFrostWalker((LivingEntity) entity))) { // Purpur
             org.bukkit.craftbukkit.event.CraftEventFactory.blockDamage = world.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()); // CraftBukkit
             entity.hurt(world.damageSources().hotFloor(), 1.0F);
             org.bukkit.craftbukkit.event.CraftEventFactory.blockDamage = null; // CraftBukkit

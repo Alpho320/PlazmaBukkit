@@ -263,6 +263,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     private long keepAliveTime = Util.getMillis();
     private boolean keepAlivePending;
     private long keepAliveChallenge;
+    private it.unimi.dsi.fastutil.longs.LongList keepAlives = new it.unimi.dsi.fastutil.longs.LongArrayList(); // Purpur
     // CraftBukkit start - multithreaded fields
     private final AtomicInteger chatSpamTickCount = new AtomicInteger();
     private final java.util.concurrent.atomic.AtomicInteger tabSpamLimiter = new java.util.concurrent.atomic.AtomicInteger(); // Paper - configurable tab spam limits
@@ -340,6 +341,20 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     private boolean justTeleported = false;
     private boolean hasMoved; // Spigot
 
+    // Purpur start
+    private final com.google.common.cache.LoadingCache<CraftPlayer, Boolean> kickPermissionCache = com.google.common.cache.CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(1, java.util.concurrent.TimeUnit.MINUTES)
+            .build(
+                    new com.google.common.cache.CacheLoader<>() {
+                        @Override
+                        public Boolean load(CraftPlayer player) {
+                            return player.hasPermission("purpur.bypassIdleKick");
+                        }
+                    }
+            );
+    // Purpur end
+
     public CraftPlayer getCraftPlayer() {
         return (this.player == null) ? null : (CraftPlayer) this.player.getBukkitEntity();
     }
@@ -395,11 +410,26 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             this.aboveGroundVehicleTickCount = 0;
         }
 
-        this.server.getProfiler().push("keepAlive");
+        //this.server.getProfiler().push("keepAlive"); // Purpur
         // Paper Start - give clients a longer time to respond to pings as per pre 1.12.2 timings
         // This should effectively place the keepalive handling back to "as it was" before 1.12.2
         long currentTime = Util.getMillis();
         long elapsedTime = currentTime - this.keepAliveTime;
+
+        // Purpur start
+        if (org.purpurmc.purpur.PurpurConfig.useAlternateKeepAlive) {
+            if (elapsedTime >= 1000L) { // 1 second
+                if (!processedDisconnect && keepAlives.size() * 1000L >= KEEPALIVE_LIMIT) {
+                    LOGGER.warn("{} was kicked due to keepalive timeout!", this.player.getScoreboardName());
+                    disconnect(Component.translatable("disconnect.timeout"), org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT);
+                } else {
+                    keepAliveTime = currentTime; // hijack this field for 1 second intervals
+                    keepAlives.add(currentTime); // currentTime is ID
+                    send(new ClientboundKeepAlivePacket(currentTime));
+                }
+            }
+        } else
+        // Purpur end
 
         if (this.keepAlivePending) {
             if (!this.processedDisconnect && elapsedTime >= KEEPALIVE_LIMIT) { // check keepalive limit, don't fire if already disconnected
@@ -416,7 +446,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         }
         // Paper end
 
-        this.server.getProfiler().pop();
+        //this.server.getProfiler().pop(); // Purpur
         // CraftBukkit start
         for (int spam; (spam = this.chatSpamTickCount.get()) > 0 && !this.chatSpamTickCount.compareAndSet(spam, spam - 1); ) ;
         if (tabSpamLimiter.get() > 0) tabSpamLimiter.getAndDecrement(); // Paper - split to seperate variable
@@ -433,6 +463,12 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         }
 
         if (this.player.getLastActionTime() > 0L && this.server.getPlayerIdleTimeout() > 0 && Util.getMillis() - this.player.getLastActionTime() > (long) (this.server.getPlayerIdleTimeout() * 1000 * 60) && !this.player.wonGame) { // Paper - Prevent AFK kick while watching end credits.
+            // Purpur start
+            this.player.setAfk(true);
+            if (!this.player.level.purpurConfig.idleTimeoutKick || (!Boolean.parseBoolean(System.getenv("PURPUR_FORCE_IDLE_KICK")) && kickPermissionCache.getUnchecked(this.player.getBukkitEntity()))) {
+                return;
+            }
+            // Purpur end
             this.player.resetLastActionTime(); // CraftBukkit - SPIGOT-854
             this.disconnect(Component.translatable("multiplayer.disconnect.idling"), org.bukkit.event.player.PlayerKickEvent.Cause.IDLING); // Paper - kick event cause
         }
@@ -744,6 +780,8 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                     this.lastYaw = to.getYaw();
                     this.lastPitch = to.getPitch();
 
+                    if (!to.getWorld().getUID().equals(from.getWorld().getUID()) || to.getBlockX() != from.getBlockX() || to.getBlockY() != from.getBlockY() || to.getBlockZ() != from.getBlockZ() || to.getYaw() != from.getYaw() || to.getPitch() != from.getPitch()) this.player.resetLastActionTime(); // Purpur
+
                     // Skip the first time we do this
                     if (true) { // Spigot - don't skip any move events
                         Location oldTo = to.clone();
@@ -820,6 +858,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         if (packet.getId() == this.awaitingTeleport) {
             if (this.awaitingPositionFromClient == null) {
                 this.disconnect(Component.translatable("multiplayer.disconnect.invalid_player_movement"), org.bukkit.event.player.PlayerKickEvent.Cause.INVALID_PLAYER_MOVEMENT); // Paper - kick event cause
+                ServerGamePacketListenerImpl.LOGGER.warn("Disconnected on accept teleport packet. Was not expecting position data from client at this time"); // Purpur
                 return;
             }
 
@@ -1224,10 +1263,12 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             int maxBookPageSize = io.papermc.paper.configuration.GlobalConfiguration.get().itemValidation.bookSize.pageMax;
             double multiplier = Math.max(0.3D, Math.min(1D, io.papermc.paper.configuration.GlobalConfiguration.get().itemValidation.bookSize.totalMultiplier));
             long byteAllowed = maxBookPageSize;
+            ItemStack itemstack = this.player.getInventory().getItem(packet.getSlot()); // Purpur
             for (String testString : pageList) {
                 int byteLength = testString.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
                 if (byteLength > 256 * 4) {
                     ServerGamePacketListenerImpl.LOGGER.warn(this.player.getScoreboardName() + " tried to send a book with with a page too large!");
+                    org.purpurmc.purpur.event.player.PlayerBookTooLargeEvent event = new org.purpurmc.purpur.event.player.PlayerBookTooLargeEvent(player.getBukkitEntity(), itemstack.asBukkitCopy()); if (event.shouldKickPlayer()) // Purpur
                     server.scheduleOnMain(() -> this.disconnect("Book too large!", org.bukkit.event.player.PlayerKickEvent.Cause.ILLEGAL_ACTION)); // Paper - kick event cause
                     return;
                 }
@@ -1251,6 +1292,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
             if (byteTotal > byteAllowed) {
                 ServerGamePacketListenerImpl.LOGGER.warn(this.player.getScoreboardName() + " tried to send too large of a book. Book Size: " + byteTotal + " - Allowed:  "+ byteAllowed + " - Pages: " + pageList.size());
+                org.purpurmc.purpur.event.player.PlayerBookTooLargeEvent event = new org.purpurmc.purpur.event.player.PlayerBookTooLargeEvent(player.getBukkitEntity(), itemstack.asBukkitCopy()); if (event.shouldKickPlayer()) // Purpur
                 server.scheduleOnMain(() -> this.disconnect("Book too large!", org.bukkit.event.player.PlayerKickEvent.Cause.ILLEGAL_ACTION)); // Paper - kick event cause
                 return;
             }
@@ -1304,13 +1346,16 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                 itemstack1.setTag(nbttagcompound.copy());
             }
 
+            // Purpur start
+            boolean hasPerm = getCraftPlayer().hasPermission("purpur.book.color.edit") || getCraftPlayer().hasPermission("purpur.book.color.sign");
             itemstack1.addTagElement("author", StringTag.valueOf(this.player.getName().getString()));
             if (this.player.isTextFilteringEnabled()) {
-                itemstack1.addTagElement("title", StringTag.valueOf(title.filteredOrEmpty()));
+                itemstack1.addTagElement("title", StringTag.valueOf(color(title.filteredOrEmpty(), hasPerm)));
             } else {
-                itemstack1.addTagElement("filtered_title", StringTag.valueOf(title.filteredOrEmpty()));
-                itemstack1.addTagElement("title", StringTag.valueOf(title.raw()));
+                itemstack1.addTagElement("filtered_title", StringTag.valueOf(color(title.filteredOrEmpty(), hasPerm)));
+                itemstack1.addTagElement("title", StringTag.valueOf(color(title.raw(), hasPerm)));
             }
+            // Purpur end
 
             this.updateBookPages(pages, (s) -> {
                 return Component.Serializer.toJson(Component.literal(s));
@@ -1322,10 +1367,13 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     private void updateBookPages(List<FilteredText> list, UnaryOperator<String> unaryoperator, ItemStack itemstack, int slot, ItemStack handItem) { // CraftBukkit
         ListTag nbttaglist = new ListTag();
 
+        // Purpur start
+        boolean hasPerm = getCraftPlayer().hasPermission("purpur.book.color.edit");
         if (this.player.isTextFilteringEnabled()) {
-            Stream<StringTag> stream = list.stream().map((filteredtext) -> { // CraftBukkit - decompile error
-                return StringTag.valueOf((String) unaryoperator.apply(filteredtext.filteredOrEmpty()));
+            Stream<StringTag> stream = list.stream().map(s -> color(s.filteredOrEmpty(), hasPerm, false)).map((s) -> { // CraftBukkit - decompile error
+                return StringTag.valueOf((String) unaryoperator.apply(s));
             });
+            // Purpur end
 
             Objects.requireNonNull(nbttaglist);
             stream.forEach(nbttaglist::add);
@@ -1335,11 +1383,11 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
             for (int j = list.size(); i < j; ++i) {
                 FilteredText filteredtext = (FilteredText) list.get(i);
-                String s = filteredtext.raw();
+                String s = color(filteredtext.raw(), hasPerm, false); // Purpur
 
                 nbttaglist.add(StringTag.valueOf((String) unaryoperator.apply(s)));
                 if (filteredtext.isFiltered()) {
-                    nbttagcompound.putString(String.valueOf(i), (String) unaryoperator.apply(filteredtext.filteredOrEmpty()));
+                    nbttagcompound.putString(String.valueOf(i), (String) unaryoperator.apply((String) color(filteredtext.filteredOrEmpty(), hasPerm, false))); // Purpur
                 }
             }
 
@@ -1351,6 +1399,16 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         itemstack.addTagElement("pages", nbttaglist);
         this.player.getInventory().setItem(slot, CraftEventFactory.handleEditBookEvent(player, slot, handItem, itemstack)); // CraftBukkit // Paper - Don't ignore result (see other callsite for handleEditBookEvent)
     }
+
+    // Purpur start
+    private String color(String str, boolean hasPerm) {
+        return color(str, hasPerm, true);
+    }
+
+    private String color(String str, boolean hasPerm, boolean parseHex) {
+        return hasPerm ? org.bukkit.ChatColor.color(str, parseHex) : str;
+    }
+    // Purpur end
 
     @Override
     public void handleEntityTagQuery(ServerboundEntityTagQuery packet) {
@@ -1381,8 +1439,16 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     @Override
     public void handleMovePlayer(ServerboundMovePlayerPacket packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        if (ServerGamePacketListenerImpl.containsInvalidValues(packet.getX(0.0D), packet.getY(0.0D), packet.getZ(0.0D), packet.getYRot(0.0F), packet.getXRot(0.0F))) {
+        // Purpur start
+        boolean invalidX = Double.isNaN(packet.getX(0.0D));
+        boolean invalidY = Double.isNaN(packet.getY(0.0D));
+        boolean invalidZ = Double.isNaN(packet.getZ(0.0D));
+        boolean invalidYaw = !Floats.isFinite(packet.getYRot(0.0F));
+        boolean invalidPitch = !Floats.isFinite(packet.getXRot(0.0F));
+        if (invalidX || invalidY || invalidZ || invalidYaw || invalidPitch) {
             this.disconnect(Component.translatable("multiplayer.disconnect.invalid_player_movement"), org.bukkit.event.player.PlayerKickEvent.Cause.INVALID_PLAYER_MOVEMENT); // Paper - kick event cause
+            ServerGamePacketListenerImpl.LOGGER.warn(String.format("Disconnected on move player packet. Invalid data: x=%b, y=%b, z=%b, yaw=%b, pitch=%b", invalidX, invalidY, invalidZ, invalidYaw, invalidPitch));
+            // Purpur end
         } else {
             ServerLevel worldserver = this.player.getLevel();
 
@@ -1548,7 +1614,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
                             if (!this.player.isChangingDimension() && d11 > org.spigotmc.SpigotConfig.movedWronglyThreshold && !this.player.isSleeping() && !this.player.gameMode.isCreative() && this.player.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) { // Spigot
                                 flag2 = true; // Paper - diff on change, this should be moved wrongly
-                                ServerGamePacketListenerImpl.LOGGER.warn("{} moved wrongly!", this.player.getName().getString());
+                                ServerGamePacketListenerImpl.LOGGER.warn("{} moved wrongly!, ({})", this.player.getName().getString(), d11); // Purpur
                             }
 
                             this.player.absMoveTo(d0, d1, d2, f, f1);
@@ -1599,6 +1665,8 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                                     this.lastYaw = to.getYaw();
                                     this.lastPitch = to.getPitch();
 
+                                    if (!to.getWorld().getUID().equals(from.getWorld().getUID()) || to.getBlockX() != from.getBlockX() || to.getBlockY() != from.getBlockY() || to.getBlockZ() != from.getBlockZ() || to.getYaw() != from.getYaw() || to.getPitch() != from.getPitch()) this.player.resetLastActionTime(); // Purpur
+
                                     // Skip the first time we do this
                                     if (from.getX() != Double.MAX_VALUE) {
                                         Location oldTo = to.clone();
@@ -1638,6 +1706,13 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                                     this.player.resetFallDistance();
                                 }
 
+                                // Purpur Start
+                                if (this.player.level.purpurConfig.dontRunWithScissors && this.player.isSprinting() && !(this.player.level.purpurConfig.ignoreScissorsInWater && this.player.isInWater()) && !(this.player.level.purpurConfig.ignoreScissorsInLava && this.player.isInLava()) && (isScissor(this.player.getItemInHand(InteractionHand.MAIN_HAND)) || isScissor(this.player.getItemInHand(InteractionHand.OFF_HAND))) && (int) (Math.random() * 10) == 0) {
+                                    this.player.hurt(this.player.damageSources().magic(), (float) this.player.level.purpurConfig.scissorsRunningDamage);
+                                    if (!org.purpurmc.purpur.PurpurConfig.dontRunWithScissors.isBlank()) this.player.sendActionBarMessage(org.purpurmc.purpur.PurpurConfig.dontRunWithScissors);
+                                }
+                                // Purpur End
+
                                 this.player.checkMovementStatistics(this.player.getX() - d3, this.player.getY() - d4, this.player.getZ() - d5);
                                 this.lastGoodX = this.player.getX();
                                 this.lastGoodY = this.player.getY();
@@ -1670,6 +1745,12 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         }
     }
     // Paper end - optimise out extra getCubes
+
+    // Purpur start
+    public boolean isScissor(ItemStack stack) {
+        return stack.is(Items.SHEARS) && (stack.getTag() == null || stack.getTag().getInt("CustomModelData") == 0);
+    }
+    // Purpur end
 
     private boolean isPlayerCollidingWithAnythingNew(LevelReader world, AABB box) {
         Iterable<VoxelShape> iterable = world.getCollisions(this.player, this.player.getBoundingBox().deflate(9.999999747378752E-6D));
@@ -2015,6 +2096,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
             boolean cancelled;
             if (movingobjectposition == null || movingobjectposition.getType() != HitResult.Type.BLOCK) {
+                if (this.player.gameMode.shiftClickMended(itemstack)) return; // Purpur
                 org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.RIGHT_CLICK_AIR, itemstack, enumhand);
                 cancelled = event.useItemInHand() == Event.Result.DENY;
             } else {
@@ -2068,12 +2150,21 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     @Override
     public void handleResourcePackResponse(ServerboundResourcePackPacket packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+        // Purpur start
+        if (player.level.purpurConfig.playerInvulnerableWhileAcceptingResourcePack && !this.player.acceptingResourcePack) {
+            ServerGamePacketListenerImpl.LOGGER.info("Disconnecting {} due to resource pack packet exploitation attempt", this.player.getName());
+            this.disconnect(Component.translatable("multiplayer.texturePrompt.failure.line1"), org.bukkit.event.player.PlayerKickEvent.Cause.RESOURCE_PACK_REJECTION); // "Server resource pack couldn't be applied"
+            return;
+        }
+        // Purpur end
         if (packet.getAction() == ServerboundResourcePackPacket.Action.DECLINED && this.server.isResourcePackRequired()) {
             ServerGamePacketListenerImpl.LOGGER.info("Disconnecting {} due to resource pack rejection", this.player.getGameProfile().getName()); // Paper - Don't print component in resource pack rejection message
             this.disconnect(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"), org.bukkit.event.player.PlayerKickEvent.Cause.RESOURCE_PACK_REJECTION); // Paper - add cause
         }
         // Paper start
         PlayerResourcePackStatusEvent.Status packStatus = PlayerResourcePackStatusEvent.Status.values()[packet.action.ordinal()];
+        if (player.level.purpurConfig.playerInvulnerableWhileAcceptingResourcePack) player.setFrozen(packStatus == PlayerResourcePackStatusEvent.Status.ACCEPTED); // Purpur
+        this.player.acceptingResourcePack = packStatus == PlayerResourcePackStatusEvent.Status.ACCEPTED; // Purpur
         player.getBukkitEntity().setResourcePackStatus(packStatus);
         this.cserver.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(this.getCraftPlayer(), packStatus)); // CraftBukkit
         // Paper end
@@ -2370,7 +2461,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         do {
             instant1 = (Instant) this.lastChatTimeStamp.get();
             if (timestamp.isBefore(instant1)) {
-                return false;
+                return !org.purpurmc.purpur.PurpurConfig.kickForOutOfOrderChat; // Purpur
             }
         } while (!this.lastChatTimeStamp.compareAndSet(instant1, timestamp));
 
@@ -2507,7 +2598,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             }
         }
         // Paper End
-        co.aikar.timings.MinecraftTimings.playerCommandTimer.startTiming(); // Paper
+        //co.aikar.timings.MinecraftTimings.playerCommandTimer.startTiming(); // Paper // Purpur
         if ( org.spigotmc.SpigotConfig.logCommands ) // Spigot
         this.LOGGER.info(this.player.getScoreboardName() + " issued server command: " + s);
 
@@ -2517,7 +2608,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         this.cserver.getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {
-            co.aikar.timings.MinecraftTimings.playerCommandTimer.stopTiming(); // Paper
+            //co.aikar.timings.MinecraftTimings.playerCommandTimer.stopTiming(); // Paper // Purpur
             return;
         }
 
@@ -2530,7 +2621,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             java.util.logging.Logger.getLogger(ServerGamePacketListenerImpl.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
             return;
         } finally {
-            co.aikar.timings.MinecraftTimings.playerCommandTimer.stopTiming(); // Paper
+            //co.aikar.timings.MinecraftTimings.playerCommandTimer.stopTiming(); // Paper // Purpur
         }
     }
     // CraftBukkit end
@@ -2796,6 +2887,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             AABB axisalignedbb = entity.getBoundingBox();
 
             if (axisalignedbb.distanceToSqr(this.player.getEyePosition()) < ServerGamePacketListenerImpl.MAX_INTERACTION_DISTANCE) {
+                if (entity instanceof Mob mob) mob.ticksSinceLastInteraction = 0; // Purpur
                 packet.dispatch(new ServerboundInteractPacket.Handler() {
                     private void performInteraction(InteractionHand enumhand, ServerGamePacketListenerImpl.EntityInteraction playerconnection_a, PlayerInteractEntityEvent event) { // CraftBukkit
                         ItemStack itemstack = ServerGamePacketListenerImpl.this.player.getItemInHand(enumhand);
@@ -2808,6 +2900,8 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                             Item origItem = ServerGamePacketListenerImpl.this.player.getInventory().getSelected() == null ? null : ServerGamePacketListenerImpl.this.player.getInventory().getSelected().getItem();
 
                             ServerGamePacketListenerImpl.this.cserver.getPluginManager().callEvent(event);
+
+                            player.processClick(enumhand); // Purpur
 
                             // Entity in bucket - SPIGOT-4048 and SPIGOT-6859a
                             if ((entity instanceof Bucketable && entity instanceof LivingEntity && origItem != null && origItem.asItem() == Items.WATER_BUCKET) && (event.isCancelled() || ServerGamePacketListenerImpl.this.player.getInventory().getSelected() == null || ServerGamePacketListenerImpl.this.player.getInventory().getSelected().getItem() != origItem)) {
@@ -3360,6 +3454,12 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                     }
                 }
             }
+            // Purpur start
+            if (org.purpurmc.purpur.PurpurConfig.fixNetworkSerializedItemsInCreative) {
+                var tag = itemstack.getTagElement("Purpur.OriginalItem");
+                if (tag != null) itemstack = ItemStack.of(tag);
+            }
+            // Purpur end
 
             boolean flag1 = packet.getSlotNum() >= 1 && packet.getSlotNum() <= 45;
             boolean flag2 = itemstack.isEmpty() || itemstack.getDamageValue() >= 0 && itemstack.getCount() <= 64 && !itemstack.isEmpty();
@@ -3466,11 +3566,17 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
             for (int i = 0; i < signText.size(); ++i) {
                 FilteredText filteredtext = (FilteredText) signText.get(i);
 
-                if (this.player.isTextFilteringEnabled()) {
-                    lines.add(net.kyori.adventure.text.Component.text(SharedConstants.filterText(filteredtext.filteredOrEmpty()))); // Paper - adventure
+                // Purpur start
+                String line = SharedConstants.filterText(this.player.isTextFilteringEnabled() ? filteredtext.filteredOrEmpty() : filteredtext.raw());
+                if (worldserver.purpurConfig.signAllowColors) {
+                    if (player.hasPermission("purpur.sign.color")) line = line.replaceAll("(?i)&([0-9a-fr])", "\u00a7$1");
+                    if (player.hasPermission("purpur.sign.style")) line = line.replaceAll("(?i)&([l-or])", "\u00a7$1");
+                    if (player.hasPermission("purpur.sign.magic")) line = line.replaceAll("(?i)&([kr])", "\u00a7$1");
+                    lines.add(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(line));
                 } else {
-                    lines.add(net.kyori.adventure.text.Component.text(SharedConstants.filterText(filteredtext.raw()))); // Paper - adventure
+                    lines.add(net.kyori.adventure.text.Component.text(line));
                 }
+                // Purpur end
             }
             SignChangeEvent event = new SignChangeEvent((org.bukkit.craftbukkit.block.CraftBlock) player.getWorld().getBlockAt(x, y, z), this.player.getBukkitEntity(), lines);
             this.cserver.getPluginManager().callEvent(event);
@@ -3492,6 +3598,16 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
     @Override
     public void handleKeepAlive(ServerboundKeepAlivePacket packet) {
+        // Purpur start
+        if (org.purpurmc.purpur.PurpurConfig.useAlternateKeepAlive) {
+            long id = packet.getId();
+            if (keepAlives.size() > 0 && keepAlives.contains(id)) {
+                int ping = (int) (Util.getMillis() - id);
+                player.latency = (player.latency * 3 + ping) / 4;
+                keepAlives.clear(); // we got a valid response, lets roll with it and forget the rest
+            }
+        } else
+        // Purpur end
         //PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel()); // CraftBukkit // Paper - This shouldn't be on the main thread
         if (this.keepAlivePending && packet.getId() == this.keepAliveChallenge) {
             int i = (int) (Util.getMillis() - this.keepAliveTime);
@@ -3542,6 +3658,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
     private static final ResourceLocation CUSTOM_UNREGISTER = new ResourceLocation("unregister");
 
     private static final ResourceLocation MINECRAFT_BRAND = new ResourceLocation("brand"); // Paper - Brand support
+    private static final ResourceLocation PURPUR_CLIENT = new ResourceLocation("purpur", "client"); // Purpur
 
     @Override
     public void handleCustomPayload(ServerboundCustomPayloadPacket packet) {
@@ -3566,6 +3683,13 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                 ServerGamePacketListenerImpl.LOGGER.error("Couldn\'t unregister custom payload", ex);
                 this.disconnect("Invalid payload UNREGISTER!", org.bukkit.event.player.PlayerKickEvent.Cause.INVALID_PAYLOAD); // Paper - kick event cause
             }
+        // Purpur start
+        } else if (packet.identifier.equals(PURPUR_CLIENT)) {
+            try {
+                player.purpurClient = true;
+            } catch (Exception ignore) {
+            }
+        // Purpur end
         } else {
             try {
                 byte[] data = new byte[packet.data.readableBytes()];

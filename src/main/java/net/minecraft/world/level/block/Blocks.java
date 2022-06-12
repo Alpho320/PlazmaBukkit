@@ -1087,8 +1087,8 @@ public class Blocks {
     public static final Block CAVE_VINES = register("cave_vines", new CaveVinesBlock(BlockBehaviour.Properties.of(Material.PLANT).randomTicks().noCollission().lightLevel(CaveVines.emission(14)).instabreak().sound(SoundType.CAVE_VINES)));
     public static final Block CAVE_VINES_PLANT = register("cave_vines_plant", new CaveVinesPlantBlock(BlockBehaviour.Properties.of(Material.PLANT).noCollission().lightLevel(CaveVines.emission(14)).instabreak().sound(SoundType.CAVE_VINES)));
     public static final Block SPORE_BLOSSOM = register("spore_blossom", new SporeBlossomBlock(BlockBehaviour.Properties.of(Material.PLANT).instabreak().noCollission().sound(SoundType.SPORE_BLOSSOM)));
-    public static final Block AZALEA = register("azalea", new AzaleaBlock(BlockBehaviour.Properties.of(Material.PLANT).instabreak().sound(SoundType.AZALEA).noOcclusion()));
-    public static final Block FLOWERING_AZALEA = register("flowering_azalea", new AzaleaBlock(BlockBehaviour.Properties.of(Material.PLANT).instabreak().sound(SoundType.FLOWERING_AZALEA).noOcclusion()));
+    public static final Block AZALEA = register("azalea", new AzaleaBlock(BlockBehaviour.Properties.of(Material.PLANT).randomTicks().instabreak().sound(SoundType.AZALEA).noOcclusion())); // Purpur
+    public static final Block FLOWERING_AZALEA = register("flowering_azalea", new AzaleaBlock(BlockBehaviour.Properties.of(Material.PLANT).randomTicks().instabreak().sound(SoundType.FLOWERING_AZALEA).noOcclusion())); // Purpur
     public static final Block MOSS_CARPET = register("moss_carpet", new CarpetBlock(BlockBehaviour.Properties.of(Material.PLANT, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS_CARPET)));
     public static final Block PINK_PETALS = register("pink_petals", new PinkPetalsBlock(BlockBehaviour.Properties.of(Material.PLANT).noCollission().sound(SoundType.PINK_PETALS).requiredFeatures(FeatureFlags.UPDATE_1_20)));
     public static final Block MOSS_BLOCK = register("moss_block", new MossBlock(BlockBehaviour.Properties.of(Material.MOSS, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS)));
@@ -1153,7 +1153,7 @@ public class Blocks {
     }
 
     private static Boolean ocelotOrParrot(BlockState state, BlockGetter world, BlockPos pos, EntityType<?> type) {
-        return (boolean)type == EntityType.OCELOT || type == EntityType.PARROT;
+        return type == EntityType.OCELOT || type == EntityType.PARROT; // Purpur - decompile error
     }
 
     private static BedBlock bed(DyeColor color) {

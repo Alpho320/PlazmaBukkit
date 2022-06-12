@@ -39,6 +39,7 @@ public abstract class Animal extends AgeableMob {
     @Nullable
     public UUID loveCause;
     public ItemStack breedItem; // CraftBukkit - Add breedItem variable
+    public abstract int getPurpurBreedTime(); // Purpur
 
     protected Animal(EntityType<? extends Animal> type, Level world) {
         super(type, world);
@@ -150,7 +151,7 @@ public abstract class Animal extends AgeableMob {
         if (this.isFood(itemstack)) {
             int i = this.getAge();
 
-            if (!this.level.isClientSide && i == 0 && this.canFallInLove()) {
+            if (!this.level.isClientSide && i == 0 && this.canFallInLove() && (this.level.purpurConfig.animalBreedingCooldownSeconds <= 0 || !this.level.hasBreedingCooldown(player.getUUID(), this.getClass()))) { // Purpur
                 this.usePlayerItem(player, hand, itemstack);
                 this.setInLove(player);
                 return InteractionResult.SUCCESS;
@@ -237,6 +238,14 @@ public abstract class Animal extends AgeableMob {
             if (entityplayer == null && other.getLoveCause() != null) {
                 entityplayer = other.getLoveCause();
             }
+            // Purpur start
+            if (entityplayer != null && world.purpurConfig.animalBreedingCooldownSeconds > 0) {
+                if (world.hasBreedingCooldown(entityplayer.getUUID(), this.getClass())) {
+                    return;
+                }
+                world.addBreedingCooldown(entityplayer.getUUID(), this.getClass());
+            }
+            // Purpur end
             // CraftBukkit start - call EntityBreedEvent
             entityageable.setBaby(true);
             entityageable.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
@@ -253,8 +262,10 @@ public abstract class Animal extends AgeableMob {
                 CriteriaTriggers.BRED_ANIMALS.trigger(entityplayer, this, other, entityageable);
             }
 
-            this.setAge(6000);
-            other.setAge(6000);
+            // Purpur start
+            this.setAge(this.getPurpurBreedTime());
+            other.setAge(other.getPurpurBreedTime());
+            // Purpur end
             this.resetLove();
             other.resetLove();
             world.addFreshEntityWithPassengers(entityageable, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason

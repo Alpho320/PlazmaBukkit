@@ -65,6 +65,7 @@ import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
@@ -133,6 +134,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
     private BlockPos restrictCenter;
     private float restrictRadius;
 
+    public int ticksSinceLastInteraction; // Purpur
     public boolean aware = true; // CraftBukkit
 
     protected Mob(EntityType<? extends Mob> type, Level world) {
@@ -146,8 +148,8 @@ public abstract class Mob extends LivingEntity implements Targeting {
         this.restrictRadius = -1.0F;
         this.goalSelector = new GoalSelector(world.getProfilerSupplier());
         this.targetSelector = new GoalSelector(world.getProfilerSupplier());
-        this.lookControl = new LookControl(this);
-        this.moveControl = new MoveControl(this);
+        this.lookControl = new org.purpurmc.purpur.controller.LookControllerWASD(this); // Purpur
+        this.moveControl = new org.purpurmc.purpur.controller.MoveControllerWASD(this); // Purpur
         this.jumpControl = new JumpControl(this);
         this.bodyRotationControl = this.createBodyControl();
         this.navigation = this.createNavigation(world);
@@ -319,6 +321,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
                 entityliving = null;
             }
         }
+        if (entityliving instanceof ServerPlayer) this.ticksSinceLastInteraction = 0; // Purpur
         this.target = entityliving;
         return true;
         // CraftBukkit end
@@ -359,14 +362,34 @@ public abstract class Mob extends LivingEntity implements Targeting {
     @Override
     public void baseTick() {
         super.baseTick();
-        this.level.getProfiler().push("mobBaseTick");
+        //this.level.getProfiler().push("mobBaseTick"); // Purpur
         if (this.isAlive() && this.random.nextInt(1000) < this.ambientSoundTime++) {
             this.resetAmbientSoundTime();
             this.playAmbientSound();
         }
 
-        this.level.getProfiler().pop();
+        incrementTicksSinceLastInteraction(); // Purpur
+        //this.level.getProfiler().pop(); // Purpur
     }
+
+    // Purpur start
+    private void incrementTicksSinceLastInteraction() {
+        ++this.ticksSinceLastInteraction;
+        if (getRider() != null) {
+            this.ticksSinceLastInteraction = 0;
+            return;
+        }
+        if (this.level.purpurConfig.entityLifeSpan <= 0) {
+            return; // feature disabled
+        }
+        if (!this.removeWhenFarAway(0) || isPersistenceRequired() || requiresCustomPersistence() || hasCustomName()) {
+            return; // mob persistent
+        }
+        if (this.ticksSinceLastInteraction > this.level.purpurConfig.entityLifeSpan) {
+            this.discard();
+        }
+    }
+    // Purpur end
 
     @Override
     protected void playHurtSound(DamageSource source) {
@@ -557,6 +580,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
         }
 
         nbt.putBoolean("Bukkit.Aware", this.aware); // CraftBukkit
+        nbt.putInt("Purpur.ticksSinceLastInteraction", this.ticksSinceLastInteraction); // Purpur
     }
 
     @Override
@@ -627,6 +651,11 @@ public abstract class Mob extends LivingEntity implements Targeting {
             this.aware = nbt.getBoolean("Bukkit.Aware");
         }
         // CraftBukkit end
+        // Purpur start
+        if (nbt.contains("Purpur.ticksSinceLastInteraction")) {
+            this.ticksSinceLastInteraction = nbt.getInt("Purpur.ticksSinceLastInteraction");
+        }
+        // Purpur end
     }
 
     @Override
@@ -670,8 +699,8 @@ public abstract class Mob extends LivingEntity implements Targeting {
     @Override
     public void aiStep() {
         super.aiStep();
-        this.level.getProfiler().push("looting");
-        if (!this.level.isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+        //this.level.getProfiler().push("looting"); // Purpur
+        if (!this.level.isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && (this.level.purpurConfig.entitiesPickUpLootBypassMobGriefing || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
             Vec3i baseblockposition = this.getPickupReach();
             List<ItemEntity> list = this.level.getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate((double) baseblockposition.getX(), (double) baseblockposition.getY(), (double) baseblockposition.getZ()));
             Iterator iterator = list.iterator();
@@ -690,7 +719,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
             }
         }
 
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
     }
 
     protected Vec3i getPickupReach() {
@@ -902,46 +931,46 @@ public abstract class Mob extends LivingEntity implements Targeting {
             return;
         }
         // Paper end
-        this.level.getProfiler().push("sensing");
+        //this.level.getProfiler().push("sensing"); // Purpur
         this.sensing.tick();
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         int i = this.level.getServer().getTickCount() + this.getId();
 
         if (i % 2 != 0 && this.tickCount > 1) {
-            this.level.getProfiler().push("targetSelector");
+            //this.level.getProfiler().push("targetSelector"); // Purpur
             if (this.targetSelector.inactiveTick(this.activatedPriority, false)) // Pufferfish - use this to alternate ticking
             this.targetSelector.tickRunningGoals(false);
-            this.level.getProfiler().pop();
-            this.level.getProfiler().push("goalSelector");
+            //this.level.getProfiler().pop(); // Purpur
+            //this.level.getProfiler().push("goalSelector"); // Purpur
             if (this.goalSelector.inactiveTick(this.activatedPriority, false)) // Pufferfish - use this to alternate ticking
             this.goalSelector.tickRunningGoals(false);
-            this.level.getProfiler().pop();
+            //this.level.getProfiler().pop(); // Purpur
         } else {
-            this.level.getProfiler().push("targetSelector");
+            //this.level.getProfiler().push("targetSelector"); // Purpur
             if (this.targetSelector.inactiveTick(this.activatedPriority, false)) // Pufferfish - use this to alternate ticking
             this.targetSelector.tick();
-            this.level.getProfiler().pop();
-            this.level.getProfiler().push("goalSelector");
+            //this.level.getProfiler().pop(); // Purpur
+            //this.level.getProfiler().push("goalSelector"); // Purpur
             if (this.goalSelector.inactiveTick(this.activatedPriority, false)) // Pufferfish - use this to alternate ticking
             this.goalSelector.tick();
-            this.level.getProfiler().pop();
+            //this.level.getProfiler().pop(); // Purpur
         }
 
-        this.level.getProfiler().push("navigation");
+        //this.level.getProfiler().push("navigation"); // Purpur
         this.navigation.tick();
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("mob tick");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("mob tick"); // Purpur
         this.customServerAiStep();
-        this.level.getProfiler().pop();
-        this.level.getProfiler().push("controls");
-        this.level.getProfiler().push("move");
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().push("controls"); // Purpur
+        //this.level.getProfiler().push("move"); // Purpur
         this.moveControl.tick();
-        this.level.getProfiler().popPush("look");
+        //this.level.getProfiler().popPush("look"); // Purpur
         this.lookControl.tick();
-        this.level.getProfiler().popPush("jump");
+        //this.level.getProfiler().popPush("jump"); // Purpur
         this.jumpControl.tick();
-        this.level.getProfiler().pop();
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
+        //this.level.getProfiler().pop(); // Purpur
         this.sendDebugPackets();
     }
 
@@ -1163,6 +1192,12 @@ public abstract class Mob extends LivingEntity implements Targeting {
 
     }
 
+    // Purpur start
+    public static @Nullable EquipmentSlot getSlotForDispenser(ItemStack itemstack) {
+        return EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BINDING_CURSE, itemstack) > 0 ? null : getEquipmentSlotForItem(itemstack);
+    }
+    // Purpur end
+
     @Nullable
     public static Item getEquipmentForSlot(EquipmentSlot equipmentSlot, int equipmentLevel) {
         switch (equipmentSlot) {
@@ -1257,7 +1292,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
         RandomSource randomsource = world.getRandom();
 
         this.getAttribute(Attributes.FOLLOW_RANGE).addPermanentModifier(new AttributeModifier("Random spawn bonus", randomsource.triangle(0.0D, 0.11485000000000001D), AttributeModifier.Operation.MULTIPLY_BASE));
-        if (randomsource.nextFloat() < 0.05F) {
+        if (randomsource.nextFloat() < world.getLevel().purpurConfig.entityLeftHandedChance) { // Purpur
             this.setLeftHanded(true);
         } else {
             this.setLeftHanded(false);
@@ -1305,6 +1340,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
         if (!this.isAlive()) {
             return InteractionResult.PASS;
         } else if (this.getLeashHolder() == player) {
+            if (hand == InteractionHand.OFF_HAND && (level.purpurConfig.villagerCanBeLeashed || level.purpurConfig.wanderingTraderCanBeLeashed) && this instanceof net.minecraft.world.entity.npc.AbstractVillager) return InteractionResult.CONSUME; // Purpur
             // CraftBukkit start - fire PlayerUnleashEntityEvent
             // Paper start - drop leash variable
             org.bukkit.event.player.PlayerUnleashEntityEvent event = CraftEventFactory.callPlayerUnleashEntityEvent(this, player, hand, !player.getAbilities().instabuild);
@@ -1378,7 +1414,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
     protected void onOffspringSpawnedFromEgg(Player player, Mob child) {}
 
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-        return InteractionResult.PASS;
+        return tryRide(player, hand); // Purpur
     }
 
     public boolean isWithinRestriction() {
@@ -1684,6 +1720,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
             this.setLastHurtMob(target);
         }
 
+        if (target instanceof ServerPlayer) this.ticksSinceLastInteraction = 0; // Purpur
         return flag;
     }
 
@@ -1700,17 +1737,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
     }
 
     public boolean isSunBurnTick() {
-        if (this.level.isDay() && !this.level.isClientSide) {
-            float f = this.getLightLevelDependentMagicValue();
-            BlockPos blockposition = BlockPos.containing(this.getX(), this.getEyeY(), this.getZ());
-            boolean flag = this.isInWaterRainOrBubble() || this.isInPowderSnow || this.wasInPowderSnow;
-
-            if (f > 0.5F && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F && !flag && this.level.canSeeSky(blockposition)) {
-                return true;
-            }
-        }
-
-        return false;
+        return super.isSunBurnTick(); // Purpur - moved contents to Entity
     }
 
     @Override
@@ -1754,4 +1781,56 @@ public abstract class Mob extends LivingEntity implements Targeting {
 
         return itemmonsteregg == null ? null : new ItemStack(itemmonsteregg);
     }
+
+    // Purpur start
+    public double getMaxY() {
+        return level.getHeight();
+    }
+
+    public InteractionResult tryRide(Player player, InteractionHand hand) {
+        return tryRide(player, hand, InteractionResult.PASS);
+    }
+
+    public InteractionResult tryRide(Player player, InteractionHand hand, InteractionResult result) {
+        if (!isRidable()) {
+            return result;
+        }
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        if (!player.getItemInHand(hand).isEmpty()) {
+            return InteractionResult.PASS;
+        }
+        if (!passengers.isEmpty() || player.isPassenger()) {
+            return InteractionResult.PASS;
+        }
+        if (this instanceof TamableAnimal tamable) {
+            if (tamable.isTame() && !tamable.isOwnedBy(player)) {
+                return InteractionResult.PASS;
+            }
+            if (!tamable.isTame() && !level.purpurConfig.untamedTamablesAreRidable) {
+                return InteractionResult.PASS;
+            }
+        }
+        if (this instanceof AgeableMob ageable) {
+            if (ageable.isBaby() && !level.purpurConfig.babiesAreRidable) {
+                return InteractionResult.PASS;
+            }
+        }
+        if (!player.getBukkitEntity().hasPermission("allow.ride." + net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(getType()).getPath())) {
+            player.sendMiniMessage(org.purpurmc.purpur.PurpurConfig.cannotRideMob);
+            return InteractionResult.PASS;
+        }
+        player.setYRot(this.getYRot());
+        player.setXRot(this.getXRot());
+        if (player.startRiding(this)) {
+            return InteractionResult.SUCCESS;
+        } else {
+            return InteractionResult.PASS;
+        }
+    }
+    // Purpur end
 }

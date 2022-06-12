@@ -431,16 +431,16 @@ public class ServerChunkCache extends ChunkSource {
                 return ifLoaded;
             }
             // Paper end
-            ProfilerFiller gameprofilerfiller = this.level.getProfiler();
+            //ProfilerFiller gameprofilerfiller = this.level.getProfiler(); // Purpur
 
-            gameprofilerfiller.incrementCounter("getChunk");
+            //gameprofilerfiller.incrementCounter("getChunk"); // Purpur
             long k = ChunkPos.asLong(x, z);
 
             ChunkAccess ichunkaccess;
 
             // Paper - rewrite chunk system - there are no correct callbacks to remove items from cache in the new chunk system
 
-            gameprofilerfiller.incrementCounter("getChunkCacheMiss");
+            //gameprofilerfiller.incrementCounter("getChunkCacheMiss"); // Purpur
             CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> completablefuture = this.getChunkFutureMainThread(x, z, leastStatus, create, true); // Paper
             ServerChunkCache.MainThreadExecutor chunkproviderserver_b = this.mainThreadProcessor;
 
@@ -450,10 +450,10 @@ public class ServerChunkCache extends ChunkSource {
                 io.papermc.paper.chunk.system.scheduling.ChunkTaskScheduler.pushChunkWait(this.level, x1, z1); // Paper - rewrite chunk system
                 // Paper end
                 com.destroystokyo.paper.io.SyncLoadFinder.logSyncLoad(this.level, x1, z1); // Paper - sync load info
-                this.level.timings.syncChunkLoad.startTiming(); // Paper
+                //this.level.timings.syncChunkLoad.startTiming(); // Paper // Purpur
             chunkproviderserver_b.managedBlock(completablefuture::isDone);
                 io.papermc.paper.chunk.system.scheduling.ChunkTaskScheduler.popChunkWait(); // Paper - async chunk debug  // Paper - rewrite chunk system
-                this.level.timings.syncChunkLoad.stopTiming(); // Paper
+                //this.level.timings.syncChunkLoad.stopTiming(); // Paper // Purpur
             } // Paper
             ichunkaccess = (ChunkAccess) ((Either) completablefuture.join()).map((ichunkaccess1) -> {
                 return ichunkaccess1;
@@ -601,17 +601,17 @@ public class ServerChunkCache extends ChunkSource {
 
     public void save(boolean flush) {
         this.runDistanceManagerUpdates();
-        try (co.aikar.timings.Timing timed = level.timings.chunkSaveData.startTiming()) { // Paper - Timings
+        //try (co.aikar.timings.Timing timed = level.timings.chunkSaveData.startTiming()) { // Paper - Timings // Purpur
         this.chunkMap.saveAllChunks(flush);
-        } // Paper - Timings
+        //} // Paper - Timings // Purpur
     }
 
     // Paper start - duplicate save, but call incremental
     public void saveIncrementally() {
         this.runDistanceManagerUpdates();
-        try (co.aikar.timings.Timing timed = level.timings.chunkSaveData.startTiming()) { // Paper - Timings
+        //try (co.aikar.timings.Timing timed = level.timings.chunkSaveData.startTiming()) { // Paper - Timings // Purpur
             this.chunkMap.saveIncrementally();
-        } // Paper - Timings
+        //} // Paper - Timings // Purpur
     }
     // Paper end
 
@@ -628,36 +628,36 @@ public class ServerChunkCache extends ChunkSource {
     // CraftBukkit start - modelled on below
     public void purgeUnload() {
         if (true) return; // Paper - tickets will be removed later, this behavior isn't really well accounted for by the chunk system
-        this.level.getProfiler().push("purge");
+        //this.level.getProfiler().push("purge"); // Purpur
         this.distanceManager.purgeStaleTickets();
         this.runDistanceManagerUpdates();
-        this.level.getProfiler().popPush("unload");
+        //this.level.getProfiler().popPush("unload"); // Purpur
         this.chunkMap.tick(() -> true);
-        this.level.getProfiler().pop();
+        //this.level.getProfiler().pop(); // Purpur
         this.clearCache();
     }
     // CraftBukkit end
 
     @Override
     public void tick(BooleanSupplier shouldKeepTicking, boolean tickChunks) {
-        this.level.getProfiler().push("purge");
-        this.level.timings.doChunkMap.startTiming(); // Spigot
+        //this.level.getProfiler().push("purge"); // Purpur
+        //this.level.timings.doChunkMap.startTiming(); // Spigot // Purpur
         this.distanceManager.purgeStaleTickets();
         this.runDistanceManagerUpdates();
-        this.level.timings.doChunkMap.stopTiming(); // Spigot
-        this.level.getProfiler().popPush("chunks");
+        //this.level.timings.doChunkMap.stopTiming(); // Spigot // Purpur
+        //this.level.getProfiler().popPush("chunks"); // Purpur
         if (tickChunks) {
-            this.level.timings.chunks.startTiming(); // Paper - timings
+            //this.level.timings.chunks.startTiming(); // Paper - timings // Purpur
             this.chunkMap.playerChunkManager.tick(); // Paper - this is mostly is to account for view distance changes
             this.tickChunks();
-            this.level.timings.chunks.stopTiming(); // Paper - timings
+            //this.level.timings.chunks.stopTiming(); // Paper - timings // Purpur
         }
 
-        this.level.timings.doChunkUnload.startTiming(); // Spigot
-        this.level.getProfiler().popPush("unload");
+        //this.level.timings.doChunkUnload.startTiming(); // Spigot // Purpur
+        //this.level.getProfiler().popPush("unload"); // Purpur
         this.chunkMap.tick(shouldKeepTicking);
-        this.level.timings.doChunkUnload.stopTiming(); // Spigot
-        this.level.getProfiler().pop();
+        //this.level.timings.doChunkUnload.stopTiming(); // Spigot // Purpur
+        //this.level.getProfiler().pop(); // Purpur
         this.clearCache();
     }
 
@@ -703,15 +703,15 @@ public class ServerChunkCache extends ChunkSource {
             }
             // Paper end - optimize isOutisdeRange
             LevelData worlddata = this.level.getLevelData();
-            ProfilerFiller gameprofilerfiller = this.level.getProfiler();
+            //ProfilerFiller gameprofilerfiller = this.level.getProfiler(); // Purpur
 
-            gameprofilerfiller.push("pollingChunks");
+            //gameprofilerfiller.push("pollingChunks"); // Purpur
             this.level.resetIceAndSnowTick(); // Pufferfish - reset ice & snow tick random
             int k = this.level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
             boolean flag1 = level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) != 0L && worlddata.getGameTime() % level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) == 0L; // CraftBukkit
 
-            gameprofilerfiller.push("naturalSpawnCount");
-            this.level.timings.countNaturalMobs.startTiming(); // Paper - timings
+            //gameprofilerfiller.push("naturalSpawnCount"); // Purpur
+            //this.level.timings.countNaturalMobs.startTiming(); // Paper - timings // Purpur
             int l = this.distanceManager.getNaturalSpawnChunkCount();
             // Paper start - per player mob spawning
             NaturalSpawner.SpawnState spawnercreature_d; // moved down
@@ -732,16 +732,16 @@ public class ServerChunkCache extends ChunkSource {
                 // Pufferfish end
             }
             // Paper end
-            this.level.timings.countNaturalMobs.stopTiming(); // Paper - timings
+            //this.level.timings.countNaturalMobs.stopTiming(); // Paper - timings // Purpur
 
             //this.lastSpawnState = spawnercreature_d; // Pufferfish - this is managed asynchronously
-            gameprofilerfiller.popPush("filteringLoadedChunks");
+            //gameprofilerfiller.popPush("filteringLoadedChunks"); // Purpur
             // Paper - moved down
-            this.level.timings.chunkTicks.startTiming(); // Paper
+            //this.level.timings.chunkTicks.startTiming(); // Paper // Purpur
 
             // Paper - moved down
 
-            gameprofilerfiller.popPush("spawnAndTick");
+            //gameprofilerfiller.popPush("spawnAndTick"); // Purpur
             boolean flag2 = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && !this.level.players().isEmpty(); // CraftBukkit
 
             // Paper - only shuffle if per-player mob spawning is disabled
@@ -791,17 +791,17 @@ public class ServerChunkCache extends ChunkSource {
                 }
             }
             // Paper end - optimise chunk tick iteration
-            this.level.timings.chunkTicks.stopTiming(); // Paper
-            gameprofilerfiller.popPush("customSpawners");
+            //this.level.timings.chunkTicks.stopTiming(); // Paper // Purpur
+            //gameprofilerfiller.popPush("customSpawners"); // Purpur
             if (flag2) {
-                try (co.aikar.timings.Timing ignored = this.level.timings.miscMobSpawning.startTiming()) { // Paper - timings
+                //try (co.aikar.timings.Timing ignored = this.level.timings.miscMobSpawning.startTiming()) { // Paper - timings // Purpur
                 this.level.tickCustomSpawners(this.spawnEnemies, this.spawnFriendlies);
-                } // Paper - timings
+                //} // Paper - timings // Purpur
             }
-            gameprofilerfiller.pop();
+            //gameprofilerfiller.pop(); // Purpur
             // Paper start - use set of chunks requiring updates, rather than iterating every single one loaded
-            gameprofilerfiller.popPush("broadcast");
-            this.level.timings.broadcastChunkUpdates.startTiming(); // Paper - timing
+            //gameprofilerfiller.popPush("broadcast"); // Purpur
+            //this.level.timings.broadcastChunkUpdates.startTiming(); // Paper - timing // Purpur
             if (!this.chunkMap.needsChangeBroadcasting.isEmpty()) {
                 ReferenceOpenHashSet<ChunkHolder> copy = this.chunkMap.needsChangeBroadcasting.clone();
                 this.chunkMap.needsChangeBroadcasting.clear();
@@ -813,8 +813,8 @@ public class ServerChunkCache extends ChunkSource {
                     }
                 }
             }
-            this.level.timings.broadcastChunkUpdates.stopTiming(); // Paper - timing
-            gameprofilerfiller.pop();
+            //this.level.timings.broadcastChunkUpdates.stopTiming(); // Paper - timing // Purpur
+            //gameprofilerfiller.pop(); // Purpur
             // Paper end - use set of chunks requiring updates, rather than iterating every single one loaded
             // Paper start - controlled flush for entity tracker packets
             List<net.minecraft.network.Connection> disabledFlushes = new java.util.ArrayList<>(this.level.players.size());
@@ -1029,7 +1029,7 @@ public class ServerChunkCache extends ChunkSource {
 
         @Override
         protected void doRunTask(Runnable task) {
-            ServerChunkCache.this.level.getProfiler().incrementCounter("runTask");
+            //ServerChunkCache.this.level.getProfiler().incrementCounter("runTask"); // Purpur
             super.doRunTask(task);
         }
 

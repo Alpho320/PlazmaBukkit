@@ -107,11 +107,13 @@ public abstract class AbstractMinecart extends Entity {
     private double flyingY = 0.949999988079071D; // Paper - restore vanilla precision
     private double flyingZ = 0.949999988079071D; // Paper - restore vanilla precision
     public double maxSpeed = 0.4D;
+    public double storedMaxSpeed; // Purpur
     // CraftBukkit end
 
     protected AbstractMinecart(EntityType<?> type, Level world) {
         super(type, world);
         this.blocksBuilding = true;
+        if (world != null) maxSpeed = storedMaxSpeed = world.purpurConfig.minecartMaxSpeed; // Purpur
     }
 
     protected AbstractMinecart(EntityType<?> type, Level world, double x, double y, double z) {
@@ -334,6 +336,12 @@ public abstract class AbstractMinecart extends Entity {
 
     @Override
     public void tick() {
+        // Purpur start
+        if (storedMaxSpeed != level.purpurConfig.minecartMaxSpeed) {
+            maxSpeed = storedMaxSpeed = level.purpurConfig.minecartMaxSpeed;
+        }
+        // Purpur end
+
         // CraftBukkit start
         double prevX = this.getX();
         double prevY = this.getY();
@@ -497,16 +505,63 @@ public abstract class AbstractMinecart extends Entity {
 
     public void activateMinecart(int x, int y, int z, boolean powered) {}
 
+    // Purpur start
+    private Double lastSpeed;
+
+    public double getControllableSpeed() {
+        BlockPos pos = new BlockPos(this);
+        Block block = level.getBlockState(pos).getBlock();
+        if (!block.material.isSolid()) {
+            block = level.getBlockState(pos.relative(Direction.DOWN)).getBlock();
+        }
+        Double speed = level.purpurConfig.minecartControllableBlockSpeeds.get(block);
+        if (!block.material.isSolid()) {
+            speed = lastSpeed;
+        }
+        if (speed == null) {
+            speed = level.purpurConfig.minecartControllableBaseSpeed;
+        }
+        return lastSpeed = speed;
+    }
+    // Purpur end
+
     protected void comeOffTrack() {
         double d0 = this.getMaxSpeed();
         Vec3 vec3d = this.getDeltaMovement();
 
         this.setDeltaMovement(Mth.clamp(vec3d.x, -d0, d0), vec3d.y, Mth.clamp(vec3d.z, -d0, d0));
+
+        // Purpur start
+        if (level.purpurConfig.minecartControllable && !isInWater() && !isInLava() && !passengers.isEmpty()) {
+            Entity passenger = passengers.get(0);
+            if (passenger instanceof Player) {
+                Player player = (Player) passenger;
+                if (player.jumping && this.onGround) {
+                    setDeltaMovement(new Vec3(getDeltaMovement().x, level.purpurConfig.minecartControllableHopBoost, getDeltaMovement().z));
+                }
+                if (player.zza != 0.0F) {
+                    Vector velocity = player.getBukkitEntity().getEyeLocation().getDirection().normalize().multiply(getControllableSpeed());
+                    if (player.zza < 0.0) {
+                        velocity.multiply(-0.5);
+                    }
+                    setDeltaMovement(new Vec3(velocity.getX(), getDeltaMovement().y, velocity.getZ()));
+                }
+                this.setYRot(passenger.getYRot() - 90);
+                maxUpStep = level.purpurConfig.minecartControllableStepHeight;
+            } else {
+                maxUpStep = 0.0F;
+            }
+        } else {
+            maxUpStep = 0.0F;
+        }
+        // Purpur end
+
         if (this.onGround) {
             // CraftBukkit start - replace magic numbers with our variables
             this.setDeltaMovement(new Vec3(this.getDeltaMovement().x * this.derailedX, this.getDeltaMovement().y * this.derailedY, this.getDeltaMovement().z * this.derailedZ));
             // CraftBukkit end
         }
+        else if (level.purpurConfig.minecartControllable) setDeltaMovement(new Vec3(getDeltaMovement().x * derailedX, getDeltaMovement().y, getDeltaMovement().z * derailedZ)); // Purpur
 
         this.move(MoverType.SELF, this.getDeltaMovement());
         if (!this.onGround) {
@@ -668,7 +723,7 @@ public abstract class AbstractMinecart extends Entity {
             if (d18 > 0.01D) {
                 double d20 = 0.06D;
 
-                this.setDeltaMovement(vec3d4.add(vec3d4.x / d18 * 0.06D, 0.0D, vec3d4.z / d18 * 0.06D));
+                this.setDeltaMovement(vec3d4.add(vec3d4.x / d18 * this.level.purpurConfig.poweredRailBoostModifier, 0.0D, vec3d4.z / d18 * this.level.purpurConfig.poweredRailBoostModifier)); // Purpur
             } else {
                 Vec3 vec3d5 = this.getDeltaMovement();
                 double d21 = vec3d5.x;

@@ -220,6 +220,8 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
             return false;
         }
 
+        if (true) return org.purpurmc.purpur.PurpurConfig.usernameValidCharactersPattern.matcher(in).matches(); // Purpur
+
         for (int i = 0, len = in.length(); i < len; ++i) {
             char c = in.charAt(i);
 
@@ -339,7 +341,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
                         ServerLoginPacketListenerImpl.this.gameProfile = gameprofile;
                         ServerLoginPacketListenerImpl.this.state = ServerLoginPacketListenerImpl.State.READY_TO_ACCEPT;
                     } else {
-                        ServerLoginPacketListenerImpl.this.disconnect(Component.translatable("multiplayer.disconnect.unverified_username"));
+                        ServerLoginPacketListenerImpl.this.disconnect(org.purpurmc.purpur.PurpurConfig.unverifiedUsername.equals("default") ? Component.translatable("multiplayer.disconnect.unverified_username") : io.papermc.paper.adventure.PaperAdventure.asVanilla(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(org.purpurmc.purpur.PurpurConfig.unverifiedUsername))); // Purpur
                         ServerLoginPacketListenerImpl.LOGGER.error("Username '{}' tried to join with an invalid session", gameprofile.getName());
                     }
                 } catch (AuthenticationUnavailableException authenticationunavailableexception) {

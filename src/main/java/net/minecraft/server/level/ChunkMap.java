@@ -621,20 +621,20 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
     }
 
     protected void tick(BooleanSupplier shouldKeepTicking) {
-        ProfilerFiller gameprofilerfiller = this.level.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.level.getProfiler(); // Purpur
 
-        try (Timing ignored = this.level.timings.poiUnload.startTiming()) { // Paper
-        gameprofilerfiller.push("poi");
+        //try (Timing ignored = this.level.timings.poiUnload.startTiming()) { // Paper // Purpur
+        //gameprofilerfiller.push("poi"); // Purpur
         this.poiManager.tick(shouldKeepTicking);
-        } // Paper
-        gameprofilerfiller.popPush("chunk_unload");
+        //} // Paper // Purpur
+        //gameprofilerfiller.popPush("chunk_unload"); // Purpur
         if (!this.level.noSave()) {
-            try (Timing ignored = this.level.timings.chunkUnload.startTiming()) { // Paper
+            //try (Timing ignored = this.level.timings.chunkUnload.startTiming()) { // Paper // Purpur
             this.processUnloads(shouldKeepTicking);
-            } // Paper
+            //} // Paper // Purpur
         }
 
-        gameprofilerfiller.pop();
+        //gameprofilerfiller.pop(); // Purpur
     }
 
     public boolean hasWork() {
@@ -998,7 +998,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
         return this.anyPlayerCloseEnoughForSpawning(this.getUpdatingChunkIfPresent(chunkcoordintpair.toLong()), chunkcoordintpair, reducedRange);
     }
 
-    final boolean anyPlayerCloseEnoughForSpawning(ChunkHolder playerchunk, ChunkPos chunkcoordintpair, boolean reducedRange) {
+    public final boolean anyPlayerCloseEnoughForSpawning(ChunkHolder playerchunk, ChunkPos chunkcoordintpair, boolean reducedRange) { // Purpur - package -> public
         // this function is so hot that removing the map lookup call can have an order of magnitude impact on its performance
         // tested and confirmed via System.nanoTime()
         com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> playersInRange = reducedRange ? playerchunk.playersInMobSpawnRange : playerchunk.playersInChunkTickRange;
@@ -1253,24 +1253,24 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
 
     // Paper start - optimised tracker
     private final void processTrackQueue() {
-        this.level.timings.tracker1.startTiming();
+        //this.level.timings.tracker1.startTiming(); // Purpur
         try {
             for (TrackedEntity tracker : this.entityMap.values()) {
                 // update tracker entry
                 tracker.updatePlayers(tracker.entity.getPlayersInTrackRange());
             }
         } finally {
-            this.level.timings.tracker1.stopTiming();
+            //this.level.timings.tracker1.stopTiming(); // Purpur
         }
 
 
-        this.level.timings.tracker2.startTiming();
+        //this.level.timings.tracker2.startTiming(); // Purpur
         try {
             for (TrackedEntity tracker : this.entityMap.values()) {
                 tracker.serverEntity.sendChanges();
             }
         } finally {
-            this.level.timings.tracker2.stopTiming();
+            //this.level.timings.tracker2.stopTiming(); // Purpur
         }
     }
     // Paper end - optimised tracker
@@ -1285,7 +1285,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
         List<ServerPlayer> list = Lists.newArrayList();
         List<ServerPlayer> list1 = this.level.players();
         ObjectIterator objectiterator = this.entityMap.values().iterator();
-        level.timings.tracker1.startTiming(); // Paper
+        //level.timings.tracker1.startTiming(); // Paper // Purpur
 
         ChunkMap.TrackedEntity playerchunkmap_entitytracker;
 
@@ -1310,17 +1310,17 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
                 playerchunkmap_entitytracker.serverEntity.sendChanges();
             }
         }
-        level.timings.tracker1.stopTiming(); // Paper
+        //level.timings.tracker1.stopTiming(); // Paper // Purpur
 
         if (!list.isEmpty()) {
             objectiterator = this.entityMap.values().iterator();
 
-            level.timings.tracker2.startTiming(); // Paper
+            //level.timings.tracker2.startTiming(); // Paper // Purpur
             while (objectiterator.hasNext()) {
                 playerchunkmap_entitytracker = (ChunkMap.TrackedEntity) objectiterator.next();
                 playerchunkmap_entitytracker.updatePlayers(list);
             }
-            level.timings.tracker2.stopTiming(); // Paper
+            //level.timings.tracker2.stopTiming(); // Paper // Purpur
         }
 
     }

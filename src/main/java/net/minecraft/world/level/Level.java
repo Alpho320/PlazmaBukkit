@@ -177,6 +177,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     // Paper end
 
     public final com.destroystokyo.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
+    public final org.purpurmc.purpur.PurpurWorldConfig purpurConfig; // Purpur
     public final co.aikar.timings.WorldTimingsHandler timings; // Paper
     public static BlockPos lastPhysicsProblem; // Spigot
     private org.spigotmc.TickLimiter entityLimiter;
@@ -193,6 +194,49 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         });
     }
     // Paper end - fix and optimise world upgrading
+
+    // Purpur start
+    private com.google.common.cache.Cache<BreedingCooldownPair, Object> playerBreedingCooldowns;
+
+    private com.google.common.cache.Cache<BreedingCooldownPair, Object> getNewBreedingCooldownCache() {
+        return com.google.common.cache.CacheBuilder.newBuilder().expireAfterWrite(this.purpurConfig.animalBreedingCooldownSeconds, java.util.concurrent.TimeUnit.SECONDS).build();
+    }
+
+    public void resetBreedingCooldowns() {
+        this.playerBreedingCooldowns = this.getNewBreedingCooldownCache();
+    }
+
+    public boolean hasBreedingCooldown(java.util.UUID player, Class<? extends net.minecraft.world.entity.animal.Animal> animalType) { // Purpur
+        return this.playerBreedingCooldowns.getIfPresent(new BreedingCooldownPair(player, animalType)) != null;
+    }
+
+    public void addBreedingCooldown(java.util.UUID player, Class<? extends net.minecraft.world.entity.animal.Animal> animalType) {
+        this.playerBreedingCooldowns.put(new BreedingCooldownPair(player, animalType), new Object());
+    }
+
+    private static final class BreedingCooldownPair {
+        private final java.util.UUID playerUUID;
+        private final Class<? extends net.minecraft.world.entity.animal.Animal> animalType;
+
+        public BreedingCooldownPair(java.util.UUID playerUUID, Class<? extends net.minecraft.world.entity.animal.Animal> animalType) {
+            this.playerUUID = playerUUID;
+            this.animalType = animalType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BreedingCooldownPair that = (BreedingCooldownPair) o;
+            return playerUUID.equals(that.playerUUID) && animalType.equals(that.animalType);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(playerUUID, animalType);
+        }
+    }
+    // Purpur end
 
     public CraftWorld getWorld() {
         return this.world;
@@ -274,7 +318,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
 
     public abstract ResourceKey<LevelStem> getTypeKey();
 
-    protected final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(java.util.concurrent.ThreadLocalRandom.current().nextLong()); public net.minecraft.util.RandomSource getThreadUnsafeRandom() { return this.randomTickRandom; } // Pufferfish - move thread unsafe random initialization // Pufferfish - getter
+    //protected final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(java.util.concurrent.ThreadLocalRandom.current().nextLong()); public net.minecraft.util.RandomSource getThreadUnsafeRandom() { return this.randomTickRandom; } // Pufferfish - move thread unsafe random initialization // Pufferfish - getter // Purpur - dont break ABI
 
     // Pufferfish start - ensure these get inlined
     private final int minBuildHeight, minSection, height, maxBuildHeight, maxSection;
@@ -288,6 +332,8 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     protected Level(WritableLevelData worlddatamutable, ResourceKey<Level> resourcekey, RegistryAccess iregistrycustom, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean flag, boolean flag1, long i, int j, org.bukkit.generator.ChunkGenerator gen, org.bukkit.generator.BiomeProvider biomeProvider, org.bukkit.World.Environment env, java.util.function.Function<org.spigotmc.SpigotWorldConfig, io.papermc.paper.configuration.WorldConfiguration> paperWorldConfigCreator, java.util.concurrent.Executor executor) { // Paper - Async-Anti-Xray - Pass executor
         this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
         this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
+        this.purpurConfig = new org.purpurmc.purpur.PurpurWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Purpur
+        this.playerBreedingCooldowns = this.getNewBreedingCooldownCache(); // Purpur
         this.generator = gen;
         this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
 
@@ -672,9 +718,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
                 BlockState iblockdata2 = this.getBlockState(pos);
 
                 if ((flags & 128) == 0 && iblockdata2 != iblockdata1 && (iblockdata2.getLightBlock(this, pos) != iblockdata1.getLightBlock(this, pos) || iblockdata2.getLightEmission() != iblockdata1.getLightEmission() || iblockdata2.useShapeForLightOcclusion() || iblockdata1.useShapeForLightOcclusion())) {
-                    this.getProfiler().push("queueCheckLight");
+                    //this.getProfiler().push("queueCheckLight"); // Purpur
                     this.getChunkSource().getLightEngine().checkBlock(pos);
-                    this.getProfiler().pop();
+                    //this.getProfiler().pop(); // Purpur
                 }
 
                 /*
@@ -973,18 +1019,18 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     }
 
     protected void tickBlockEntities() {
-        ProfilerFiller gameprofilerfiller = this.getProfiler();
+        //ProfilerFiller gameprofilerfiller = this.getProfiler(); // Purpur
 
-        gameprofilerfiller.push("blockEntities");
-        timings.tileEntityPending.startTiming(); // Spigot
+        //gameprofilerfiller.push("blockEntities"); // Purpur
+        //timings.tileEntityPending.startTiming(); // Spigot // Purpur
         this.tickingBlockEntities = true;
         if (!this.pendingBlockEntityTickers.isEmpty()) {
             this.blockEntityTickers.addAll(this.pendingBlockEntityTickers);
             this.pendingBlockEntityTickers.clear();
         }
-        timings.tileEntityPending.stopTiming(); // Spigot
+        //timings.tileEntityPending.stopTiming(); // Spigot // Purpur
 
-        timings.tileEntityTick.startTiming(); // Spigot
+        //timings.tileEntityTick.startTiming(); // Spigot // Purpur
         // Spigot start
         // Iterator iterator = this.blockEntityTickers.iterator();
         int tilesThisCycle = 0;
@@ -1017,10 +1063,10 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         }
         this.blockEntityTickers.removeAll(toRemove);
 
-        timings.tileEntityTick.stopTiming(); // Spigot
+        //timings.tileEntityTick.stopTiming(); // Spigot // Purpur
         this.tickingBlockEntities = false;
         co.aikar.timings.TimingHistory.tileEntityTicks += this.blockEntityTickers.size(); // Paper
-        gameprofilerfiller.pop();
+        //gameprofilerfiller.pop(); // Purpur
         spigotConfig.currentPrimedTnt = 0; // Spigot
     }
 
@@ -1213,7 +1259,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
 
     @Override
     public List<Entity> getEntities(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate) {
-        this.getProfiler().incrementCounter("getEntities");
+        //this.getProfiler().incrementCounter("getEntities"); // Purpur
         List<Entity> list = Lists.newArrayList();
         ((ServerLevel)this).getEntityLookup().getEntities(except, box, list, predicate); // Paper - optimise this call
         return list;
@@ -1232,7 +1278,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     }
 
     public <T extends Entity> void getEntities(EntityTypeTest<Entity, T> filter, AABB box, Predicate<? super T> predicate, List<? super T> result, int limit) {
-        this.getProfiler().incrementCounter("getEntities");
+        //this.getProfiler().incrementCounter("getEntities"); // Purpur
         // Paper start - optimise this call
         //TODO use limit
         if (filter instanceof net.minecraft.world.entity.EntityType entityTypeTest) {
@@ -1557,7 +1603,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     }
 
     public ProfilerFiller getProfiler() {
-        if (gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE; // Pufferfish
+        if (true || gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE; // Pufferfish
         return (ProfilerFiller) this.profiler.get();
     }
 
@@ -1648,4 +1694,14 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         return null;
     }
     // Paper end
+
+    // Purpur start
+    public boolean isNether() {
+        return getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER;
+    }
+
+    public boolean isTheEnd() {
+        return getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END;
+    }
+    // Purpur end
 }
