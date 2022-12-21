@@ -229,7 +229,7 @@ public class PurpurConfig {
         deathMessageOnlyBroadcastToAffectedPlayer = getBoolean("settings.broadcasts.death.only-broadcast-to-affected-player", deathMessageOnlyBroadcastToAffectedPlayer);
     }
 
-    public static String serverModName = "Purpur";
+    public static String serverModName = "Plazma"; // Plazma
     private static void serverModName() {
         serverModName = getString("settings.server-mod-name", serverModName);
     }

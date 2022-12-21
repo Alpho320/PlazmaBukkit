@@ -8,22 +8,25 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 
 public final class Versioning {
-    public static String getBukkitVersion() {
-        String result = "Unknown-Version";
-
-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur
+    // Plazma start
+    public static String version = "Unknown-Version";
+    static {
+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.plazmamc.plazma/plazma-api/pom.properties");
         Properties properties = new Properties();
 
         if (stream != null) {
             try {
                 properties.load(stream);
 
-                result = properties.getProperty("version");
+                version = properties.getProperty("version");
             } catch (IOException ex) {
-                Logger.getLogger(Versioning.class.getName()).log(Level.SEVERE, "Could not get Bukkit version!", ex);
+                Logger.getLogger(Versioning.class.getName()).log(Level.SEVERE, "Could not get Plazma version!", ex);
             }
         }
-
-        return result;
     }
+
+    public static String getBukkitVersion() {
+        return version;
+    }
+    // Plazma end
 }
