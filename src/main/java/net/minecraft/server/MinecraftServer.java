@@ -930,7 +930,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         shutdownThread = Thread.currentThread();
         org.spigotmc.WatchdogThread.doStop(); // Paper
         if (!isSameThread()) {
-            MinecraftServer.LOGGER.info("Stopping main thread (Ignore any thread death message you see! - DO NOT REPORT THREAD DEATH TO PURPUR)"); // Purpur
+            MinecraftServer.LOGGER.info("Stopping main thread (Ignore any thread death message you see! - DO NOT REPORT THREAD DEATH TO PLAZMA)"); // Purpur // Plazma
             while (this.getRunningThread().isAlive()) {
                 this.getRunningThread().stop();
                 try {

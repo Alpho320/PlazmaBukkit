@@ -1041,7 +1041,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
             TickingBlockEntity tickingblockentity = (TickingBlockEntity) this.blockEntityTickers.get(tileTickPosition);
             // Spigot start
             if (tickingblockentity == null) {
-                this.getCraftServer().getLogger().severe("Spigot has detected a null entity and has removed it, preventing a crash");
+                this.getCraftServer().getLogger().severe("Plazma has detected a null entity and has removed it, preventing a crash"); // Plazma
                 tilesThisCycle--;
                 continue;
             }

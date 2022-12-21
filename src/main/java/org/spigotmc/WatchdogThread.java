@@ -96,7 +96,7 @@ public final class WatchdogThread extends io.papermc.paper.util.TickThread // Pa
 
     private WatchdogThread(long timeoutTime, boolean restart)
     {
-        super( "Watchdog Thread" ); // Purpur - use a generic name
+        super( "Plazma Watchdog Thread" ); // Purpur - use a generic name // Plazma
         this.timeoutTime = timeoutTime;
         this.restart = restart;
         earlyWarningEvery = Math.min(io.papermc.paper.configuration.GlobalConfiguration.get().watchdog.earlyWarningEvery, timeoutTime); // Paper
@@ -155,14 +155,14 @@ public final class WatchdogThread extends io.papermc.paper.util.TickThread // Pa
                 if (isLongTimeout) {
                 // Paper end
                 log.log( Level.SEVERE, "------------------------------" );
-                log.log( Level.SEVERE, "The server has stopped responding! This is (probably) not a Purpur bug." ); // Paper // Purpur
+                log.log( Level.SEVERE, "The server has stopped responding! This is (probably) not a Plazma bug." ); // Paper // Purpur // Plazma
                 log.log( Level.SEVERE, "If you see a plugin in the Server thread dump below, then please report it to that author" );
                 log.log( Level.SEVERE, "\t *Especially* if it looks like HTTP or MySQL operations are occurring" );
                 log.log( Level.SEVERE, "If you see a world save or edit, then it means you did far more than your server can handle at once" );
                 log.log( Level.SEVERE, "\t If this is the case, consider increasing timeout-time in spigot.yml but note that this will replace the crash with LARGE lag spikes" );
-                log.log( Level.SEVERE, "If you are unsure or still think this is a Purpur bug, please report this to https://github.com/PurpurMC/Purpur/issues" ); // Purpur
+                log.log( Level.SEVERE, "If you are unsure or still think this is a Plazma bug, please report this to https://github.com/PlazmaMC/Plazma/issues" ); // Purpur // Plazma
                 log.log( Level.SEVERE, "Be sure to include ALL relevant console errors and Minecraft crash reports" );
-                log.log( Level.SEVERE, "Purpur version: " + Bukkit.getServer().getVersion() ); // Purpur
+                log.log( Level.SEVERE, "Plazma version: " + Bukkit.getServer().getVersion() ); // Purpur
                 //
                 if ( net.minecraft.world.level.Level.lastPhysicsProblem != null )
                 {
@@ -185,12 +185,12 @@ public final class WatchdogThread extends io.papermc.paper.util.TickThread // Pa
                 // Paper end
                 } else
                 {
-                    log.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur
+                    log.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PLAZMA - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur // Plazma
                     log.log(Level.SEVERE, "The server has not responded for " + (currentTime - lastTick) / 1000 + " seconds! Creating thread dump");
                 }
                 // Paper end - Different message for short timeout
                 log.log( Level.SEVERE, "------------------------------" );
-                log.log( Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Purpur!):" ); // Paper // Purpur
+                log.log( Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Plazma!):" ); // Paper // Purpur // Plazma
                 io.papermc.paper.chunk.system.scheduling.ChunkTaskScheduler.dumpAllChunkLoadInfo(isLongTimeout); // Paper // Paper - rewrite chunk system
                 this.dumpTickingInfo(); // Paper - log detailed tick information
                 WatchdogThread.dumpThread( ManagementFactory.getThreadMXBean().getThreadInfo( MinecraftServer.getServer().serverThread.getId(), Integer.MAX_VALUE ), log );
@@ -206,7 +206,7 @@ public final class WatchdogThread extends io.papermc.paper.util.TickThread // Pa
                     WatchdogThread.dumpThread( thread, log );
                 }
                 } else {
-                    log.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH ---"); // Purpur
+                    log.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PLAZMA - THIS IS NOT A BUG OR A CRASH ---"); // Purpur // Plazma
                 }
 
                 log.log( Level.SEVERE, "------------------------------" );

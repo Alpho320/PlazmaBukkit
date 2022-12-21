@@ -56,7 +56,7 @@ public class MinecraftServerGui extends JComponent {
             ;
         }
 
-        final JFrame jframe = new JFrame("Purpur Minecraft server"); // Purpur
+        final JFrame jframe = new JFrame("Plazma Minecraft server"); // Purpur // Plazma
         final MinecraftServerGui servergui = new MinecraftServerGui(server);
 
         jframe.setDefaultCloseOperation(2);
@@ -64,7 +64,7 @@ public class MinecraftServerGui extends JComponent {
         jframe.pack();
         jframe.setLocationRelativeTo((Component) null);
         jframe.setVisible(true);
-        jframe.setName("Purpur Minecraft server"); // Paper // Purpur
+        jframe.setName("Plazma Minecraft server"); // Paper // Purpur // Plazma
 
         // Paper start - Add logo as frame image
         try {
@@ -76,7 +76,7 @@ public class MinecraftServerGui extends JComponent {
         jframe.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent windowevent) {
                 if (!servergui.isClosing.getAndSet(true)) {
-                    jframe.setTitle("Purpur Minecraft server - shutting down!"); // Purpur
+                    jframe.setTitle("Plazma Minecraft server - shutting down!"); // Purpur // Plazma
                     server.halt(true);
                     servergui.runFinalizers();
                 }
