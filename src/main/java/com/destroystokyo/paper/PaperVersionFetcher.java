@@ -20,7 +20,7 @@ import java.util.stream.StreamSupport;
 public class PaperVersionFetcher implements VersionFetcher {
     private static final java.util.regex.Pattern VER_PATTERN = java.util.regex.Pattern.compile("^([0-9\\.]*)\\-.*R"); // R is an anchor, will always give '-R' at end
     // Purpur start
-    private static final String DOWNLOAD_PAGE = "https://purpurmc.org/downloads";
+    private static final String DOWNLOAD_PAGE = "https://github.com/PlazmaMC/Plazma/releases"; // Plazma
     private static int distance = -2; public int distance() { return distance; }
     // Purpur end
     private static @Nullable String mcVer;
@@ -33,8 +33,8 @@ public class PaperVersionFetcher implements VersionFetcher {
     @Nonnull
     @Override
     public Component getVersionMessage(@Nonnull String serverVersion) {
-        String[] parts = serverVersion.substring("git-Purpur-".length()).split("[-\\s]"); // Purpur
-        final Component updateMessage = getUpdateStatusMessage("PurpurMC/Purpur", "ver/" + getMinecraftVersion(), parts[0]); // Purpur
+        String[] parts = serverVersion.substring("git-Plazma-".length()).split("[-\\s]"); // Purpur // Plazma
+        final Component updateMessage = getUpdateStatusMessage("PlazmaMC/Plazma", "ver/" + getMinecraftVersion(), parts[0]); // Purpur // Plazma
         final Component history = getHistory();
 
         return history != null ? Component.join(net.kyori.adventure.text.JoinConfiguration.separator(Component.newline()), history, updateMessage) : updateMessage; // Purpur
@@ -47,7 +47,7 @@ public class PaperVersionFetcher implements VersionFetcher {
                 String result = matcher.group();
                 mcVer = result.substring(0, result.length() - 2); // strip 'R' anchor and trailing '-'
             } else {
-                org.bukkit.Bukkit.getLogger().warning("Unable to match version to pattern! Report to Purpur!"); // Purpur
+                org.bukkit.Bukkit.getLogger().warning("Unable to match version to pattern! Report to Plazma!"); // Purpur // Plazma
                 org.bukkit.Bukkit.getLogger().warning("Pattern: " + VER_PATTERN.toString());
                 org.bukkit.Bukkit.getLogger().warning("Version: " + org.bukkit.Bukkit.getBukkitVersion());
             }
@@ -57,6 +57,7 @@ public class PaperVersionFetcher implements VersionFetcher {
     }
 
     private static Component getUpdateStatusMessage(@Nonnull String repo, @Nonnull String branch, @Nonnull String versionInfo) {
+        /* // Plazma - Disable CI Checking
         //int distance; // Purpur - use field
         try {
             int jenkinsBuild = Integer.parseInt(versionInfo);
@@ -65,6 +66,11 @@ public class PaperVersionFetcher implements VersionFetcher {
             versionInfo = versionInfo.replace("\"", "");
             distance = fetchDistanceFromGitHub(repo, branch, versionInfo);
         }
+        // Plazma start - Disable CI Checking
+         */
+        versionInfo = versionInfo.replace("\"", ""); // Plazma
+        distance = fetchDistanceFromGitHub(repo, branch, versionInfo); // Plazma
+        // Plazma end
 
         switch (distance) {
             case -1:
@@ -83,6 +89,7 @@ public class PaperVersionFetcher implements VersionFetcher {
         }
     }
 
+    /* // Plazma - Disable CI Checking
     private static int fetchDistanceFromSiteApi(int jenkinsBuild, @Nullable String siteApiVersion) {
         if (siteApiVersion == null) { return -1; }
         try {
@@ -102,6 +109,7 @@ public class PaperVersionFetcher implements VersionFetcher {
             return -1;
         }
     }
+     */ // Plazma - Disable CI Checking
 
     // Contributed by Techcable <Techcable@outlook.com> in GH-65
     private static int fetchDistanceFromGitHub(@Nonnull String repo, @Nonnull String branch, @Nonnull String hash) {

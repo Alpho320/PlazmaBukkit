@@ -35,7 +35,7 @@ public class CrashReport {
         io.papermc.paper.util.StacktraceDeobfuscator.INSTANCE.deobfuscateThrowable(cause); // Paper
         this.title = message;
         this.exception = cause;
-        this.systemReport.setDetail("CraftBukkit Information", new org.bukkit.craftbukkit.CraftCrashReport()); // CraftBukkit
+        this.systemReport.setDetail("Plazma Information", new org.bukkit.craftbukkit.CraftCrashReport()); // CraftBukkit // Plazma
     }
 
     public String getTitle() {
@@ -125,7 +125,7 @@ public class CrashReport {
         stringbuilder.append("---- Minecraft Crash Report ----\n");
         // Purpur start
         stringbuilder.append("// ");
-        stringbuilder.append("// DO NOT REPORT THIS TO PAPER! REPORT TO PURPUR INSTEAD!");
+        stringbuilder.append("// DO NOT REPORT THIS TO PAPER OR PURPUR! REPORT TO PLAZMA INSTEAD!"); // Plazma
         // Purpur end
         stringbuilder.append("// ");
         stringbuilder.append(CrashReport.getErrorComment());

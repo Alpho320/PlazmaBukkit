@@ -884,7 +884,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             return EntityCategory.WATER;
         }
 
-        throw new UnsupportedOperationException("Unsupported monster type: " + type + ". This is a bug, report this to Purpur."); // Purpur
+        throw new UnsupportedOperationException("Unsupported monster type: " + type + ". This is a bug, report this to Plazma."); // Purpur // Plazma
     }
 
     @Override

@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":purpur-api")) // Purpur
+    implementation(project(":plazma-api")) // Purpur
     implementation("io.papermc.paper:paper-mojangapi:1.19.4-R0.1-SNAPSHOT") // Purpur
     // Paper start
     implementation("org.jline:jline-terminal-jansi:3.21.0")
@@ -81,7 +81,7 @@ tasks.jar {
         attributes(
             "Main-Class" to "org.bukkit.craftbukkit.Main",
             "Implementation-Title" to "CraftBukkit",
-            "Implementation-Version" to "git-Purpur-$implementationVersion", // Pufferfish // Purpur
+            "Implementation-Version" to "git-Plazma-$implementationVersion", // Pufferfish // Purpur // Plazma
             "Implementation-Vendor" to date, // Paper
             "Specification-Title" to "Bukkit",
             "Specification-Version" to project.version,
