@@ -993,6 +993,7 @@ public final class CraftServer implements Server {
 
         org.spigotmc.SpigotConfig.init((File) console.options.valueOf("spigot-settings")); // Spigot
         this.console.paperConfigurations.reloadConfigs(this.console);
+        this.console.plazmaConfigurations.reloadConfigurations(this.console); // Plazma
         org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur
         for (ServerLevel world : this.console.getAllLevels()) {
             // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
@@ -2834,6 +2835,13 @@ public final class CraftServer implements Server {
         {
             return CraftServer.this.console.paperConfigurations.createLegacyObject(CraftServer.this.console);
         }
+
+        // Plazma start
+        @Override
+        public YamlConfiguration getPlazmaConfiguration() {
+            return CraftServer.this.console.plazmaConfigurations.createLegacyObject(CraftServer.this.console);
+        }
+        // Plazma end
 
         // Purpur start
         @Override

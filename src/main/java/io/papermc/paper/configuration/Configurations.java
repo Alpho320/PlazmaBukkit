@@ -88,7 +88,7 @@ public abstract class Configurations<G, W> {
         };
     }
 
-    static <T> CheckedFunction<ConfigurationNode, T, SerializationException> reloader(Class<T> type, T instance) {
+    public static <T> CheckedFunction<ConfigurationNode, T, SerializationException> reloader(Class<T> type, T instance) { // Plazma - package -> public
         return node -> {
             ObjectMapper.Factory factory = (ObjectMapper.Factory) Objects.requireNonNull(node.options().serializers().get(type));
             ObjectMapper.Mutable<T> mutable = (ObjectMapper.Mutable<T>) factory.get(type);
@@ -148,7 +148,7 @@ public abstract class Configurations<G, W> {
         final YamlConfigurationLoader loader = result.loader();
         final ConfigurationNode node = loader.load();
         if (result.isNewFile()) { // add version to new files
-            node.node(Configuration.VERSION_FIELD).raw(WorldConfiguration.CURRENT_VERSION);
+            node.node(Configuration.VERSION_FIELD).raw(getWorldConfigurationCurrentVersion()); // Plazma
         }
         this.applyWorldConfigTransformations(contextMap, node);
         final W instance = node.require(this.worldConfigClass);
@@ -207,7 +207,7 @@ public abstract class Configurations<G, W> {
             .build();
         final ConfigurationNode worldNode = worldLoader.load();
         if (newFile) { // set the version field if new file
-            worldNode.node(Configuration.VERSION_FIELD).set(WorldConfiguration.CURRENT_VERSION);
+            worldNode.node(Configuration.VERSION_FIELD).set(getWorldConfigurationCurrentVersion()); // Plazma
         }
         this.applyWorldConfigTransformations(contextMap, worldNode);
         this.applyDefaultsAwareWorldConfigTransformations(contextMap, worldNode, defaultsNode);
@@ -231,6 +231,21 @@ public abstract class Configurations<G, W> {
     public Path getWorldConfigFile(ServerLevel level) {
         return level.convertable.levelDirectory.path().resolve(this.worldConfigFileName);
     }
+
+    // Plazma start
+    @Deprecated
+    public org.bukkit.configuration.file.YamlConfiguration createLegacyObject(final net.minecraft.server.MinecraftServer server) {
+        org.bukkit.configuration.file.YamlConfiguration global = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(this.globalFolder.resolve(this.globalConfigFileName).toFile());
+        org.bukkit.configuration.ConfigurationSection worlds = global.createSection("__________WORLDS__________");
+        worlds.set("__defaults__", org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(this.globalFolder.resolve(this.defaultWorldConfigFileName).toFile()));
+        for (ServerLevel level : server.getAllLevels()) {
+            worlds.set(level.getWorld().getName(), org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(getWorldConfigFile(level).toFile()));
+        }
+        return global;
+    }
+
+    protected abstract int getWorldConfigurationCurrentVersion();
+    // Plazma end
 
     public static class ContextMap {
         private static final Object VOID = new Object();

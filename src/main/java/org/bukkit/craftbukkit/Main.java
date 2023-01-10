@@ -173,6 +173,14 @@ public class Main {
                         .describedAs("Jar file");
                 // Paper end
 
+                // Plazma start
+                acceptsAll(asList("plazma-dir", "plazma-configurations-directory"), "Directory for Plazma configurations")
+                        .withRequiredArg()
+                        .ofType(File.class)
+                        .defaultsTo(new File(io.papermc.paper.configuration.PaperConfigurations.CONFIG_DIR))
+                        .describedAs("Config directory");
+                // Plazma end
+
                 // Purpur Start
                 acceptsAll(asList("purpur", "purpur-settings"), "File for purpur settings")
                     .withRequiredArg()

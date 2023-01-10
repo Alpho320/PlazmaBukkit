@@ -209,6 +209,10 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
         io.papermc.paper.util.ObfHelper.INSTANCE.getClass(); // Paper - load mappings for stacktrace deobf and etc.
         paperConfigurations.initializeGlobalConfiguration();
         paperConfigurations.initializeWorldDefaultsConfiguration();
+        // Plazma start
+        plazmaConfigurations.initializeGlobalConfiguration();
+        plazmaConfigurations.initializeWorldDefaultsConfiguration();
+        // Plazma end
         // Paper start - moved up to right after PlayerList creation but before file load/save
         if (this.convertOldUsers()) {
             this.getProfileCache().save(false); // Paper
@@ -218,6 +222,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
         org.spigotmc.WatchdogThread.doStart(org.spigotmc.SpigotConfig.timeoutTime, org.spigotmc.SpigotConfig.restartOnCrash);
         thread.start(); // Paper - start console thread after MinecraftServer.console & PaperConfig are initialized
         io.papermc.paper.command.PaperCommands.registerCommands(this);
+        org.plazmamc.plazma.commands.PlazmaCommands.registerCommands(this);
         com.destroystokyo.paper.Metrics.PaperMetrics.startMetrics();
         // Purpur start
         try {
