@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static io.leangen.geantyref.GenericTypeReflector.erase;
 
-final class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Object>> {
+public final class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Object>> { // Plazma - package -> public
 
     private final Map<Class<?>, Object> instanceMap = new HashMap<>();
     private final Map<Class<?>, Object> overrides;
@@ -136,7 +136,19 @@ final class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Obje
         return new InnerClassFieldDiscoverer(overrides);
     }
 
-    static FieldDiscoverer<?> globalConfig() {
+    public static FieldDiscoverer<?> globalConfig() { // Plazma - package -> public
         return new InnerClassFieldDiscoverer(Collections.emptyMap());
     }
+
+    // Plazma start
+    public static FieldDiscoverer<?> plazmaLevelConfiguration(Configurations.ContextMap contextMap) {
+        final Map<Class<?>, Object> overrides = Map.of(
+                org.plazmamc.plazma.configurations.LevelConfigurations.class,
+                new org.plazmamc.plazma.configurations.LevelConfigurations(
+                        contextMap.require(Configurations.WORLD_KEY)
+                )
+        );
+        return new InnerClassFieldDiscoverer(overrides);
+    }
+    // Plazma end
 }

@@ -127,13 +127,13 @@ public class PaperConfigurations extends Configurations<GlobalConfiguration, Wor
         See https://docs.papermc.io/paper/configuration for more information.
         """;
 
-    private static final Supplier<SpigotWorldConfig> SPIGOT_WORLD_DEFAULTS = Suppliers.memoize(() -> new SpigotWorldConfig(RandomStringUtils.randomAlphabetic(255)) {
+    public static final Supplier<SpigotWorldConfig> SPIGOT_WORLD_DEFAULTS = Suppliers.memoize(() -> new SpigotWorldConfig(RandomStringUtils.randomAlphabetic(255)) { // Plazma - private -> public
         @Override // override to ensure "verbose" is false
         public void init() {
             SpigotConfig.readConfig(SpigotWorldConfig.class, this);
         }
     });
-    static final ContextKey<Supplier<SpigotWorldConfig>> SPIGOT_WORLD_CONFIG_CONTEXT_KEY = new ContextKey<>(new TypeToken<Supplier<SpigotWorldConfig>>() {}, "spigot world config");
+    public static final ContextKey<Supplier<SpigotWorldConfig>> SPIGOT_WORLD_CONFIG_CONTEXT_KEY = new ContextKey<>(new TypeToken<Supplier<SpigotWorldConfig>>() {}, "spigot world config"); // Plazma - package -> public
 
 
     public PaperConfigurations(final Path globalFolder) {
@@ -297,7 +297,7 @@ public class PaperConfigurations extends Configurations<GlobalConfiguration, Wor
         }
     }
 
-    private static ContextMap createWorldContextMap(ServerLevel level) {
+    public static ContextMap createWorldContextMap(ServerLevel level) { // Plazma - private -> public
         return createWorldContextMap(level.convertable.levelDirectory.path(), level.serverLevelData.getLevelName(), level.dimension().location(), level.spigotConfig);
     }
 
@@ -399,17 +399,6 @@ public class PaperConfigurations extends Configurations<GlobalConfiguration, Wor
     }
 
     @Deprecated
-    public YamlConfiguration createLegacyObject(final MinecraftServer server) {
-        YamlConfiguration global = YamlConfiguration.loadConfiguration(this.globalFolder.resolve(this.globalConfigFileName).toFile());
-        ConfigurationSection worlds = global.createSection("__________WORLDS__________");
-        worlds.set("__defaults__", YamlConfiguration.loadConfiguration(this.globalFolder.resolve(this.defaultWorldConfigFileName).toFile()));
-        for (ServerLevel level : server.getAllLevels()) {
-            worlds.set(level.getWorld().getName(), YamlConfiguration.loadConfiguration(getWorldConfigFile(level).toFile()));
-        }
-        return global;
-    }
-
-    @Deprecated
     public static YamlConfiguration loadLegacyConfigFile(File configFile) throws Exception {
         YamlConfiguration config = new YamlConfiguration();
         if (configFile.exists()) {
@@ -431,9 +420,16 @@ public class PaperConfigurations extends Configurations<GlobalConfiguration, Wor
     }
 
     // Symlinks are not correctly checked in createDirectories
-    static void createDirectoriesSymlinkAware(Path path) throws IOException {
+    public static void createDirectoriesSymlinkAware(Path path) throws IOException { // Plazma - package -> public
         if (!Files.isDirectory(path)) {
             Files.createDirectories(path);
         }
     }
+
+    // Plazma start
+    @Override
+    protected int getWorldConfigurationCurrentVersion() {
+        return WorldConfiguration.CURRENT_VERSION;
+    }
+    // Plazma end
 }
