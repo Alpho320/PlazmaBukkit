@@ -63,6 +63,7 @@ public abstract class AbstractTestingBase {
 
         DummyEnchantments.setup();
         io.papermc.paper.configuration.GlobalConfigTestingBase.setupGlobalConfigForTest(); // Paper
+        org.plazmamc.plazma.configurations.GlobalConfigurationTestingBase.setupGlobalConfigurationForTest(); // Plazma
 
         ImmutableList.Builder<Material> builder = ImmutableList.builder();
         for (Material m : Material.values()) {

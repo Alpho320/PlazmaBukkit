@@ -309,6 +309,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public final double[] recentTps = new double[ 4 ]; // Purpur
     // Spigot end
     public final io.papermc.paper.configuration.PaperConfigurations paperConfigurations;
+    public final org.plazmamc.plazma.configurations.PlazmaConfigurations plazmaConfigurations; // Plazma
     public static long currentTickLong = 0L; // Paper
     public boolean lagging = false; // Purpur
     protected boolean upnp = false; // Purpur
@@ -415,6 +416,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         // Paper end
         Runtime.getRuntime().addShutdownHook(new org.bukkit.craftbukkit.util.ServerShutdownThread(this));
         this.paperConfigurations = services.paperConfigurations(); // Paper
+        this.plazmaConfigurations = services.plazmaConfigurations(); // Plazma
     }
     // CraftBukkit end
 
