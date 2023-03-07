@@ -148,14 +148,14 @@ public class SpigotWorldConfig
     public double itemMerge;
     private void itemMerge()
     {
-        this.itemMerge = this.getDouble("merge-radius.item", 2.5 );
+        this.itemMerge = this.getDouble("merge-radius.item", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 2.5 : 3.5 ); // Plazma - Optimize Default Configurations
         this.log( "Item Merge Radius: " + this.itemMerge );
     }
 
     public double expMerge;
     private void expMerge()
     {
-        this.expMerge = this.getDouble("merge-radius.exp", 3.0 );
+        this.expMerge = this.getDouble("merge-radius.exp", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 3.0 : 4.0 ); // Plazma - Optimize Default Configurations
         this.log( "Experience Merge Radius: " + this.expMerge );
     }
 
@@ -194,7 +194,7 @@ public class SpigotWorldConfig
     public byte mobSpawnRange;
     private void mobSpawnRange()
     {
-        this.mobSpawnRange = (byte) getInt( "mob-spawn-range", 8 ); // Paper - Vanilla
+        this.mobSpawnRange = (byte) getInt( "mob-spawn-range", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 8 : 3 ); // Paper - Vanilla // Plazma - Optimize Default Configurations
         this.log( "Mob Spawn Range: " + this.mobSpawnRange );
     }
 
@@ -205,26 +205,26 @@ public class SpigotWorldConfig
         this.log( "Item Despawn Rate: " + this.itemDespawnRate );
     }
 
-    public int animalActivationRange = 32;
-    public int monsterActivationRange = 32;
+    public int animalActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 32 : 16; // Plazma - Optimize Default Configurations
+    public int monsterActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 32 : 24; // Plazma - Optimize Default Configurations
     public int raiderActivationRange = 48;
-    public int miscActivationRange = 16;
+    public int miscActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 16 : 8; // Plazma - Optimize Default Configurations
     // Paper start
-    public int flyingMonsterActivationRange = 32;
-    public int waterActivationRange = 16;
-    public int villagerActivationRange = 32;
+    public int flyingMonsterActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 32 : 48; // Plazma - Optimize Default Configurations
+    public int waterActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 16 : 8; // Plazma - Optimize Default Configurations
+    public int villagerActivationRange = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 32 : 16; // Plazma - Optimize Default Configurations
     public int wakeUpInactiveAnimals = 4;
     public int wakeUpInactiveAnimalsEvery = 60*20;
-    public int wakeUpInactiveAnimalsFor = 5*20;
-    public int wakeUpInactiveMonsters = 8;
+    public int wakeUpInactiveAnimalsFor = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 5*20 : 40; // Plazma - Optimize Default Configurations
+    public int wakeUpInactiveMonsters = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 8 : 4; // Plazma - Optimize Default Configurations
     public int wakeUpInactiveMonstersEvery = 20*20;
-    public int wakeUpInactiveMonstersFor = 5*20;
-    public int wakeUpInactiveVillagers = 4;
+    public int wakeUpInactiveMonstersFor = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 5*20 : 60; // Plazma - Optimize Default Configurations
+    public int wakeUpInactiveVillagers = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 4 : 1; // Plazma - Optimize Default Configurations
     public int wakeUpInactiveVillagersEvery = 30*20;
-    public int wakeUpInactiveVillagersFor = 5*20;
-    public int wakeUpInactiveFlying = 8;
+    public int wakeUpInactiveVillagersFor = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 5*20 : 20; // Plazma - Optimize Default Configurations
+    public int wakeUpInactiveFlying = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 8 : 1; // Plazma - Optimize Default Configurations
     public int wakeUpInactiveFlyingEvery = 10*20;
-    public int wakeUpInactiveFlyingFor = 5*20;
+    public int wakeUpInactiveFlyingFor = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 5*20 : 60; // Plazma - Optimize Default Configurations
     public int villagersWorkImmunityAfter = 5*20;
     public int villagersWorkImmunityFor = 20;
     public boolean villagersActiveForPanic = true;
@@ -297,7 +297,7 @@ public class SpigotWorldConfig
         {
             this.set( "ticks-per.hopper-check", 1 );
         }
-        this.hopperCheck = this.getInt( "ticks-per.hopper-check", 1 );
+        this.hopperCheck = this.getInt( "ticks-per.hopper-check", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 1 : 8 ); // Plazma - Optimize Default Configurations
         this.hopperAmount = this.getInt( "hopper-amount", 1 );
         this.hopperCanLoadChunks = this.getBoolean( "hopper-can-load-chunks", false );
         this.log( "Hopper Transfer: " + this.hopperTransfer + " Hopper Check: " + this.hopperCheck + " Hopper Amount: " + this.hopperAmount + " Hopper Can Load Chunks: " + this.hopperCanLoadChunks );
@@ -307,7 +307,7 @@ public class SpigotWorldConfig
     public int tridentDespawnRate;
     private void arrowDespawnRate()
     {
-        this.arrowDespawnRate = this.getInt( "arrow-despawn-rate", 1200 );
+        this.arrowDespawnRate = this.getInt( "arrow-despawn-rate", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 1200 : 300 ); // Plazma - Optimize Default Configurations
         this.tridentDespawnRate = this.getInt( "trident-despawn-rate", this.arrowDespawnRate );
         this.log( "Arrow Despawn Rate: " + this.arrowDespawnRate + " Trident Respawn Rate:" + this.tridentDespawnRate );
     }

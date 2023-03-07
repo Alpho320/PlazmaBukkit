@@ -120,7 +120,7 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
         this.levelName = this.get("level-name", "world");
         this.serverPort = this.get("server-port", 25565);
         this.announcePlayerAchievements = this.getLegacyBoolean("announce-player-achievements");
-        this.enableQuery = this.get("enable-query", false);
+        this.enableQuery = this.get("enable-query", !Boolean.getBoolean("Plazma.disableConfigOptimization")); // Plazma - Optimize Default Configurations
         this.queryPort = this.get("query.port", 25565);
         this.enableRcon = this.get("enable-rcon", false);
         this.rconPort = this.get("rcon.port", 25575);
@@ -129,15 +129,15 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
         this.allowNether = this.get("allow-nether", true);
         this.spawnMonsters = this.get("spawn-monsters", true);
         this.useNativeTransport = this.get("use-native-transport", true);
-        this.enableCommandBlock = this.get("enable-command-block", false);
-        this.spawnProtection = this.get("spawn-protection", 16);
+        this.enableCommandBlock = this.get("enable-command-block", !Boolean.getBoolean("Plazma.disableConfigOptimization")); // Plazma - Optimize Default Configurations
+        this.spawnProtection = this.get("spawn-protection", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 16 : 0); // Plazma - Optimize Default Configurations
         this.opPermissionLevel = this.get("op-permission-level", 4);
         this.functionPermissionLevel = this.get("function-permission-level", 2);
         this.maxTickTime = this.get("max-tick-time", TimeUnit.MINUTES.toMillis(1L));
-        this.maxChainedNeighborUpdates = this.get("max-chained-neighbor-updates", 1000000);
+        this.maxChainedNeighborUpdates = this.get("max-chained-neighbor-updates", !Boolean.getBoolean("Plazma.disableConfigOptimization") ? 10000 : 1000000); // Plazma - Optimize Default Configurations
         this.rateLimitPacketsPerSecond = this.get("rate-limit", 0);
-        this.viewDistance = this.get("view-distance", 10);
-        this.simulationDistance = this.get("simulation-distance", 10);
+        this.viewDistance = this.get("view-distance", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 10 : 7); // Plazma - Optimize Default Configurations
+        this.simulationDistance = this.get("simulation-distance", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 10 : 4); // Plazma - Optimize Default Configurations
         this.maxPlayers = this.get("max-players", 20);
         this.networkCompressionThreshold = this.get("network-compression-threshold", 256);
         this.broadcastRconToOps = this.get("broadcast-rcon-to-ops", true);
@@ -145,7 +145,7 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
         this.maxWorldSize = this.get("max-world-size", (integer) -> {
             return Mth.clamp(integer, 1, 29999984);
         }, 29999984);
-        this.syncChunkWrites = this.get("sync-chunk-writes", true) && Boolean.getBoolean("Paper.enable-sync-chunk-writes"); // Paper - hide behind flag
+        this.syncChunkWrites = Boolean.getBoolean("Paper.enable-sync-chunk-writes"); // Paper - hide behind flag // Plazma - Optimize Default Configurations
         this.enableJmxMonitoring = this.get("enable-jmx-monitoring", false);
         this.enableStatus = this.get("enable-status", true);
         this.hideOnlinePlayers = this.get("hide-online-players", false);
