@@ -84,15 +84,15 @@ public class WorldConfiguration extends ConfigurationPart {
 
         public class AntiXray extends ConfigurationPart {
             public boolean enabled = false;
-            public EngineMode engineMode = EngineMode.HIDE;
+            public EngineMode engineMode = Boolean.getBoolean("Plazma.disableConfigOptimization") ? EngineMode.HIDE : EngineMode.OBFUSCATE_LAYER; // Plazma - Optimize Default Configurations
             public int maxBlockHeight = 64;
             public int updateRadius = 2;
             public boolean lavaObscures = false;
             public boolean usePermission = false;
-            public List<String> hiddenBlocks = List.of("copper_ore", "deepslate_copper_ore", "gold_ore", "deepslate_gold_ore", "iron_ore", "deepslate_iron_ore",
-                "coal_ore", "deepslate_coal_ore", "lapis_ore", "deepslate_lapis_ore", "mossy_cobblestone", "obsidian", "chest", "diamond_ore", "deepslate_diamond_ore",
-                "redstone_ore", "deepslate_redstone_ore", "clay", "emerald_ore", "deepslate_emerald_ore", "ender_chest"); // TODO update type to List<Block>
-            public List<String> replacementBlocks = List.of("stone", "oak_planks", "deepslate"); // TODO update type to List<Block>
+            // Plazma start - Optimize Default Configurations
+            public List<String> hiddenBlocks = List.of("air", "copper_ore", "deepslate_copper_ore", "raw_copper_block", "diamond_ore", "deepslate_diamond_ore", "gold_ore", "deepslate_gold_ore", "iron_ore", "deepslate_iron_ore", "raw_iron_block", "lapis_ore", "deepslate_lapis_ore", "redstone_ore", "deepslate_redstone_ore"); // TODO update type to List<Block>
+            public List<String> replacementBlocks = List.of("chest", "amethyst_block", "andesite", "budding_amethyst", "calcite", "coal_ore", "deepslate_coal_ore", "deepslate", "diorite", "dirt", "emerald_ore", "deepslate_emerald_ore", "granite", "gravel", "oak_planks", "smooth_basalt", "stone", "tuff"); // TODO update type to List<Block>
+            // Plazma end
         }
     }
 
@@ -116,8 +116,8 @@ public class WorldConfiguration extends ConfigurationPart {
         public ArmorStands armorStands;
 
         public class ArmorStands extends ConfigurationPart {
-            public boolean doCollisionEntityLookups = true;
-            public boolean tick = true;
+            public boolean doCollisionEntityLookups = Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
+            public boolean tick = Boolean.getBoolean("Plazma.disableConfigOptimization");; // Plazma - Optimize Default Configurations
         }
 
         public Markers markers;
@@ -139,7 +139,7 @@ public class WorldConfiguration extends ConfigurationPart {
             @MergeMap
             public Reference2IntMap<MobCategory> spawnLimits = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
             @MergeMap
-            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getNoDespawnDistance(), category.getDespawnDistance())));
+            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getNoDespawnDistance(), Boolean.getBoolean("Plazma.disableConfigOptimization") ? category.getDespawnDistance() : (net.minecraft.server.MinecraftServer.getServer().server.getSimulationDistance() * 16) + 8))); // Plazma - Optimize Default Configurations
 
             @ConfigSerializable
             public record DespawnRange(@Required int soft, @Required int hard) {
@@ -323,7 +323,7 @@ public class WorldConfiguration extends ConfigurationPart {
     public class Environment extends ConfigurationPart {
         public boolean disableThunder = false;
         public boolean disableIceAndSnow = false;
-        public boolean optimizeExplosions = false;
+        public boolean optimizeExplosions = !Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
         public boolean disableExplosionKnockback = false;
         public boolean generateFlatBedrock = false;
         public FrostedIce frostedIce;
@@ -403,9 +403,9 @@ public class WorldConfiguration extends ConfigurationPart {
     public class Collisions extends ConfigurationPart {
         public boolean onlyPlayersCollide = false;
         public boolean allowVehicleCollisions = true;
-        public boolean fixClimbingBypassingCrammingRule = false;
+        public boolean fixClimbingBypassingCrammingRule = !Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
         @RequiresSpigotInitialization(MaxEntityCollisionsInitializer.class)
-        public int maxEntityCollisions = 8;
+        public int maxEntityCollisions = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 8 : 2; // Plazma - Optimize Default Configurations
         public boolean allowPlayerCrammingDamage = false;
     }
 
@@ -413,18 +413,40 @@ public class WorldConfiguration extends ConfigurationPart {
 
     public class Chunks extends ConfigurationPart {
         public AutosavePeriod autoSaveInterval = AutosavePeriod.def();
-        public int maxAutoSaveChunksPerTick = 24;
+        public int maxAutoSaveChunksPerTick = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 24 : 8; // Plazma - Optimize Default Configurations
         public int fixedChunkInhabitedTime = -1;
-        public boolean preventMovingIntoUnloadedChunks = false;
+        public boolean preventMovingIntoUnloadedChunks = !Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
         public Duration delayChunkUnloadsBy = Duration.of("10s");
         public Reference2IntMap<EntityType<?>> entityPerChunkSaveLimit = Util.make(new Reference2IntOpenHashMap<>(BuiltInRegistries.ENTITY_TYPE.size()), map -> {
-            map.defaultReturnValue(-1);
-            map.put(EntityType.EXPERIENCE_ORB, -1);
-            map.put(EntityType.SNOWBALL, -1);
-            map.put(EntityType.ENDER_PEARL, -1);
-            map.put(EntityType.ARROW, -1);
-            map.put(EntityType.FIREBALL, -1);
-            map.put(EntityType.SMALL_FIREBALL, -1);
+            // Plazma start - Optimize Default Configurations
+            if (!Boolean.getBoolean("Plazma.disableConfigOptimization")) {
+                map.put(EntityType.AREA_EFFECT_CLOUD, 8);
+                map.put(EntityType.ARROW, 16);
+                map.put(EntityType.DRAGON_FIREBALL, 3);
+                map.put(EntityType.EGG, 8);
+                map.put(EntityType.ENDER_PEARL, 8);
+                map.put(EntityType.EXPERIENCE_BOTTLE, 3);
+                map.put(EntityType.EXPERIENCE_ORB, 16);
+                map.put(EntityType.EYE_OF_ENDER, 8);
+                map.put(EntityType.FIREBALL, 8);
+                map.put(EntityType.FIREWORK_ROCKET, 8);
+                map.put(EntityType.LLAMA_SPIT, 3);
+                map.put(EntityType.POTION, 8);
+                map.put(EntityType.SHULKER_BULLET, 8);
+                map.put(EntityType.SMALL_FIREBALL, 8);
+                map.put(EntityType.SNOWBALL, 8);
+                map.put(EntityType.SPECTRAL_ARROW, 16);
+                map.put(EntityType.TRIDENT, 16);
+                map.put(EntityType.WITHER_SKULL, 4);
+            } else {
+                map.put(EntityType.EXPERIENCE_ORB, -1);
+                map.put(EntityType.SNOWBALL, -1);
+                map.put(EntityType.ENDER_PEARL, -1);
+                map.put(EntityType.ARROW, -1);
+                map.put(EntityType.FIREBALL, -1);
+                map.put(EntityType.SMALL_FIREBALL, -1);
+            }
+            // Plazma end
         });
         public boolean flushRegionsOnSave = false;
     }
@@ -439,9 +461,9 @@ public class WorldConfiguration extends ConfigurationPart {
     public TickRates tickRates;
 
     public class TickRates extends ConfigurationPart {
-        public int grassSpread = 1;
+        public int grassSpread = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 1 : 4; // Plazma - Optimize Default Configurations
         public int containerUpdate = 1;
-        public int mobSpawner = 1;
+        public int mobSpawner = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 1 : 2; // Plazma - Optimize Default Configurations
         public Table<EntityType<?>, String, Integer> sensor = Util.make(HashBasedTable.create(), table -> table.put(EntityType.VILLAGER, "secondarypoisensor", 40));
         public Table<EntityType<?>, String, Integer> behavior = Util.make(HashBasedTable.create(), table -> table.put(EntityType.VILLAGER, "validatenearbypoi", -1));
     }
@@ -465,9 +487,9 @@ public class WorldConfiguration extends ConfigurationPart {
 
     public class Misc extends ConfigurationPart {
         public int lightQueueSize = 20;
-        public boolean updatePathfindingOnBlockUpdate = true;
+        public boolean updatePathfindingOnBlockUpdate = Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
         public boolean showSignClickCommandFailureMsgsToPlayer = false;
-        public RedstoneImplementation redstoneImplementation = RedstoneImplementation.VANILLA;
+        public RedstoneImplementation redstoneImplementation = Boolean.getBoolean("Plazma.disableConfigOptimization") ? RedstoneImplementation.VANILLA : RedstoneImplementation.ALTERNATE_CURRENT; // Plazma - Optimize Default Configurations
         public boolean disableEndCredits = false;
         public float maxLeashDistance = 10f;
         public boolean disableSprintInterruptionOnAttack = false;

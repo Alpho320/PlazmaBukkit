@@ -103,7 +103,7 @@ public class GlobalConfiguration extends ConfigurationPart {
 
     public class Watchdog extends ConfigurationPart {
         public int earlyWarningEvery = 5000;
-        public int earlyWarningDelay = 10000;
+        public int earlyWarningDelay = Boolean.getBoolean("Plazma.disableConfigOptimization") ? 10000 : 180000; // Plazma - Optimize Default Configurations
     }
 
     public SpamLimiter spamLimiter;
@@ -198,7 +198,7 @@ public class GlobalConfiguration extends ConfigurationPart {
         public BookSize bookSize;
 
         public class BookSize extends ConfigurationPart {
-            public int pageMax = 2560; // TODO this appears to be a duplicate setting with one above
+            public int pageMax = !Boolean.getBoolean("Plazma.disableConfigOptimization") ? 1024 : 2560; // TODO this appears to be a duplicate setting with one above // Plazma - Optimize Default Configurations
             public double totalMultiplier = 0.98D; // TODO this should probably be merged into the above inner class
         }
         public boolean resolveSelectorsInBooks = false;
@@ -209,7 +209,15 @@ public class GlobalConfiguration extends ConfigurationPart {
     public class PacketLimiter extends ConfigurationPart {
         public Component kickMessage = Component.translatable("disconnect.exceeded_packet_rate", NamedTextColor.RED);
         public PacketLimit allPackets = new PacketLimit(7.0, 500.0, PacketLimit.ViolateAction.KICK);
-        public Map<Class<? extends Packet<?>>, PacketLimit> overrides = Map.of(ServerboundPlaceRecipePacket.class, new PacketLimit(4.0, 5.0, PacketLimit.ViolateAction.DROP));
+        // Plazma start - Optimize Default Configurations
+        public Map<Class<? extends Packet<?>>, PacketLimit> overrides = new java.util.HashMap<>() {{
+            put(ServerboundPlaceRecipePacket.class, new PacketLimit(4.0, 5.0, PacketLimit.ViolateAction.DROP));
+            if (!Boolean.getBoolean("Plazma.disableConfigOptimization")) {
+                put(net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket.class, new PacketLimit(1.0, 15.0, PacketLimit.ViolateAction.DROP));
+                put(net.minecraft.network.protocol.game.ServerboundPlaceRecipePacket.class, new PacketLimit(4.0, 5.0, PacketLimit.ViolateAction.DROP));
+            }
+        }};
+        // Plazma end
 
         @ConfigSerializable
         public record PacketLimit(@Required double interval, @Required double maxPacketRate, ViolateAction action) {
@@ -276,7 +284,7 @@ public class GlobalConfiguration extends ConfigurationPart {
                 executor.setMaximumPoolSize(_chatExecutorMaxSize);
             }
         }
-        public int maxJoinsPerTick = 5;
+        public int maxJoinsPerTick = !Boolean.getBoolean("Plazma.disableConfigOptimization") ? 3 : 5; // Plazma - Optimize Default Configurations
         public boolean fixEntityPositionDesync = true;
         public boolean loadPermissionsYmlBeforePlugins = true;
         @Constraints.Min(4)

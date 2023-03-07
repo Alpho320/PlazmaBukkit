@@ -29,6 +29,7 @@ public class ArrowDespawnRate extends FallbackValue.Int {
 
     @Override
     protected int fallback() {
+        if (!Boolean.getBoolean("Plazma.disableConfigOptimization")) return 100; // Plazma - Optimize Default Configurations
         return this.get(FallbackValue.SPIGOT_WORLD_CONFIG).arrowDespawnRate;
     }
 
