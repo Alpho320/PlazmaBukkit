@@ -49,7 +49,10 @@ public class PurpurConfig {
             + "join us in our Discord guild.\n"
             + "\n"
             + "Website: https://purpurmc.org \n"
-            + "Docs: https://purpurmc.org/docs \n";
+            // Plazma start
+            + "Docs: https://purpurmc.org/docs \n"
+            + "Vanilla Food Properties: https://gist.github.com/BillyGalbreath/4fdfba991bd020e814eabf5143e3b225 \n";
+            // Plazma end
     private static File CONFIG_FILE;
     public static YamlConfiguration config;
 
@@ -239,7 +242,7 @@ public class PurpurConfig {
         laggingThreshold = getDouble("settings.lagging-threshold", laggingThreshold);
     }
 
-    public static boolean useAlternateKeepAlive = false;
+    public static boolean useAlternateKeepAlive = !Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
     private static void useAlternateKeepAlive() {
         useAlternateKeepAlive = getBoolean("settings.use-alternate-keepalive", useAlternateKeepAlive);
     }

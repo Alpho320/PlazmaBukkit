@@ -354,7 +354,7 @@ public final class CraftServer implements Server {
 
         this.configuration = YamlConfiguration.loadConfiguration(this.getConfigFile());
         this.configuration.options().copyDefaults(true);
-        this.configuration.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("configurations/bukkit.yml"), Charsets.UTF_8)));
+        this.configuration.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(Boolean.getBoolean("Plazma.disableConfigOptimization") ? "configurations/bukkit.yml" : "configurations/bukkit_optimized.yml"), Charsets.UTF_8))); // Plazma - Optimize Default Configurations
         ConfigurationSection legacyAlias = null;
         if (!this.configuration.isString("aliases")) {
             legacyAlias = this.configuration.getConfigurationSection("aliases");

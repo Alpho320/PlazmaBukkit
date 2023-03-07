@@ -211,8 +211,8 @@ public class PufferfishConfig {
     public static int maxProjectileLoadsPerTick;
     public static int maxProjectileLoadsPerProjectile;
     private static void projectileLoading() {
-        maxProjectileLoadsPerTick = getInt("projectile.max-loads-per-tick", 10, "Controls how many chunks are allowed", "to be sync loaded by projectiles in a tick.");
-        maxProjectileLoadsPerProjectile = getInt("projectile.max-loads-per-projectile", 10, "Controls how many chunks a projectile", "can load in its lifetime before it gets", "automatically removed.");
+		maxProjectileLoadsPerTick = getInt("projectile.max-loads-per-tick", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 10 : 8, "Controls how many chunks are allowed", "to be sync loaded by projectiles in a tick."); // Plazma
+		maxProjectileLoadsPerProjectile = getInt("projectile.max-loads-per-projectile", 10, "Controls how many chunks a projectile", "can load in its lifetime before it gets", "automatically removed.");
 
         setComment("projectile", "Optimizes projectile settings");
     }
@@ -225,16 +225,16 @@ public class PufferfishConfig {
     public static int activationDistanceMod;
 
     private static void dynamicActivationOfBrains() throws IOException {
-        dearEnabled = getBoolean("dab.enabled", "activation-range.enabled", false); // Purpur
-        startDistance = getInt("dab.start-distance", "activation-range.start-distance", 12,
+		dearEnabled = getBoolean("dab.enabled", "activation-range.enabled", !Boolean.getBoolean("Plazma.disableConfigOptimization")); // Purpur // Plazma
+		startDistance = getInt("dab.start-distance", "activation-range.start-distance", 12,
                 "This value determines how far away an entity has to be",
                 "from the player to start being effected by DEAR.");
         startDistanceSquared = startDistance * startDistance;
         maximumActivationPrio = getInt("dab.max-tick-freq", "activation-range.max-tick-freq", 20,
                 "This value defines how often in ticks, the furthest entity",
                 "will get their pathfinders and behaviors ticked. 20 = 1s");
-        activationDistanceMod = getInt("dab.activation-dist-mod", "activation-range.activation-dist-mod", 8,
-                "This value defines how much distance modifies an entity's",
+		activationDistanceMod = getInt("dab.activation-dist-mod", "activation-range.activation-dist-mod", Boolean.getBoolean("Plazma.disableConfigOptimization") ? 8 : 7, // Plazma
+				"This value defines how much distance modifies an entity's",
                 "tick frequency. freq = (distanceToPlayer^2) / (2^value)",
                 "If you want further away entities to tick less often, use 7.",
                 "If you want further away entities to tick more often, try 9.");
@@ -253,8 +253,18 @@ public class PufferfishConfig {
 	public static Map<String, Integer> projectileTimeouts;
 	private static void projectileTimeouts() {
 		// Set some defaults
-		getInt("entity_timeouts.SNOWBALL", -1);
-		getInt("entity_timeouts.LLAMA_SPIT", -1);
+		// Plazma start - Optimize Default Configurations
+		if (!Boolean.getBoolean("Plazma.disableConfigOptimization")) {
+			getInt("entity_timeouts.ARROW", 200);
+			getInt("entity_timeouts.EGG", 200);
+			getInt("entity_timeouts.ENDER_PEARL", 200);
+			getInt("entity_timeouts.SNOWBALL", 200);
+			getInt("entity_timeouts.LLAMA_SPIT", 200);
+		} else {
+			// Plazma end
+			getInt("entity_timeouts.SNOWBALL", -1);
+			getInt("entity_timeouts.LLAMA_SPIT", -1);
+		} // Plazma
 		setComment("entity_timeouts",
 				"These values define a entity's maximum lifespan. If an",
 				"entity is in this list and it has survived for longer than",

@@ -154,7 +154,7 @@ public class Main {
                 File configFile = (File) optionset.valueOf("bukkit-settings");
                 YamlConfiguration configuration = YamlConfiguration.loadConfiguration(configFile);
                 configuration.options().copyDefaults(true);
-                configuration.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("configurations/bukkit.yml"), Charsets.UTF_8)));
+                configuration.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream(Boolean.getBoolean("Plazma.disableConfigOptimization") ? "configurations/bukkit.yml" : "configurations/bukkit_optimized.yml"), Charsets.UTF_8))); // Plazma - Optimize Default Configurations
                 configuration.save(configFile);
 
                 File commandFile = (File) optionset.valueOf("commands-settings");

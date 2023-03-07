@@ -427,7 +427,7 @@ public class PurpurWorldConfig {
     public boolean playerInvulnerableWhileAcceptingResourcePack = false;
     public String playerDeathExpDropEquation = "expLevel * 7";
     public int playerDeathExpDropMax = 100;
-    public boolean teleportIfOutsideBorder = false;
+    public boolean teleportIfOutsideBorder = !Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
     public boolean teleportOnNetherCeilingDamage = false;
     public boolean totemOfUndyingWorksInInventory = false;
     public boolean playerFixStuckPortal = false;
@@ -3040,7 +3040,7 @@ public class PurpurWorldConfig {
     public boolean zombieJockeyOnlyBaby = true;
     public double zombieJockeyChance = 0.05D;
     public boolean zombieJockeyTryExistingChickens = true;
-    public boolean zombieAggressiveTowardsVillagerWhenLagging = true;
+    public boolean zombieAggressiveTowardsVillagerWhenLagging = Boolean.getBoolean("Plazma.disableConfigOptimization"); // Plazma - Optimize Default Configurations
     public boolean zombieBypassMobGriefing = false;
     public boolean zombieTakeDamageFromWater = false;
     public boolean zombieAlwaysDropExp = false;
