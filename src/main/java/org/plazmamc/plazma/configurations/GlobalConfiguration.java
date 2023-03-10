@@ -20,4 +20,10 @@ public class GlobalConfiguration extends ConfigurationPart {
 
     @Setting(Configuration.VERSION_FIELD)
     public int version = CURRENT_VERSION;
+
+    public ConsoleLogs consoleLogs;
+    public class ConsoleLogs extends ConfigurationPart {
+
+
+    }
 }
