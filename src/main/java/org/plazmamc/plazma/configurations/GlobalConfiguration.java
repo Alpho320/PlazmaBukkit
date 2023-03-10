@@ -24,6 +24,8 @@ public class GlobalConfiguration extends ConfigurationPart {
     public ConsoleLogs consoleLogs;
     public class ConsoleLogs extends ConfigurationPart {
 
+        public boolean enableOfflineWarnings = true;
+        public boolean enableRootUserWarnings = true;
 
     }
 }

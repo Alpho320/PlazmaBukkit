@@ -180,16 +180,6 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
             DedicatedServer.LOGGER.warn("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
         }
 
-        // Paper start - detect running as root
-        if (io.papermc.paper.util.ServerEnvironment.userIsRootOrAdmin()) {
-            DedicatedServer.LOGGER.warn("****************************");
-            DedicatedServer.LOGGER.warn("YOU ARE RUNNING THIS SERVER AS AN ADMINISTRATIVE OR ROOT USER. THIS IS NOT ADVISED.");
-            DedicatedServer.LOGGER.warn("YOU ARE OPENING YOURSELF UP TO POTENTIAL RISKS WHEN DOING THIS.");
-            DedicatedServer.LOGGER.warn("FOR MORE INFORMATION, SEE https://madelinemiller.dev/blog/root-minecraft-server/");
-            DedicatedServer.LOGGER.warn("****************************");
-        }
-        // Paper end
-
         DedicatedServer.LOGGER.info("Loading properties");
         DedicatedServerProperties dedicatedserverproperties = this.settings.getProperties();
 
@@ -321,7 +311,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
         String proxyFlavor = (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) ? "Velocity" : "BungeeCord";
         String proxyLink = (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) ? "https://docs.papermc.io/velocity/security" : "http://www.spigotmc.org/wiki/firewall-guide/";
         // Paper end
-        if (!this.usesAuthentication()) {
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().consoleLogs.enableOfflineWarnings && !this.usesAuthentication()) { // Plazma
             DedicatedServer.LOGGER.warn("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
             DedicatedServer.LOGGER.warn("The server will make no attempt to authenticate usernames. Beware.");
             // Spigot start
@@ -334,9 +324,20 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
                 DedicatedServer.LOGGER.warn("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
             }
             // Spigot end
-            DedicatedServer.LOGGER.warn("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
+            DedicatedServer.LOGGER.warn("To change this, set \"online-mode\" to \"true\" in the \"server.properties\" file or set \"console-logs.offline-warning\" to \"false\" in the \"config/plazma-global.yml\" file."); // Plazma
         }
 
+        // Plazma start - Moved down
+        // Paper start - detect running as root
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().consoleLogs.enableRootUserWarnings && io.papermc.paper.util.ServerEnvironment.userIsRootOrAdmin()) {
+            DedicatedServer.LOGGER.warn("****************************");
+            DedicatedServer.LOGGER.warn("YOU ARE RUNNING THIS SERVER AS AN ADMINISTRATIVE OR ROOT USER. THIS IS NOT ADVISED.");
+            DedicatedServer.LOGGER.warn("YOU ARE OPENING YOURSELF UP TO POTENTIAL RISKS WHEN DOING THIS.");
+            DedicatedServer.LOGGER.warn("FOR MORE INFORMATION, SEE https://madelinemiller.dev/blog/root-minecraft-server/");
+            DedicatedServer.LOGGER.warn("****************************");
+        }
+        // Paper end
+        // Plazma end
 
         if (!OldUsersConverter.serverReadyAfterUserconversion(this)) {
             return false;
