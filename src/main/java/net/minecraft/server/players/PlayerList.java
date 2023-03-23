@@ -275,7 +275,7 @@ public abstract class PlayerList {
         ServerGamePacketListenerImpl playerconnection = new ServerGamePacketListenerImpl(this.server, connection, player);
         GameRules gamerules = worldserver1.getGameRules();
         boolean flag = gamerules.getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN);
-        boolean flag1 = gamerules.getBoolean(GameRules.RULE_REDUCEDDEBUGINFO);
+        boolean flag1 = gamerules.getBoolean(GameRules.RULE_REDUCEDDEBUGINFO) && !player.getBukkitEntity().hasPermission("plazma.bypass-reduced-debug-info-gamerule"); // Plazma
 
         // Spigot - view distance
         playerconnection.send(new ClientboundLoginPacket(player.getId(), worlddata.isHardcore(), player.gameMode.getGameModeForPlayer(), player.gameMode.getPreviousGameModeForPlayer(), this.server.levelKeys(), this.synchronizedRegistries, worldserver1.dimensionTypeId(), worldserver1.dimension(), BiomeManager.obfuscateSeed(worldserver1.getSeed()), this.getMaxPlayers(), worldserver1.getChunkSource().chunkMap.playerChunkManager.getTargetSendDistance(), worldserver1.getChunkSource().chunkMap.playerChunkManager.getTargetTickViewDistance(), flag1, !flag, worldserver1.isDebug(), worldserver1.isFlat(), player.getLastDeathLocation())); // Paper - replace old player chunk management
@@ -1300,7 +1300,7 @@ public abstract class PlayerList {
         player.getEntityData().refresh(player); // CraftBukkkit - SPIGOT-7218: sync metadata
         player.connection.send(new ClientboundSetCarriedItemPacket(player.getInventory().selected));
         // CraftBukkit start - from GameRules
-        int i = player.level.getGameRules().getBoolean(GameRules.RULE_REDUCEDDEBUGINFO) ? 22 : 23;
+        int i = player.level.getGameRules().getBoolean(GameRules.RULE_REDUCEDDEBUGINFO) && !player.getBukkitEntity().hasPermission("plazma.bypass-reduced-debug-info-gamerule") ? 22 : 23; // Plazma
         player.connection.send(new ClientboundEntityEventPacket(player, (byte) i));
         float immediateRespawn = player.level.getGameRules().getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN) ? 1.0F: 0.0F;
         player.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.IMMEDIATE_RESPAWN, immediateRespawn));
