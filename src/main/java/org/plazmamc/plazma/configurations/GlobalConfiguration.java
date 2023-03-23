@@ -32,7 +32,7 @@ public class GlobalConfiguration extends ConfigurationPart {
     public Player player;
     public class Player extends ConfigurationPart {
 
-
+        public boolean allowAnyUsername = false;
 
     }
 }
