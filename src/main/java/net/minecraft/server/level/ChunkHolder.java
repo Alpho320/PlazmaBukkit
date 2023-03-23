@@ -362,15 +362,14 @@ public class ChunkHolder {
         }
 
         Object[] backingSet = players.getBackingSet();
-        for (int i = 0, len = backingSet.length; i < len; ++i) {
-            if (!(backingSet[i] instanceof ServerPlayer player)) {
-                continue;
+        // Plazma start - Implement ChunkSending
+        for (Object o : backingSet) {
+            if (o instanceof ServerPlayer player && this.chunkMap.playerChunkManager.isChunkSent(player, this.pos.x, this.pos.z, onlyOnWatchDistanceEdge)) {
+                if (this.chunkMap.level.plazmaLevelConfiguration().chunkSending.enabled && player.attachToPending(pos, packet)) continue;
+                player.connection.send(packet);
             }
-            if (!this.chunkMap.playerChunkManager.isChunkSent(player, this.pos.x, this.pos.z, onlyOnWatchDistanceEdge)) {
-                continue;
-            }
-            player.connection.send(packet);
         }
+        // Plazma end
         // Paper end - per player view distance
     }
 
