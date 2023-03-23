@@ -22,4 +22,12 @@ public class LevelConfigurations extends ConfigurationPart {
 
     @Setting(Configuration.VERSION_FIELD)
     public int version = CURRENT_VERSION;
+
+    public ChunkSending chunkSending;
+    public class ChunkSending extends ConfigurationPart {
+
+        public boolean enabled = DO_OPTIMIZE;
+        public int maxChunksPerTick = 5;
+
+    }
 }
