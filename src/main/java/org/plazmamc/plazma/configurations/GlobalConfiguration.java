@@ -28,4 +28,11 @@ public class GlobalConfiguration extends ConfigurationPart {
         public boolean enableRootUserWarnings = true;
 
     }
+
+    public Player player;
+    public class Player extends ConfigurationPart {
+
+
+
+    }
 }
