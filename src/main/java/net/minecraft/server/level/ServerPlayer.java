@@ -730,7 +730,35 @@ public class ServerPlayer extends Player {
             }
         }
         // Purpur end
+    // Plazma start - Implement ChunkSending
+        if (this.level.plazmaLevelConfiguration().chunkSending.enabled) {
+            if (chunksToSend.isEmpty()) return;
+
+            if (disconnected) {
+                chunksToSend.clear();
+                return;
+            }
+
+            final List<java.util.Map.Entry<ChunkPos, List<Packet<?>>>> packets = new java.util.ArrayList<>(chunksToSend.entrySet());
+            packets.sort(java.util.Comparator.comparingDouble(e -> e.getKey().getMiddleBlockPosition(getBlockY()).distSqr(blockPosition())));
+
+            for (int i = 0; i < packets.size() && i < this.level.plazmaLevelConfiguration().chunkSending.maxChunksPerTick; i++) {
+                final java.util.Map.Entry<ChunkPos, List<Packet<?>>> entry = packets.get(i);
+                for (final Packet<?> packet : entry.getValue()) {
+                    connection.send(packet);
+                }
+                chunksToSend.remove(entry.getKey());
+            }
+        }
     }
+
+    public boolean attachToPending(final ChunkPos pos, final Packet<?> packet) {
+        final List<Packet<?>> packetList = chunksToSend.get(pos);
+        if (packetList == null) return false;
+        packetList.add(packet);
+        return true;
+    }
+    // Plazma end
 
     public void doTick() {
         try {
@@ -2374,7 +2402,14 @@ public class ServerPlayer extends Player {
         return true; // Paper
     }
 
+    // Plazma start - Implement ChunkSending
+    private final java.util.Map<ChunkPos, List<Packet<?>>> chunksToSend = java.util.Collections.synchronizedMap(new java.util.HashMap<>());
     public void trackChunk(ChunkPos chunkPos, Packet<?> chunkDataPacket) {
+        if (this.level.plazmaLevelConfiguration().chunkSending.enabled) {
+            List<Packet<?>> packetList = chunksToSend.computeIfAbsent(chunkPos, k -> new java.util.ArrayList<>());
+            packetList.add(chunkDataPacket);
+        }
+    // Plazma end
         this.connection.send(chunkDataPacket);
         // Paper start
         if(io.papermc.paper.event.packet.PlayerChunkLoadEvent.getHandlerList().getRegisteredListeners().length > 0){
