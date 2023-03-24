@@ -30,4 +30,21 @@ public class LevelConfigurations extends ConfigurationPart {
         public int maxChunksPerTick = 5;
 
     }
+
+    public Structure structure;
+    public class Structure extends ConfigurationPart {
+
+        public Portal portal;
+        public class Portal extends ConfigurationPart {
+
+            public NetherPortal netherPortal;
+            public class NetherPortal extends ConfigurationPart {
+
+
+
+            }
+
+        }
+
+    }
 }
