@@ -146,6 +146,23 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.wardenTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.wardenAlwaysDropExp;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level.purpurConfig.wardenMaxHealth);
+    }
+    // Plazma end
+
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this, this.hasPose(Pose.EMERGING) ? 1 : 0);

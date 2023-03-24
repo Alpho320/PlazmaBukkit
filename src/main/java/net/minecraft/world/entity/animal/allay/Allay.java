@@ -154,6 +154,23 @@ public class Allay extends PathfinderMob implements InventoryCarrier {
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.allayTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.allayAlwaysDropExp;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level.purpurConfig.allayMaxHealth);
+    }
+    // Plazma end
+
     @Override
     protected Brain.Provider<Allay> brainProvider() {
         return Brain.provider(Allay.MEMORY_TYPES, Allay.SENSOR_TYPES);
