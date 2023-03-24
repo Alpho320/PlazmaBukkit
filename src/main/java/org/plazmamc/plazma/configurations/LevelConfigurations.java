@@ -40,7 +40,43 @@ public class LevelConfigurations extends ConfigurationPart {
             public NetherPortal netherPortal;
             public class NetherPortal extends ConfigurationPart {
 
+                public Size size;
+                public class Size extends ConfigurationPart {
 
+                    public Width width;
+                    public Height height;
+
+                    public class Width extends ConfigurationPart {
+
+                        int min = 2;
+                        int max = 21;
+
+                        public int min() {
+                            return Math.max(this.min, 1);
+                        }
+
+                        public int max() {
+                            return Math.max(this.min, this.max);
+                        }
+
+                    }
+
+                    public class Height extends ConfigurationPart {
+
+                        int min = 3;
+                        int max = 21;
+
+                        public int min() {
+                            return Math.max(this.min, 2);
+                        }
+
+                        public int max() {
+                            return Math.max(this.min, this.max);
+                        }
+
+                    }
+
+                }
 
             }
 
