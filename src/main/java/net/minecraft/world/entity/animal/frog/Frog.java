@@ -145,6 +145,23 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.frogTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.frogAlwaysDropExp;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level.purpurConfig.frogMaxHealth);
+    }
+    // Plazma end
+
     @Override
     protected Brain.Provider<Frog> brainProvider() {
         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);

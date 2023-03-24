@@ -1098,7 +1098,15 @@ public class PurpurWorldConfig {
     public boolean allayRidableInWater = true;
     public boolean allayControllable = true;
     public List<String> allayRespectNBT = new ArrayList<>();
+    // Plazma start - Add missing purpur config options
+    public double allayMaxHealth = 20.0D;
+    public boolean allayTakeDamageFromWater = false;
+    public boolean allayAlwaysDropExp = false;
     private void allaySettings() {
+        allayMaxHealth = getDouble("mobs.allay.max-health", allayMaxHealth);
+        allayTakeDamageFromWater = getBoolean("mobs.allay.take-damage-from-water", allayTakeDamageFromWater);
+        allayAlwaysDropExp = getBoolean("mobs.allay.always-drop-exp", allayAlwaysDropExp);
+    // Plazma end
         allayRidable = getBoolean("mobs.allay.ridable", allayRidable);
         allayRidableInWater = getBoolean("mobs.allay.ridable-in-water", allayRidableInWater);
         allayControllable = getBoolean("mobs.allay.controllable", allayControllable);
@@ -1209,7 +1217,15 @@ public class PurpurWorldConfig {
     public double camelJumpStrengthMax = 0.42D;
     public double camelMovementSpeedMin = 0.09D;
     public double camelMovementSpeedMax = 0.09D;
+    // Plazma start - Add missing purpur config options
+    public boolean camelRidableInWater = false;
+    public boolean camelTakeDamageFromWater = false;
+    public boolean camelAlwaysDropExp = false;
     private void camelSettings() {
+        camelRidableInWater = getBoolean("mobs.camel.ridable-in-water", camelRidableInWater);
+        camelTakeDamageFromWater = getBoolean("mobs.camel.takes-damage-from-water", camelTakeDamageFromWater);
+        camelAlwaysDropExp = getBoolean("mobs.camel.always-drop-exp", camelAlwaysDropExp);
+    // Plazma end
         camelMaxHealthMin = getDouble("mobs.camel.attributes.max_health.min", camelMaxHealthMin);
         camelMaxHealthMax = getDouble("mobs.camel.attributes.max_health.max", camelMaxHealthMax);
         camelJumpStrengthMin = getDouble("mobs.camel.attributes.jump_strength.min", camelJumpStrengthMin);
@@ -1636,7 +1652,15 @@ public class PurpurWorldConfig {
     public boolean frogControllable = true;
     public float frogRidableJumpHeight = 0.65F;
     public int frogBreedingTicks = 6000;
+    // Plazma start - Add missing purpur config options
+    public double frogMaxHealth = 10.0D;
+    public boolean frogTakeDamageFromWater = false;
+    public boolean frogAlwaysDropExp = false;
     private void frogSettings() {
+        frogMaxHealth = getDouble("mobs.frog.attributes.max_health", frogMaxHealth);
+        frogTakeDamageFromWater = getBoolean("mobs.frog.takes-damage-from-water", frogTakeDamageFromWater);
+        frogAlwaysDropExp = getBoolean("mobs.frog.always-drop-exp", frogAlwaysDropExp);
+    // Plazma end
         frogRidable = getBoolean("mobs.frog.ridable", frogRidable);
         frogRidableInWater = getBoolean("mobs.frog.ridable-in-water", frogRidableInWater);
         frogControllable = getBoolean("mobs.frog.controllable", frogControllable);
@@ -2587,7 +2611,13 @@ public class PurpurWorldConfig {
     public boolean snifferControllable = true;
     public double snifferMaxHealth = 14.0D;
     public int snifferBreedingTicks = 6000;
+    // Plazma start - Add missing purpur config options
+    public boolean snifferTakeDamageFromWater = false;
+    public boolean snifferAlwaysDropExp = false;
     private void snifferSettings() {
+        snifferTakeDamageFromWater = getBoolean("mobs.sniffer.takes-damage-from-water", snifferTakeDamageFromWater);
+        snifferAlwaysDropExp = getBoolean("mobs.sniffer.always-drop-exp", snifferAlwaysDropExp);
+    // Plazma end
         snifferRidable = getBoolean("mobs.sniffer.ridable", snifferRidable);
         snifferRidableInWater = getBoolean("mobs.sniffer.ridable-in-water", snifferRidableInWater);
         snifferControllable = getBoolean("mobs.sniffer.controllable", snifferControllable);
@@ -2686,7 +2716,15 @@ public class PurpurWorldConfig {
     public boolean tadpoleRidable = false;
     public boolean tadpoleRidableInWater = true;
     public boolean tadpoleControllable = true;
+    // Plazma start - Add missing purpur config options
+    public double tadpoleMaxHealth = 10.0D;
+    public boolean tadpoleTakeDamageFromWater = false;
+    public boolean tadpoleAlwaysDropExp = false;
     private void tadpoleSettings() {
+        tadpoleMaxHealth = getDouble("mobs.tadpole.attributes.max_health", tadpoleMaxHealth);
+        tadpoleTakeDamageFromWater = getBoolean("mobs.tadpole.takes-damage-from-water", tadpoleTakeDamageFromWater);
+        tadpoleAlwaysDropExp = getBoolean("mobs.tadpole.always-drop-exp", tadpoleAlwaysDropExp);
+    // Plazma end
         tadpoleRidable = getBoolean("mobs.tadpole.ridable", tadpoleRidable);
         tadpoleRidableInWater = getBoolean("mobs.tadpole.ridable-in-water", tadpoleRidableInWater);
         tadpoleControllable = getBoolean("mobs.tadpole.controllable", tadpoleControllable);
@@ -2896,7 +2934,15 @@ public class PurpurWorldConfig {
     public boolean wardenRidable = false;
     public boolean wardenRidableInWater = true;
     public boolean wardenControllable = true;
+    // Plazma start - Add missing purpur config options
+    public double wardenMaxHealth = 500.0D;
+    public boolean wardenTakeDamageFromWater = false;
+    public boolean wardenAlwaysDropExp = false;
     private void wardenSettings() {
+        wardenMaxHealth = getDouble("mobs.warden.attributes.max_health", wardenMaxHealth);
+        wardenTakeDamageFromWater = getBoolean("mobs.warden.takes-damage-from-water", wardenTakeDamageFromWater);
+        wardenAlwaysDropExp = getBoolean("mobs.warden.always-drop-exp", wardenAlwaysDropExp);
+    // Plazma end
         wardenRidable = getBoolean("mobs.warden.ridable", wardenRidable);
         wardenRidableInWater = getBoolean("mobs.warden.ridable-in-water", wardenRidableInWater);
         wardenControllable = getBoolean("mobs.warden.controllable", wardenControllable);

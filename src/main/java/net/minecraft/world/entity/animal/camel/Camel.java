@@ -90,6 +90,23 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Rider
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean dismountsUnderwater() {
+        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.camelRidableInWater;
+    }
+
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.camelTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.camelAlwaysDropExp;
+    }
+    // Plazma end
+
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);

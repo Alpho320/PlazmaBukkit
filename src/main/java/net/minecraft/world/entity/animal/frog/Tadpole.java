@@ -89,6 +89,23 @@ public class Tadpole extends AbstractFish {
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.tadpoleTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.tadpoleAlwaysDropExp;
+    }
+
+    @Override
+    public void initAttributes() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level.purpurConfig.tadpoleMaxHealth);
+    }
+    // Plazma end
+
     @Override
     protected PathNavigation createNavigation(Level world) {
         return new WaterBoundPathNavigation(this, world);
