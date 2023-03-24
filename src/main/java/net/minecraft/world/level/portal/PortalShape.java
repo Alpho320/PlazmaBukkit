@@ -100,7 +100,7 @@ public class PortalShape {
     private int calculateWidth() {
         int i = this.getDistanceUntilEdgeAboveFrame(this.bottomLeft, this.rightDir);
 
-        return i >= 2 && i <= 21 ? i : 0;
+        return i >= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.width.min() && i <= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.width.max() ? i : 0; // Plazma
     }
 
     private int getDistanceUntilEdgeAboveFrame(BlockPos pos, Direction direction) {
@@ -133,7 +133,7 @@ public class PortalShape {
         BlockPos.MutableBlockPos blockposition_mutableblockposition = new BlockPos.MutableBlockPos();
         int i = this.getDistanceUntilTop(blockposition_mutableblockposition);
 
-        return i >= 3 && i <= 21 && this.hasTopFrame(blockposition_mutableblockposition, i) ? i : 0;
+        return i >= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.height.min() && i <= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.height.max() && this.hasTopFrame(blockposition_mutableblockposition, i) ? i : 0; // Plazma
     }
 
     private boolean hasTopFrame(BlockPos.MutableBlockPos pos, int height) {
@@ -187,7 +187,7 @@ public class PortalShape {
     }
 
     public boolean isValid() {
-        return this.bottomLeft != null && this.width >= 2 && this.width <= 21 && this.height >= 3 && this.height <= 21;
+        return this.bottomLeft != null && this.width >= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.width.min() && this.width <= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.width.max() && this.height >= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.height.min() && this.height <= this.level.getMinecraftWorld().plazmaLevelConfiguration().structure.portal.netherPortal.size.height.max(); // Plazma
     }
 
     // CraftBukkit start - return boolean
