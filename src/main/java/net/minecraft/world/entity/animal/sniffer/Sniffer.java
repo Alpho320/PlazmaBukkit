@@ -108,6 +108,18 @@ public class Sniffer extends Animal {
     }
     // Purpur end
 
+    // Plazma start - Add missing purpur config options
+    @Override
+    public boolean isSensitiveToWater() {
+        return level.purpurConfig.snifferTakeDamageFromWater;
+    }
+
+    @Override
+    public boolean isAlwaysExperienceDropper() {
+        return level.purpurConfig.snifferAlwaysDropExp;
+    }
+    // Plazma end
+
     // CraftBukkit start - SPIGOT-7295: moved from constructor to appropriate location
     @Override
     protected void defineSynchedData() {
