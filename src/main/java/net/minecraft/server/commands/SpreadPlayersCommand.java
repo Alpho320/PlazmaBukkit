@@ -65,7 +65,7 @@ public class SpreadPlayersCommand {
         if (maxY < j) {
             throw SpreadPlayersCommand.ERROR_INVALID_MAX_HEIGHT.create(maxY, j);
         } else {
-            RandomSource randomsource = RandomSource.create();
+            RandomSource randomsource = worldserver.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? worldserver.getRandom() : RandomSource.create(); // Plazma
             double d0 = (double) (center.x - maxRange);
             double d1 = (double) (center.y - maxRange);
             double d2 = (double) (center.x + maxRange);

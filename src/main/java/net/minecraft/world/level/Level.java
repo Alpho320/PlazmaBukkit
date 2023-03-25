@@ -125,7 +125,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     public final Thread thread;
     private final boolean isDebug;
     private int skyDarken;
-    protected int randValue = RandomSource.create().nextInt();
+    protected int randValue = org.plazmamc.plazma.configurations.GlobalConfiguration.get().misc.reduceCreateRandomInstance ? java.util.concurrent.ThreadLocalRandom.current().nextInt() : RandomSource.create().nextInt(); // Plazma
     protected final int addend = 1013904223;
     protected float oRainLevel;
     public float rainLevel;

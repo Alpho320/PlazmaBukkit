@@ -86,7 +86,7 @@ public class FishingHook extends Projectile {
 
     private FishingHook(EntityType<? extends FishingHook> type, Level world, int luckOfTheSeaLevel, int lureLevel) {
         super(type, world);
-        this.syncronizedRandom = RandomSource.create();
+        this.syncronizedRandom = world.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? world.getRandom() : RandomSource.create(); // Plazma
         this.openWater = true;
         this.currentState = FishingHook.FishHookState.FLYING;
         this.noCulling = true;
