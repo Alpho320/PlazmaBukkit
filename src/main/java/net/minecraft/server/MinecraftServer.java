@@ -694,7 +694,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             ChunkPos chunkcoordintpair = new ChunkPos(chunkproviderserver.randomState().sampler().findSpawnPosition());
             // CraftBukkit start
             if (world.generator != null) {
-                Random rand = new Random(world.getSeed());
+                Random rand = Boolean.getBoolean("Plazma.doNotUseFasterRandom") ? new Random() : new org.plazmamc.plazma.Random(); rand.setSeed(world.getSeed()); // Plazma
                 org.bukkit.Location spawn = world.generator.getFixedSpawnLocation(world.getWorld(), rand);
 
                 if (spawn != null) {

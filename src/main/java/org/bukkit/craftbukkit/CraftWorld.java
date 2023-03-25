@@ -230,7 +230,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
     }
     // Paper end
 
-    private static final Random rand = new Random();
+    private static final Random rand = Boolean.getBoolean("Plazma.doNotUseFasterRandom") ? new Random() : new org.plazmamc.plazma.Random(); // Plazma
 
     public CraftWorld(ServerLevel world, ChunkGenerator gen, BiomeProvider biomeProvider, Environment env) {
         this.world = world;
