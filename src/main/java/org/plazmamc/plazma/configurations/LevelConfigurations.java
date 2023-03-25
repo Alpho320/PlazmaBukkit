@@ -100,7 +100,7 @@ public class LevelConfigurations extends ConfigurationPart {
             public Phantom phantom;
             public class Phantom extends ConfigurationPart {
 
-
+                public boolean doNotLoadChunksToSpawn = DO_OPTIMIZE;
 
             }
 
