@@ -1993,8 +1993,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     public void playerTouch(Player player) {}
 
     public void push(Entity entity) {
+        if (entity.noPhysics || this.noPhysics) return; // Plazma
         if (!this.isPassengerOfSameVehicle(entity)) {
-            if (!entity.noPhysics && !this.noPhysics) {
+            //if (!entity.noPhysics && !this.noPhysics) { // Plazma
                 if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper
                 double d0 = entity.getX() - this.getX();
                 double d1 = entity.getZ() - this.getZ();
@@ -2023,7 +2024,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                     }
                 }
 
-            }
+            //} // Plazma
         }
     }
 

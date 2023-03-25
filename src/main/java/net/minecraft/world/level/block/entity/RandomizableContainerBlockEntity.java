@@ -70,6 +70,7 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
     }
 
     public void unpackLootTable(@Nullable Player player) {
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().misc.doNotTriggerLootTableRefreshForNonPlayerInteraction && player == null) return; // Plazma
         if (this.lootableData.shouldReplenish(player) && this.level.getServer() != null) { // Paper
             LootTable lootTable = this.level.getServer().getLootTables().get(this.lootTable);
             if (player instanceof ServerPlayer) {

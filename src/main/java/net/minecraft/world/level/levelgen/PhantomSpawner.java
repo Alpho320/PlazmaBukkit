@@ -73,6 +73,7 @@ public class PhantomSpawner implements CustomSpawner {
 
                                     if (randomsource.nextInt(j) >= world.paperConfig().entities.behavior.playerInsomniaStartTicks) { // Paper
                                         BlockPos blockposition1 = blockposition.above(20 + randomsource.nextInt(15)).east(-10 + randomsource.nextInt(21)).south(-10 + randomsource.nextInt(21));
+                                        if (world.plazmaLevelConfiguration().entity.monster.phantom.doNotLoadChunksToSpawn && world.hasChunkAt(blockposition1)) continue; // Plazma
                                         BlockState iblockdata = world.getBlockState(blockposition1);
                                         FluidState fluid = world.getFluidState(blockposition1);
 
