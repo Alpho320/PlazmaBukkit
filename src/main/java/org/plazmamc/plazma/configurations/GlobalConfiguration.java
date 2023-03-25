@@ -35,4 +35,11 @@ public class GlobalConfiguration extends ConfigurationPart {
         public boolean allowAnyUsername = false;
 
     }
+
+    public Misc misc;
+    public class Misc extends ConfigurationPart {
+
+
+
+    }
 }
