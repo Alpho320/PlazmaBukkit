@@ -88,6 +88,7 @@ public class LevelConfigurations extends ConfigurationPart {
     public class Misc extends ConfigurationPart {
 
         public boolean reduceCreateRandomInstance = DO_OPTIMIZE;
+        public boolean checkSpectatorMovedToQuickly = DO_OPTIMIZE;
 
     }
 
