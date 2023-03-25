@@ -83,4 +83,11 @@ public class LevelConfigurations extends ConfigurationPart {
         }
 
     }
+
+    public Misc misc;
+    public class Misc extends ConfigurationPart {
+
+
+
+    }
 }
