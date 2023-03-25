@@ -90,4 +90,21 @@ public class LevelConfigurations extends ConfigurationPart {
         public boolean reduceCreateRandomInstance = DO_OPTIMIZE;
 
     }
+
+    public Entity entity;
+    public class Entity extends ConfigurationPart {
+
+        public Monster monster;
+        public class Monster extends ConfigurationPart {
+
+            public Phantom phantom;
+            public class Phantom extends ConfigurationPart {
+
+
+
+            }
+
+        }
+
+    }
 }
