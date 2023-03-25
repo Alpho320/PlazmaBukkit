@@ -39,7 +39,7 @@ public class GlobalConfiguration extends ConfigurationPart {
     public Misc misc;
     public class Misc extends ConfigurationPart {
 
-
+        public boolean reduceCreateRandomInstance = DO_OPTIMIZE;
 
     }
 }

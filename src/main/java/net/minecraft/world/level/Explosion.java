@@ -81,7 +81,7 @@ public class Explosion {
     }
 
     public Explosion(Level world, @Nullable Entity entity, @Nullable DamageSource damageSource, @Nullable ExplosionDamageCalculator behavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType) {
-        this.random = RandomSource.create();
+        this.random = world.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? world.getRandom() : RandomSource.create(); // Plazma
         this.toBlow = new ObjectArrayList();
         this.hitPlayers = Maps.newHashMap();
         this.level = world;
