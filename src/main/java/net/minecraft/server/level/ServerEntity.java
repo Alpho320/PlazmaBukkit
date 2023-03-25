@@ -207,6 +207,7 @@ public class ServerEntity {
                         flag4 = true;
                         flag5 = true;
                     }
+                    if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().misc.doNotSendUselessEntityPackets && isUselessEntityPacket(packet1)) packet1 = null; // Plazma
                 }
 
                 if ((this.trackDelta || this.entity.hasImpulse || this.entity instanceof LivingEntity && ((LivingEntity) this.entity).isFallFlying()) && this.tickCount > 0) {
@@ -280,6 +281,21 @@ public class ServerEntity {
             return !lastPassengers.contains(entity);
         }));
     }
+
+    // Plazma start
+    private boolean isUselessEntityPacket(@Nullable Packet<?> packet) {
+        if (packet == null) return false;
+        if (packet instanceof ClientboundMoveEntityPacket p) {
+            if (p instanceof ClientboundMoveEntityPacket.Pos)
+                return p.getXa() == 0 && p.getYa() == 0 && p.getZa() == 0;
+            else if (p instanceof ClientboundMoveEntityPacket.Rot)
+                return p.getxRot() == 0 && p.getyRot() == 0;
+            else if (p instanceof ClientboundMoveEntityPacket.PosRot)
+                return p.getXa() == 0 && p.getYa() == 0 && p.getZa() == 0 && p.getxRot() == 0 && p.getyRot() == 0;
+        }
+        return false;
+    }
+    // Plazma end
 
     public void removePairing(ServerPlayer player) {
         this.entity.stopSeenByPlayer(player);
