@@ -41,6 +41,7 @@ public class GlobalConfiguration extends ConfigurationPart {
 
         public boolean reduceCreateRandomInstance = DO_OPTIMIZE;
         public boolean doNotTriggerLootTableRefreshForNonPlayerInteraction = DO_OPTIMIZE;
+        public boolean doNotSendUselessEntityPackets = DO_OPTIMIZE;
 
     }
 }
