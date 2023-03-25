@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class PaperLootableInventoryData {
 
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = Boolean.getBoolean("Plazma.doNotUseFasterRandom") ? new Random() : new org.plazmamc.plazma.Random(); // Plazma
 
     private long lastFill = -1;
     private long nextRefill = -1;

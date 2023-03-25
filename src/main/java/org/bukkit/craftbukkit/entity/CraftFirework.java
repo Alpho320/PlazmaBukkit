@@ -15,7 +15,7 @@ import org.bukkit.inventory.meta.FireworkMeta;
 
 public class CraftFirework extends CraftProjectile implements Firework {
 
-    private final Random random = new Random();
+    private final Random random = Boolean.getBoolean("Plazma.doNotUseFasterRandom") ? new Random() : new org.plazmamc.plazma.Random(); // Plazma
     //private CraftItemStack item; // Paper - Remove usage, not accurate representation of current item.
 
     public CraftFirework(CraftServer server, FireworkRocketEntity entity) {

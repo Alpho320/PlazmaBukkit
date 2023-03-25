@@ -48,7 +48,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
     private final net.minecraft.world.level.chunk.ChunkGenerator delegate;
     private final ChunkGenerator generator;
     private final ServerLevel world;
-    private final Random random = new Random();
+    private final Random random = Boolean.getBoolean("Plazma.doNotUseFasterRandom") ? new Random() : new org.plazmamc.plazma.Random(); // Plazma
     private boolean newApi;
     private boolean implementBaseHeight = true;
 
