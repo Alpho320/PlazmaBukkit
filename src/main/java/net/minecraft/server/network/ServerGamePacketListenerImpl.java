@@ -1544,7 +1544,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
                             if (!this.player.isChangingDimension() && (!this.player.getLevel().getGameRules().getBoolean(GameRules.RULE_DISABLE_ELYTRA_MOVEMENT_CHECK) || !this.player.isFallFlying())) {
                                 float f2 = this.player.isFallFlying() ? 300.0F : 100.0F;
 
-                                if (d11 - d10 > Math.max(f2, Math.pow((double) (org.spigotmc.SpigotConfig.movedTooQuicklyMultiplier * (float) i * speed), 2)) && !this.isSingleplayerOwner()) {
+                                if (!(this.player.getLevel().plazmaLevelConfiguration().misc.checkSpectatorMovedToQuickly && this.player.isSpectator()) && d11 - d10 > Math.max(f2, Math.pow((double) (org.spigotmc.SpigotConfig.movedTooQuicklyMultiplier * (float) i * speed), 2)) && !this.isSingleplayerOwner()) { // Plazma
                                 // CraftBukkit end
                                     ServerGamePacketListenerImpl.LOGGER.warn("{} moved too quickly! {},{},{}", new Object[]{this.player.getName().getString(), d7, d8, d9});
                                     this.teleport(this.player.getX(), this.player.getY(), this.player.getZ(), this.player.getYRot(), this.player.getXRot());
