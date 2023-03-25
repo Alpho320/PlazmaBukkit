@@ -369,7 +369,7 @@ public class TheEndGatewayBlockEntity extends TheEndPortalBlockEntity {
     }
 
     private static void spawnGatewayPortal(ServerLevel world, BlockPos pos, EndGatewayConfiguration config) {
-        Feature.END_GATEWAY.place(config, world, world.getChunkSource().getGenerator(), RandomSource.create(), pos);
+        Feature.END_GATEWAY.place(config, world, world.getChunkSource().getGenerator(), (world.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? world.getRandom() : RandomSource.create()), pos); // Plazma
     }
 
     @Override

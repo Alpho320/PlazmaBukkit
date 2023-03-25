@@ -202,7 +202,7 @@ public class LootContext {
                 } else {
                     RandomSource randomSource = this.random;
                     if (randomSource == null) {
-                        randomSource = RandomSource.create();
+                        randomSource = this.level.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? this.level.getRandom() : RandomSource.create();
                     }
 
                     MinecraftServer minecraftServer = this.level.getServer();

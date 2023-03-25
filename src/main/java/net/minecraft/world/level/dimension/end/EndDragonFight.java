@@ -411,7 +411,7 @@ public class EndDragonFight {
         this.level.registryAccess().registry(Registries.CONFIGURED_FEATURE).flatMap((registry) -> {
             return registry.getHolder(EndFeatures.END_GATEWAY_DELAYED);
         }).ifPresent((reference) -> {
-            reference.value().place(this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), pos);
+            reference.value().place(this.level, this.level.getChunkSource().getGenerator(), (this.level.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? this.level.getRandom() : RandomSource.create()), pos); // Plazma
         });
     }
 
@@ -427,7 +427,7 @@ public class EndDragonFight {
             this.portalLocation = this.portalLocation.atY(this.level.getMinBuildHeight() + 1);
         }
         // Paper end
-        endPodiumFeature.place(FeatureConfiguration.NONE, this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), this.portalLocation);
+        endPodiumFeature.place(FeatureConfiguration.NONE, this.level, this.level.getChunkSource().getGenerator(), (this.level.plazmaLevelConfiguration().misc.reduceCreateRandomInstance ? this.level.getRandom() : RandomSource.create()), this.portalLocation); // Plazma
     }
 
     @Nullable
