@@ -147,18 +147,23 @@ public class FriendlyByteBuf extends ByteBuf {
     public <T> T readJsonWithCodec(Codec<T> codec) {
         JsonElement jsonelement = (JsonElement) GsonHelper.fromJson(FriendlyByteBuf.GSON, this.readUtf(), JsonElement.class);
         DataResult<T> dataresult = codec.parse(JsonOps.INSTANCE, jsonelement);
-
-        return Util.getOrThrow(dataresult, (s) -> {
-            return new DecoderException("Failed to decode json: " + s);
-        });
+        // Plazma start - NCR
+        T result = Util.getOrThrow(dataresult, (s) -> new DecoderException("Failed to decode json: " + s));
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.addQueryData() && jsonelement.getAsJsonObject().has("preventsChatReports"))
+            ((net.minecraft.network.protocol.status.ServerStatus) result).setPreventsChatReports(jsonelement.getAsJsonObject().get("preventsChatReports").getAsBoolean());
+        return result;
+        // Plazma end
     }
 
     public <T> void writeJsonWithCodec(Codec<T> codec, T value) {
         DataResult<JsonElement> dataresult = codec.encodeStart(JsonOps.INSTANCE, value);
 
-        this.writeUtf(FriendlyByteBuf.GSON.toJson((JsonElement) Util.getOrThrow(dataresult, (s) -> {
-            return new EncoderException("Failed to encode: " + s + " " + value);
-        })));
+        // Plazma start - NCR
+        JsonElement element = Util.getOrThrow(dataresult, (s) -> new EncoderException("Failed to encode: " + s + " " + value));
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.addQueryData() && codec == net.minecraft.network.protocol.status.ServerStatus.CODEC)
+            element.getAsJsonObject().addProperty("preventsChatReports", true);
+        this.writeUtf(FriendlyByteBuf.GSON.toJson(element));
+        // Plazma end
     }
 
     public <T> void writeId(IdMap<T> registry, T value) {

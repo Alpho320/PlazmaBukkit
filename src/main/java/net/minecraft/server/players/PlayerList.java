@@ -1464,7 +1464,7 @@ public abstract class PlayerList {
     }
 
     public boolean verifyChatTrusted(PlayerChatMessage message) { // Paper - private -> public
-        return message.hasSignature() && !message.hasExpiredServer(Instant.now());
+        return org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.enabled || (message.hasSignature() && !message.hasExpiredServer(Instant.now())); // Plazma - NCR
     }
 
     // CraftBukkit start
