@@ -46,6 +46,8 @@ public abstract class BaseSpawner {
     public int requiredPlayerRange = 16;
     public int spawnRange = 4;
     private int tickDelay = 0; // Paper
+    private int blockExistsTick = 0; // Plazma
+    private boolean blockLockedByTime = false; // Plazma
 
     public BaseSpawner() {}
 
@@ -81,6 +83,18 @@ public abstract class BaseSpawner {
     }
 
     public void serverTick(ServerLevel world, BlockPos pos) {
+        // Plazma start - FixMySpawnR
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().fixMySpawnR.enabled) {
+            if (!blockLockedByTime) {
+                if (blockExistsTick > org.plazmamc.plazma.configurations.GlobalConfiguration.get().fixMySpawnR.timerTimeOut) {
+                    blockLockedByTime = true;
+                } else {
+                    blockExistsTick++;
+                }
+            }
+        }
+        if (blockLockedByTime && world.getBestNeighborSignal(pos) > 0) return;
+        // Plazma end
         if (spawnCount <= 0 || maxNearbyEntities <= 0) return; // Paper - Ignore impossible spawn tick
         // Paper start - Configurable mob spawner tick rate
         if (spawnDelay > 0 && --tickDelay > 0) return;
@@ -292,6 +306,13 @@ public abstract class BaseSpawner {
             this.spawnRange = nbt.getShort("SpawnRange");
         }
 
+        // Plazma start - FixMySpawnR
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().fixMySpawnR.enabled && nbt.contains("SpawnRange", 99)) {
+            this.blockExistsTick = nbt.getInt("fixmyspawnrTicks");
+            this.blockLockedByTime = nbt.getBoolean("fixMySpawnerLocked");
+        }
+        // Plazma end
+
         this.displayEntity = null;
     }
 
@@ -321,6 +342,12 @@ public abstract class BaseSpawner {
         }
 
         nbt.put("SpawnPotentials", (Tag) SpawnData.LIST_CODEC.encodeStart(NbtOps.INSTANCE, this.spawnPotentials).result().orElseThrow());
+        // Plazma start - FixMySpawnR
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().fixMySpawnR.enabled) {
+            nbt.putInt("fixmyspawnrTicks", blockExistsTick);
+            nbt.putBoolean("fixMySpawnerLocked", blockLockedByTime);
+        }
+        // Plazma end
         return nbt;
     }
 
