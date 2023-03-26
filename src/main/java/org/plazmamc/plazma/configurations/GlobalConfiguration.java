@@ -48,7 +48,17 @@ public class GlobalConfiguration extends ConfigurationPart {
     public NoChatReports noChatReports;
     public class NoChatReports extends ConfigurationPart {
 
+        public boolean enabled = false;
+        boolean addQueryData = true;
+        boolean convertToGameMessage = true;
 
+        public boolean addQueryData() {
+            return enabled && addQueryData;
+        }
+
+        public boolean convertToGameMessage() {
+            return enabled && convertToGameMessage;
+        }
 
     }
 }

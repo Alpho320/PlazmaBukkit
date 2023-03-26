@@ -684,7 +684,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
 
     @Override
     public boolean enforceSecureProfile() {
-        return this.getProperties().enforceSecureProfile && this.getProperties().onlineMode;
+        return !org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.enabled && this.getProperties().enforceSecureProfile && this.getProperties().onlineMode; // Plazma - NCR
     }
 
     protected boolean convertOldUsers() {
