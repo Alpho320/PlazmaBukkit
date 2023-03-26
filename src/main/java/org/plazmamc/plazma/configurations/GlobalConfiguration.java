@@ -61,4 +61,12 @@ public class GlobalConfiguration extends ConfigurationPart {
         }
 
     }
+
+    public FixMySpawnR fixMySpawnR;
+    public class FixMySpawnR extends ConfigurationPart {
+
+        public boolean enabled = DO_OPTIMIZE;
+        public int timerTimeOut = 0;
+
+    }
 }
