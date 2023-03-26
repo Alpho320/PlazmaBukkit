@@ -44,4 +44,11 @@ public class GlobalConfiguration extends ConfigurationPart {
         public boolean doNotSendUselessEntityPackets = DO_OPTIMIZE;
 
     }
+
+    public NoChatReports noChatReports;
+    public class NoChatReports extends ConfigurationPart {
+
+
+
+    }
 }
