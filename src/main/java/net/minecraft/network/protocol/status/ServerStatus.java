@@ -64,4 +64,21 @@ public record ServerStatus(Component description, Optional<ServerStatus.Players>
             return new ServerStatus.Version(worldVersion.getName(), worldVersion.getProtocolVersion());
         }
     }
+
+    // Plazma start - NCR
+    public boolean enforcesSecureChat() {
+        return org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.enabled || this.enforcesSecureChat;
+    }
+
+    private static boolean preventsChatReports;
+
+    public boolean preventsChatReports() {
+        if (this.version().isPresent() && this.version().get().protocol() < 759 && this.version().get().protocol() > 0) return true;
+        return this.preventsChatReports;
+    }
+
+    public void setPreventsChatReports(boolean prevents) {
+        this.preventsChatReports = prevents;
+    }
+    // Plazma end
 }

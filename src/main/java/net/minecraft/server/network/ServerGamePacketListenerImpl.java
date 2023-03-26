@@ -2235,10 +2235,19 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
 
     @Override
     public void send(Packet<?> packet) {
+        // Plazma start - NCR
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.convertToGameMessage() && packet instanceof ClientboundPlayerChatPacket chat)
+            packet = new ClientboundSystemChatPacket(null, Component.Serializer.toJson(chat.chatType().resolve(this.player.level.registryAccess()).get().decorate(chat.unsignedContent() != null ? chat.unsignedContent() : Component.literal(chat.body().content()))), false);
         this.send(packet, (PacketSendListener) null);
     }
 
     public void send(Packet<?> packet, @Nullable PacketSendListener callbacks) {
+        if (org.plazmamc.plazma.configurations.GlobalConfiguration.get().noChatReports.convertToGameMessage() && packet instanceof ClientboundPlayerChatPacket p && callbacks != null) {
+            this.send(p);
+            return;
+        }
+        // Plazma end
+
         // CraftBukkit start
         if (packet == null || this.processedDisconnect) { // Spigot
             return;
