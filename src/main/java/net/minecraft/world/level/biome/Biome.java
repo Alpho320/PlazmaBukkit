@@ -67,7 +67,7 @@ public final class Biome {
     private final MobSpawnSettings mobSettings;
     private final BiomeSpecialEffects specialEffects;
     // Pufferfish start - use our cache
-    private final ThreadLocal<gg.airplane.structs.Long2FloatAgingCache> temperatureCache = ThreadLocal.withInitial(() -> {
+    private static final ThreadLocal<gg.airplane.structs.Long2FloatAgingCache> temperatureCache = ThreadLocal.withInitial(() -> { // Plazma - Improve BiomeTemperatureCache
         return Util.make(() -> {
             /*
             Long2FloatLinkedOpenHashMap long2FloatLinkedOpenHashMap = new Long2FloatLinkedOpenHashMap(1024, 0.25F) {
@@ -125,7 +125,7 @@ public final class Biome {
     public float getTemperature(BlockPos blockPos) {
         long l = blockPos.asLong();
         // Pufferfish start
-        gg.airplane.structs.Long2FloatAgingCache cache = this.temperatureCache.get();
+        gg.airplane.structs.Long2FloatAgingCache cache = temperatureCache.get(); // Plazma - Improve BiomeTemperatureCache
         float f = cache.getValue(l);
         if (!Float.isNaN(f)) {
             return f;
