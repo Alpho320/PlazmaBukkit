@@ -98,6 +98,11 @@ public class BeehiveBlock extends BaseEntityBlock {
 
         if (!list.isEmpty()) {
             List<Player> list1 = world.getEntitiesOfClass(Player.class, (new AABB(pos)).inflate(8.0D, 6.0D, 8.0D));
+            // Paper start - if there are no players nearby, then nextInt() will throw
+            if (list1.isEmpty()) {
+                return;
+            }
+            // Paper end - if there are no players nearby, then nextInt() will throw
             int i = list1.size();
             Iterator iterator = list.iterator();
 
