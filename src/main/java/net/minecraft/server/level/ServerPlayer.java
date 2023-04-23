@@ -286,7 +286,7 @@ public class ServerPlayer extends Player {
         this.recipeBook = new ServerRecipeBook();
         this.lastSectionPos = SectionPos.of(0, 0, 0);
         this.respawnDimension = Level.OVERWORLD;
-        this.allowsListing = true;
+        this.allowsListing = false; // Paper - Set to false by default... wait for packet sent by client to populate
         this.wardenSpawnTracker = new WardenSpawnTracker(0, 0, 0);
         this.containerSynchronizer = new ContainerSynchronizer() {
             @Override
