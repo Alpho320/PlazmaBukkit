@@ -1030,6 +1030,11 @@ public class CraftEventFactory {
             } else if (source.is(DamageTypes.SONIC_BOOM)) {
                 cause = DamageCause.SONIC_BOOM;
             }
+            // Paper start - fix handle of Falling Blocks
+            else if (source.is(DamageTypes.FALLING_STALACTITE) || source.is(DamageTypes.FALLING_BLOCK) || source.is(DamageTypes.FALLING_ANVIL)) {
+                cause = DamageCause.FALLING_BLOCK;
+            }
+            // Paper end
 
             return CraftEventFactory.callEntityDamageEvent(damager, entity, cause, modifiers, modifierFunctions, cancelled, source.isCritical()); // Paper - add critical damage API
         } else if (source.is(DamageTypes.OUT_OF_WORLD)) {
