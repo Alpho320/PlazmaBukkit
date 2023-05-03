@@ -107,5 +107,12 @@ public class LevelConfigurations extends ConfigurationPart {
 
         }
 
+        public Sensor sensor;
+        public class Sensor extends ConfigurationPart {
+
+            public int tick = DO_OPTIMIZE ? 10 : 1;
+
+        }
+
     }
 }
