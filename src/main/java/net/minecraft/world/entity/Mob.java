@@ -932,10 +932,10 @@ public abstract class Mob extends LivingEntity implements Targeting {
         }
         // Paper end
         //this.level.getProfiler().push("sensing"); // Purpur
-        this.sensing.tick();
+        // Plazma - Configurable Sensor Tick
         //this.level.getProfiler().pop(); // Purpur
         int i = this.level.getServer().getTickCount() + this.getId();
-
+        if (i % this.level.plazmaLevelConfiguration().entity.sensor.tick == 0) this.sensing.tick(); // Plazma - Configurable Sensor Tick
         if (i % 2 != 0 && this.tickCount > 1) {
             //this.level.getProfiler().push("targetSelector"); // Purpur
             if (this.targetSelector.inactiveTick(this.activatedPriority, false)) // Pufferfish - use this to alternate ticking
