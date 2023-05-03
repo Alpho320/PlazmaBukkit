@@ -1020,20 +1020,20 @@ public abstract class LivingEntity extends Entity implements Attackable {
         }
 
         if (entity != null) {
-            ItemStack itemstack = this.getItemBySlot(EquipmentSlot.HEAD);
+            // ItemStack itemstack = this.getItemBySlot(EquipmentSlot.HEAD); // Plazma - check head itemstack only when needed
             EntityType<?> entitytypes = entity.getType();
 
             // Purpur start
-            if (entitytypes == EntityType.SKELETON && itemstack.is(Items.SKELETON_SKULL)) {
+            if (entitytypes == EntityType.SKELETON && this.getItemBySlot(EquipmentSlot.HEAD).is(Items.SKELETON_SKULL)) { // Plazma
                 d0 *= entity.level.purpurConfig.skeletonHeadVisibilityPercent;
             }
-            else if (entitytypes == EntityType.ZOMBIE && itemstack.is(Items.ZOMBIE_HEAD)) {
+            else if (entitytypes == EntityType.ZOMBIE && this.getItemBySlot(EquipmentSlot.HEAD).is(Items.ZOMBIE_HEAD)) { // Plazma
                 d0 *= entity.level.purpurConfig.zombieHeadVisibilityPercent;
             }
-            else if (entitytypes == EntityType.CREEPER && itemstack.is(Items.CREEPER_HEAD)) {
+            else if (entitytypes == EntityType.CREEPER && this.getItemBySlot(EquipmentSlot.HEAD).is(Items.CREEPER_HEAD)) { // Plazma
                 d0 *= entity.level.purpurConfig.creeperHeadVisibilityPercent;
             }
-            else if ((entitytypes == EntityType.PIGLIN || entitytypes == EntityType.PIGLIN_BRUTE) && itemstack.is(Items.PIGLIN_HEAD)) {
+            else if ((entitytypes == EntityType.PIGLIN || entitytypes == EntityType.PIGLIN_BRUTE) && this.getItemBySlot(EquipmentSlot.HEAD).is(Items.PIGLIN_HEAD)) { // Plazma
                 d0 *= entity.level.purpurConfig.piglinHeadVisibilityPercent;
             }
             // Purpur end
