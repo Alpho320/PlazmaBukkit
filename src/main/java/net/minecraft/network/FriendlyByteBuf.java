@@ -99,12 +99,26 @@ public class FriendlyByteBuf extends ByteBuf {
     private static final Gson GSON = new Gson();
 
     public static boolean hasItemSerializeEvent = false; // Purpur
+    public static boolean optimizeVarInts = false; // Plazma
 
     public FriendlyByteBuf(ByteBuf parent) {
         this.source = parent;
     }
 
+    // Plazma start - Optimize VarInts
+    private static final int[] VARINT_EXACT_BYTE_LENGTHS = new int[33];
+    static {
+        for (int i = 0; i <= 32; ++i) {
+            VARINT_EXACT_BYTE_LENGTHS[i] = (int) Math.ceil((31d - (i - 1)) / 7d);
+        }
+        VARINT_EXACT_BYTE_LENGTHS[32] = 1; // Special case for the number 0.
+    }
+    // Plazma end
     public static int getVarIntSize(int value) {
+        // Plazma start - Optimize VarInts
+        if (optimizeVarInts)
+            return VARINT_EXACT_BYTE_LENGTHS[Integer.numberOfLeadingZeros(value)];
+        // Plazma end
         for (int j = 1; j < 5; ++j) {
             if ((value & -1 << j * 7) == 0) {
                 return j;
@@ -620,6 +634,25 @@ public class FriendlyByteBuf extends ByteBuf {
     }
 
     public FriendlyByteBuf writeVarInt(int value) {
+        // Plazma start - Optimize VarInts
+        if (optimizeVarInts) {
+            // Peel the one and two byte count cases explicitly as they are the most common VarInt sizes
+            // that the proxy will write, to improve inlining.
+            if ((value & (0xFFFFFFFF << 7)) == 0) {
+                writeByte(value);
+            } else if ((value & (0xFFFFFFFF << 14)) == 0) {
+                int w = (value & 0x7F | 0x80) << 8 | (value >>> 7);
+                writeShort(w);
+            } else {
+                while ((value & -128) != 0) {
+                    this.writeByte(value & 127 | 128);
+                    value >>>= 7;
+                }
+                this.writeByte(value);
+            }
+            return this;
+        }
+        // Plazma end
         while ((value & -128) != 0) {
             this.writeByte(value & 127 | 128);
             value >>>= 7;
