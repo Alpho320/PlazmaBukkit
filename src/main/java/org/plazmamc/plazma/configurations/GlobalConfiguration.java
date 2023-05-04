@@ -37,11 +37,17 @@ public class GlobalConfiguration extends ConfigurationPart {
     }
 
     public Misc misc;
-    public class Misc extends ConfigurationPart {
+    public class Misc extends ConfigurationPart.Post {
 
         public boolean reduceCreateRandomInstance = DO_OPTIMIZE;
         public boolean doNotTriggerLootTableRefreshForNonPlayerInteraction = DO_OPTIMIZE;
         public boolean doNotSendUselessEntityPackets = DO_OPTIMIZE;
+        public boolean optimizeVarInts = DO_OPTIMIZE;
+
+        @Override
+        public void postProcess() {
+            net.minecraft.network.FriendlyByteBuf.optimizeVarInts = optimizeVarInts;
+        }
 
     }
 
