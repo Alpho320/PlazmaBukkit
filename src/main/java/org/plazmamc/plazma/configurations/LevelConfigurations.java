@@ -114,5 +114,20 @@ public class LevelConfigurations extends ConfigurationPart {
 
         }
 
+        public WakeUp wakeUp;
+        public class WakeUp extends ConfigurationPart {
+
+            public DurationVariance durationVariance;
+            public class DurationVariance extends ConfigurationPart {
+
+                public double animal = DO_OPTIMIZE ? 0.2 : 0.0;
+                public double monster = DO_OPTIMIZE ? 0.2 : 0.0;
+                public double flyingMonster = DO_OPTIMIZE ? 0.2 : 0.0;
+                public double villager = DO_OPTIMIZE ? 0.2 : 0.0;
+
+            }
+
+        }
+
     }
 }
