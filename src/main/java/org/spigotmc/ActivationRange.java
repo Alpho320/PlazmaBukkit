@@ -75,27 +75,35 @@ public class ActivationRange
         if (entity.activationType == ActivationType.VILLAGER) {
             if (inactiveFor > config.wakeUpInactiveVillagersEvery && world.wakeupInactiveRemainingVillagers > 0) {
                 world.wakeupInactiveRemainingVillagers--;
-                return config.wakeUpInactiveVillagersFor;
+                return getWakeUpDurationWithVariance(config.wakeUpInactiveVillagersFor, entity.level.plazmaLevelConfiguration().entity.wakeUp.durationVariance.villager); // Plazma - Variable Entity WakeUp Duration
             }
         } else if (entity.activationType == ActivationType.ANIMAL) {
             if (inactiveFor > config.wakeUpInactiveAnimalsEvery && world.wakeupInactiveRemainingAnimals > 0) {
                 world.wakeupInactiveRemainingAnimals--;
-                return config.wakeUpInactiveAnimalsFor;
+                return getWakeUpDurationWithVariance(config.wakeUpInactiveAnimalsFor, entity.level.plazmaLevelConfiguration().entity.wakeUp.durationVariance.animal); // Plazma - Variable Entity WakeUp Duration
             }
         } else if (entity.activationType == ActivationType.FLYING_MONSTER) {
             if (inactiveFor > config.wakeUpInactiveFlyingEvery && world.wakeupInactiveRemainingFlying > 0) {
                 world.wakeupInactiveRemainingFlying--;
-                return config.wakeUpInactiveFlyingFor;
+                return getWakeUpDurationWithVariance(config.wakeUpInactiveFlyingFor, entity.level.plazmaLevelConfiguration().entity.wakeUp.durationVariance.flyingMonster); // Plazma - Variable Entity WakeUp Duration
             }
         } else if (entity.activationType == ActivationType.MONSTER || entity.activationType == ActivationType.RAIDER) {
             if (inactiveFor > config.wakeUpInactiveMonstersEvery && world.wakeupInactiveRemainingMonsters > 0) {
                 world.wakeupInactiveRemainingMonsters--;
-                return config.wakeUpInactiveMonstersFor;
+                return getWakeUpDurationWithVariance(config.wakeUpInactiveMonstersFor, entity.level.plazmaLevelConfiguration().entity.wakeUp.durationVariance.monster); // Plazma - Variable Entity WakeUp Duration
             }
         }
         return -1;
     }
     // Paper end
+
+    // Plazma start - Variable Entity WakeUp Duration
+    private static final java.util.Random wakeUpDurationRandom = new java.util.Random();
+    private static int getWakeUpDurationWithVariance(int wakeUpDuration, double deviation) {
+        if (deviation <= 0) return wakeUpDuration;
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1, Math.round(wakeUpDuration * wakeUpDurationRandom.nextGaussian(1, deviation))));
+    }
+    // Plazma end
 
     static AABB maxBB = new AABB( 0, 0, 0, 0, 0, 0 );
 
