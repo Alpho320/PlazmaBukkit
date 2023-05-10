@@ -16,7 +16,7 @@ public final class ZeroCollidingReferenceStateTable {
     protected final Comparable<?>[] this_table;
     protected final StateHolder<?, ?> this_state;
 
-    protected long[] index_table;
+    protected long[] index_table; public long[] index_table() { return index_table; } // Plazma - Paper - optimise state lookup
     protected StateHolder<?, ?>[][] value_table;
 
     public ZeroCollidingReferenceStateTable(final StateHolder<?, ?> state, final Map<Property<?>, Comparable<?>> this_map) {
