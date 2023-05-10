@@ -114,21 +114,17 @@ public abstract class StateHolder<O, S> {
     }
 
     public <T extends Comparable<T>, V extends T> S trySetValue(Property<T> property, V value) {
-        Comparable<?> comparable = this.values.get(property);
-        if (comparable != null && comparable != value) {
-            S object = this.neighbours.get(property, value);
-            if (object == null) {
-                throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner + ", it is not an allowed value");
-            } else {
-                return object;
-            }
-        } else {
-            return (S)this;
+        // Plazma start - Paper - optimise state lookup
+        final S ret = (S)this.optimisedTable.get(property, value);
+        if (ret == null) {
+            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner + ", it is not an allowed value");
         }
+        return ret;
+        // Plazma end - Paper - optimise state lookup
     }
 
     public void populateNeighbours(Map<Map<Property<?>, Comparable<?>>, S> states) {
-        if (this.neighbours != null) {
+        if (this.optimisedTable.index_table() != null) {
             throw new IllegalStateException();
         } else {
             Table<Property<?>, Comparable<?>, S> table = HashBasedTable.create();
@@ -143,7 +139,7 @@ public abstract class StateHolder<O, S> {
                 }
             }
 
-            this.neighbours = (Table<Property<?>, Comparable<?>, S>)(table.isEmpty() ? table : ArrayTable.create(table)); this.optimisedTable.loadInTable((Table)this.neighbours, this.values); // Paper - optimise state lookup
+            this.optimisedTable.loadInTable((Table)(table.isEmpty() ? table : ArrayTable.create(table)), this.values); // Paper - optimise state lookup // Plazma
         }
     }
 
