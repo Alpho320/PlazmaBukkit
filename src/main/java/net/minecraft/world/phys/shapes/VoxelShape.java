@@ -16,9 +16,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class VoxelShape {
-    public final DiscreteVoxelShape shape; // Paper - public
+    public DiscreteVoxelShape shape; // Paper - public // Plazma - FerriteCore - public final -> public
     @Nullable
-    private VoxelShape[] faces;
+    public VoxelShape[] faces; // Plazma - FerriteCore - private -> public
 
     // Paper start
     public boolean intersects(AABB shape) {
