@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.Direction;
 
 public class SliceShape extends VoxelShape {
-    private final VoxelShape delegate;
+    private final VoxelShape delegate; public VoxelShape getDelegate() { return this.delegate; } // Plazma - FerriteCore
     private final Direction.Axis axis;
     private static final DoubleList SLICE_COORDS = new CubePointRange(1);
 

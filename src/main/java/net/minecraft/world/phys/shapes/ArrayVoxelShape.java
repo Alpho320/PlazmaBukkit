@@ -10,9 +10,9 @@ import net.minecraft.core.Direction;
 import it.unimi.dsi.fastutil.doubles.AbstractDoubleList;
 // Paper end
 public class ArrayVoxelShape extends VoxelShape {
-    private final DoubleList xs;
-    private final DoubleList ys;
-    private final DoubleList zs;
+    public DoubleList xs; // Plazma - FerriteCore - private final -> public
+    public DoubleList ys; // Plazma - FerriteCore - private final -> public
+    public DoubleList zs; // Plazma - FerriteCore - private final -> public
 
     protected ArrayVoxelShape(DiscreteVoxelShape shape, double[] xPoints, double[] yPoints, double[] zPoints) {
         this(shape, (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(xPoints, shape.getXSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(yPoints, shape.getYSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(zPoints, shape.getZSize() + 1)));
