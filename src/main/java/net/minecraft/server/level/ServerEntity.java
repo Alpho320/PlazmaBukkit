@@ -419,8 +419,8 @@ public class ServerEntity {
         }
 
         if (this.entity instanceof LivingEntity) {
-            Set<AttributeInstance> set = ((LivingEntity) this.entity).getAttributes().getDirtyAttributes();
-
+            Set<AttributeInstance> attributes = ((LivingEntity) this.entity).getAttributes().getDirtyAttributes(); // Plazma - suppress error from dirty attributes
+            final Set<AttributeInstance> set = this.entity.level.plazmaLevelConfiguration().misc.suppressErrorFromDirtyAttributes ? java.util.Collections.synchronizedSet(attributes) : attributes; // Plazma - suppress error from dirty attributes
             if (!set.isEmpty()) {
                 // CraftBukkit start - Send scaled max health
                 if (this.entity instanceof ServerPlayer) {
@@ -430,7 +430,7 @@ public class ServerEntity {
                 this.broadcastAndSend(new ClientboundUpdateAttributesPacket(this.entity.getId(), set));
             }
 
-            set.clear();
+            attributes.clear();
         }
 
     }
