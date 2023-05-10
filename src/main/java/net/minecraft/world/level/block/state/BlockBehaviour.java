@@ -737,6 +737,12 @@ public abstract class BlockBehaviour implements FeatureElement {
         protected BlockBehaviour.BlockStateBase.Cache cache;
         private FluidState fluidState;
         private boolean isRandomlyTicking;
+        // Plazma start - FerriteCore
+        public static final java.util.Map<net.minecraft.world.phys.shapes.VoxelShape, net.minecraft.world.phys.shapes.VoxelShape> CACHE_COLLIDE = new java.util.HashMap<>();
+        public static final java.util.Map<VoxelShape, org.apache.commons.lang3.tuple.Pair<VoxelShape, VoxelShape[]>> CACHE_PROJECT = new java.util.HashMap<>();
+        public static final java.util.Map<boolean[], boolean[]> CACHE_FACE_STURDY = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap<>(it.unimi.dsi.fastutil.booleans.BooleanArrays.HASH_STRATEGY);
+        private static final ThreadLocal<BlockBehaviour.BlockStateBase.Cache> LAST_CACHE = new ThreadLocal<>();
+        // Plazma end
 
         protected BlockStateBase(Block block, ImmutableMap<Property<?>, Comparable<?>> propertyMap, MapCodec<BlockState> codec) {
             super(block, propertyMap, codec);
@@ -795,6 +801,7 @@ public abstract class BlockBehaviour implements FeatureElement {
         // Paper end
 
         public void initCache() {
+            LAST_CACHE.set(asState().cache); // Plazma - FerriteCore
             this.fluidState = ((Block) this.owner).getFluidState(this.asState());
             this.isRandomlyTicking = ((Block) this.owner).isRandomlyTicking(this.asState());
             if (!this.getBlock().hasDynamicShape()) {
@@ -832,7 +839,61 @@ public abstract class BlockBehaviour implements FeatureElement {
                 }
             }
             // Paper end
+            // Plazma start - FerriteCore
+            if (asState().cache != null) {
+                Cache newCache = asState().cache;
+                final Cache oldCache = LAST_CACHE.get();
+                VoxelShape dedupedCollisionShape;
+                if (oldCache != null && oldCache.collisionShape.equals(newCache.collisionShape)) {
+                    dedupedCollisionShape = oldCache.collisionShape;
+                } else {
+                    dedupedCollisionShape = CACHE_COLLIDE.computeIfAbsent(newCache.collisionShape, Function.identity());
+                }
+                if (dedupedCollisionShape instanceof net.minecraft.world.phys.shapes.ArrayVoxelShape keepArray && newCache.collisionShape instanceof net.minecraft.world.phys.shapes.ArrayVoxelShape replaceArray) {
+                    replaceInternals(keepArray, replaceArray);
+                }
+                newCache.collisionShape = dedupedCollisionShape;
+                final VoxelShape newRenderShape = getRenderShape(newCache.occlusionShapes);
+                if (newRenderShape == null)  return;
+                org.apache.commons.lang3.tuple.Pair<VoxelShape, VoxelShape[]> dedupedRenderShapes = null;
+                if (oldCache != null) {
+                    final VoxelShape oldRenderShape = getRenderShape(oldCache.occlusionShapes);
+                    if (newRenderShape.equals(oldRenderShape)) dedupedRenderShapes = org.apache.commons.lang3.tuple.Pair.of(oldRenderShape, oldCache.occlusionShapes);
+                }
+                if (dedupedRenderShapes == null) {
+                    org.apache.commons.lang3.tuple.Pair<VoxelShape, VoxelShape[]> newPair = org.apache.commons.lang3.tuple.Pair.of(newRenderShape, newCache.occlusionShapes);
+                    dedupedRenderShapes = CACHE_PROJECT.putIfAbsent(newRenderShape, newPair);
+                    if (dedupedRenderShapes == null) dedupedRenderShapes = newPair;
+                }
+                if (dedupedRenderShapes.getLeft() instanceof net.minecraft.world.phys.shapes.ArrayVoxelShape keepArray && newRenderShape instanceof net.minecraft.world.phys.shapes.ArrayVoxelShape replaceArray) {
+                    replaceInternals(keepArray, replaceArray);
+                }
+                newCache.occlusionShapes = dedupedRenderShapes.getRight();
+                boolean equalCheck = oldCache != null && Arrays.equals(oldCache.faceSturdy, newCache.faceSturdy);
+                newCache.faceSturdy = equalCheck ? oldCache.faceSturdy : CACHE_FACE_STURDY.computeIfAbsent(newCache.faceSturdy, Function.identity());
+                LAST_CACHE.set(null);
+            }
+            // Plazma end
         }
+
+        // Plazma start - FerriteCore
+        private void replaceInternals(net.minecraft.world.phys.shapes.ArrayVoxelShape toKeep, net.minecraft.world.phys.shapes.ArrayVoxelShape toReplace) {
+            if (toKeep == toReplace) return;
+            toReplace.xs = toKeep.xs;
+            toReplace.ys = toKeep.ys;
+            toReplace.zs = toKeep.zs;
+            toReplace.faces = toKeep.faces;
+            toReplace.shape = toKeep.shape;
+        }
+
+        @Nullable
+        private static VoxelShape getRenderShape(@Nullable VoxelShape[] projected) {
+            if (projected != null) {
+                for (VoxelShape side : projected) if (side instanceof net.minecraft.world.phys.shapes.SliceShape slice) return slice.getDelegate();
+            }
+            return null;
+        }
+        // Plazma end
 
         public Block getBlock() {
             return (Block) this.owner;
@@ -1205,10 +1266,10 @@ public abstract class BlockBehaviour implements FeatureElement {
             final boolean propagatesSkylightDown;
             final int lightBlock;
             @Nullable
-            final VoxelShape[] occlusionShapes;
-            protected final VoxelShape collisionShape;
+            public VoxelShape[] occlusionShapes; // Plazma - FerriteCore - final -> public
+            public VoxelShape collisionShape; // Plazma - FerriteCore - protected final -> public
             protected final boolean largeCollisionShape;
-            private final boolean[] faceSturdy;
+            public boolean[] faceSturdy; // Plazma - FerriteCore - private final -> public
             protected final boolean isCollisionShapeFullBlock;
 
             Cache(BlockState state) {
