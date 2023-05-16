@@ -244,6 +244,7 @@ public class LevelChunkSection {
         this.nonEmptyBlockCount = 0;
         this.tickingBlockCount = 0;
         this.tickingFluidCount = 0;
+        if (this.maybeHas((BlockState state) -> !state.isAir() || !state.getFluidState().isEmpty())) { // Paper - do not run forEachLocation on clearly empty sections
         this.states.forEachLocation((BlockState iblockdata, int i) -> {
             FluidState fluid = iblockdata.getFluidState();
 
@@ -263,6 +264,7 @@ public class LevelChunkSection {
             }
 
         });
+        } // Paper - do not run forEachLocation on clearly empty sections
         // Paper end
         this.initBlockCollisionData(); // Paper
     }
