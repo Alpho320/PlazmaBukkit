@@ -21,7 +21,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.Entity;
 
 public class TranslatableContents implements ComponentContents {
-    public static final Object[] NO_ARGS = new Object[0];
+    public static final Object[] NO_ARGS = org.plazmamc.plazma.util.Constants.EMPTY_OBJECT;
     private static final FormattedText TEXT_PERCENT = FormattedText.of("%");
     private static final FormattedText TEXT_NULL = FormattedText.of("null");
     private final String key;

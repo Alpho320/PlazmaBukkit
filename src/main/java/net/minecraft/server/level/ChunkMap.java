@@ -1550,7 +1550,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
             // stuff could have been removed, so we need to check the trackedPlayers set
             // for players that were removed
 
-            for (ServerPlayerConnection conn : this.seenBy.toArray(new ServerPlayerConnection[0])) { // avoid CME
+            for (ServerPlayerConnection conn : this.seenBy.toArray(org.plazmamc.plazma.util.Constants.SERVER_PLAYER_CONNECTION)) { // avoid CME
                 if (newTrackerCandidates == null || !newTrackerCandidates.contains(conn.getPlayer())) {
                     this.updatePlayer(conn.getPlayer());
                 }

@@ -57,7 +57,7 @@ public class PurpurCommand extends Command {
         } else if (args[0].equalsIgnoreCase("version")) {
             Command verCmd = org.bukkit.Bukkit.getServer().getCommandMap().getCommand("version");
             if (verCmd != null) {
-                return verCmd.execute(sender, commandLabel, new String[0]);
+                return verCmd.execute(sender, commandLabel, org.plazmamc.plazma.util.Constants.EMPTY_STRING);
             }
         }
 

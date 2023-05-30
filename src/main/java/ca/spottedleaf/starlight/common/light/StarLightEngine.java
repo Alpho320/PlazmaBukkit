@@ -39,7 +39,7 @@ public abstract class StarLightEngine {
             AxisDirection.POSITIVE_Z, AxisDirection.NEGATIVE_Z
     };
 
-    protected static enum AxisDirection {
+    public static enum AxisDirection { // Plazma - protected -> public
 
         // Declaration order is important and relied upon. Do not change without modifying propagation code.
         POSITIVE_X(1, 0, 0), NEGATIVE_X(-1, 0, 0),
@@ -1094,7 +1094,7 @@ public abstract class StarLightEngine {
             for (int bitset = i, len = Integer.bitCount(i), index = 0; index < len; ++index, bitset ^= IntegerUtil.getTrailingBit(bitset)) {
                 directions.add(AXIS_DIRECTIONS[IntegerUtil.trailingZeros(bitset)]);
             }
-            OLD_CHECK_DIRECTIONS[i] = directions.toArray(new AxisDirection[0]);
+            OLD_CHECK_DIRECTIONS[i] = directions.toArray(org.plazmamc.plazma.util.Constants.STARLIGHT_AXIS_DIRECTION);
         }
     }
 

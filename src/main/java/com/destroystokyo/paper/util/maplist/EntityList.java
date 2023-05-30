@@ -17,7 +17,7 @@ public final class EntityList implements Iterable<Entity> {
         this.entityToIndex.defaultReturnValue(Integer.MIN_VALUE);
     }
 
-    protected static final Entity[] EMPTY_LIST = new Entity[0];
+    protected static final Entity[] EMPTY_LIST = org.plazmamc.plazma.util.Constants.ENTITY;
 
     protected Entity[] entities = EMPTY_LIST;
     protected int count;

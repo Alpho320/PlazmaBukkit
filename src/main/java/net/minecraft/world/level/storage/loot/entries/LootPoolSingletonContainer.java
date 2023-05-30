@@ -78,7 +78,7 @@ public abstract class LootPoolSingletonContainer extends LootPoolEntryContainer 
         }
 
         protected LootItemFunction[] getFunctions() {
-            return this.functions.toArray(new LootItemFunction[0]);
+            return this.functions.toArray(org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION);
         }
 
         public T setWeight(int weight) {
@@ -169,7 +169,7 @@ public abstract class LootPoolSingletonContainer extends LootPoolEntryContainer 
         public final T deserializeCustom(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext, LootItemCondition[] lootItemConditions) {
             int i = GsonHelper.getAsInt(jsonObject, "weight", 1);
             int j = GsonHelper.getAsInt(jsonObject, "quality", 0);
-            LootItemFunction[] lootItemFunctions = GsonHelper.getAsObject(jsonObject, "functions", new LootItemFunction[0], jsonDeserializationContext, LootItemFunction[].class);
+            LootItemFunction[] lootItemFunctions = GsonHelper.getAsObject(jsonObject, "functions", org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION, jsonDeserializationContext, LootItemFunction[].class);
             return this.deserialize(jsonObject, jsonDeserializationContext, i, j, lootItemConditions, lootItemFunctions);
         }
 

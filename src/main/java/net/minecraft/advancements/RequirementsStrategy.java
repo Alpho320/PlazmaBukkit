@@ -14,7 +14,7 @@ public interface RequirementsStrategy {
         return strings;
     };
     RequirementsStrategy OR = (criteriaNames) -> {
-        return new String[][]{criteriaNames.toArray(new String[0])};
+        return new String[][]{criteriaNames.toArray(org.plazmamc.plazma.util.Constants.EMPTY_STRING)};
     };
 
     String[][] createRequirements(Collection<String> criteriaNames);

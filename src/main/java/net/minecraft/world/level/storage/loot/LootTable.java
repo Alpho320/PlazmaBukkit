@@ -42,7 +42,7 @@ import org.bukkit.event.world.LootGenerateEvent;
 public class LootTable {
 
     static final Logger LOGGER = LogUtils.getLogger();
-    public static final LootTable EMPTY = new LootTable(LootContextParamSets.EMPTY, new LootPool[0], new LootItemFunction[0]);
+    public static final LootTable EMPTY = new LootTable(LootContextParamSets.EMPTY, org.plazmamc.plazma.util.Constants.LOOT_POOL, org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION);
     public static final LootContextParamSet DEFAULT_PARAM_SET = LootContextParamSets.ALL_PARAMS;
     final LootContextParamSet paramSet;
     final LootPool[] pools;
@@ -257,7 +257,7 @@ public class LootTable {
         }
 
         public LootTable build() {
-            return new LootTable(this.paramSet, (LootPool[]) this.pools.toArray(new LootPool[0]), (LootItemFunction[]) this.functions.toArray(new LootItemFunction[0]));
+            return new LootTable(this.paramSet, (LootPool[]) this.pools.toArray(org.plazmamc.plazma.util.Constants.LOOT_POOL), (LootItemFunction[]) this.functions.toArray(org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION));
         }
     }
 
@@ -267,7 +267,7 @@ public class LootTable {
 
         public LootTable deserialize(JsonElement jsonelement, Type type, JsonDeserializationContext jsondeserializationcontext) throws JsonParseException {
             JsonObject jsonobject = GsonHelper.convertToJsonObject(jsonelement, "loot table");
-            LootPool[] alootselector = (LootPool[]) GsonHelper.getAsObject(jsonobject, "pools", new LootPool[0], jsondeserializationcontext, LootPool[].class);
+            LootPool[] alootselector = (LootPool[]) GsonHelper.getAsObject(jsonobject, "pools", org.plazmamc.plazma.util.Constants.LOOT_POOL, jsondeserializationcontext, LootPool[].class);
             LootContextParamSet lootcontextparameterset = null;
 
             if (jsonobject.has("type")) {
@@ -276,7 +276,7 @@ public class LootTable {
                 lootcontextparameterset = LootContextParamSets.get(new ResourceLocation(s));
             }
 
-            LootItemFunction[] alootitemfunction = (LootItemFunction[]) GsonHelper.getAsObject(jsonobject, "functions", new LootItemFunction[0], jsondeserializationcontext, LootItemFunction[].class);
+            LootItemFunction[] alootitemfunction = (LootItemFunction[]) GsonHelper.getAsObject(jsonobject, "functions", org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION, jsondeserializationcontext, LootItemFunction[].class);
 
             return new LootTable(lootcontextparameterset != null ? lootcontextparameterset : LootContextParamSets.ALL_PARAMS, alootselector, alootitemfunction);
         }

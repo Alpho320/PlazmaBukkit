@@ -124,7 +124,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     protected void addBehaviourGoals() {
         this.goalSelector.addGoal(2, new ZombieAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.targetSelector.addGoal(1, pathfinderGoalHurtByTarget = (new HurtByTargetGoal(this, new Class[0])).setAlertOthers()); // Paper - assign field
+        this.targetSelector.addGoal(1, pathfinderGoalHurtByTarget = (new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS)).setAlertOthers()); // Paper - assign field
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::isAngryAt));
         this.targetSelector.addGoal(3, new ResetUniversalAngerTargetGoal<>(this, true));
     }

@@ -1373,10 +1373,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
     private Optional<ServerStatus.Favicon> loadStatusIcon() {
         Optional<Path> optional = Optional.of(this.getFile("server-icon.png").toPath()).filter((path) -> {
-            return Files.isRegularFile(path, new LinkOption[0]);
+            return Files.isRegularFile(path, org.plazmamc.plazma.util.Constants.LINK_OPTION);
         }).or(() -> {
             return this.storageSource.getIconFile().filter((path) -> {
-                return Files.isRegularFile(path, new LinkOption[0]);
+                return Files.isRegularFile(path, org.plazmamc.plazma.util.Constants.LINK_OPTION);
             });
         });
 

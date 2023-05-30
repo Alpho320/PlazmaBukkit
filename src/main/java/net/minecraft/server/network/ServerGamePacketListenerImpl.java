@@ -434,7 +434,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         if (this.keepAlivePending) {
             if (!this.processedDisconnect && elapsedTime >= KEEPALIVE_LIMIT) { // check keepalive limit, don't fire if already disconnected
                 ServerGamePacketListenerImpl.LOGGER.warn("{} was kicked due to keepalive timeout!", this.player.getScoreboardName()); // more info
-                this.disconnect(Component.translatable("disconnect.timeout", new Object[0]), org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
+                this.disconnect(Component.translatable("disconnect.timeout", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT), org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
             }
         } else {
             if (elapsedTime >= 15000L) { // 15 seconds
@@ -915,13 +915,13 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         // PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel()); // Paper - run this async
         // CraftBukkit start
         if (this.chatSpamTickCount.addAndGet(io.papermc.paper.configuration.GlobalConfiguration.get().spamLimiter.tabSpamIncrement) > io.papermc.paper.configuration.GlobalConfiguration.get().spamLimiter.tabSpamLimit && !this.server.getPlayerList().isOp(this.player.getGameProfile())) { // Paper start - split and make configurable
-            server.scheduleOnMain(() -> this.disconnect(Component.translatable("disconnect.spam", new Object[0]), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
+            server.scheduleOnMain(() -> this.disconnect(Component.translatable("disconnect.spam", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
             return;
         }
         // Paper start
         String str = packet.getCommand(); int index = -1;
         if (str.length() > 64 && ((index = str.indexOf(' ')) == -1 || index >= 64)) {
-            server.scheduleOnMain(() -> this.disconnect(Component.translatable("disconnect.spam", new Object[0]), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
+            server.scheduleOnMain(() -> this.disconnect(Component.translatable("disconnect.spam", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
             return;
         }
         // Paper end
@@ -3391,7 +3391,7 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
         // Paper start
         if (!org.bukkit.Bukkit.isPrimaryThread()) {
             if (recipeSpamPackets.addAndGet(io.papermc.paper.configuration.GlobalConfiguration.get().spamLimiter.recipeSpamIncrement) > io.papermc.paper.configuration.GlobalConfiguration.get().spamLimiter.recipeSpamLimit) {
-                server.scheduleOnMain(() -> this.disconnect(net.minecraft.network.chat.Component.translatable("disconnect.spam", new Object[0]), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
+                server.scheduleOnMain(() -> this.disconnect(net.minecraft.network.chat.Component.translatable("disconnect.spam", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM)); // Paper - kick event cause
                 return;
             }
         }

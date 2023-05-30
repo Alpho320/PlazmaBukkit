@@ -9,7 +9,7 @@ public class VersionCommand implements PlazmaSubCommand {
     @Override
     public boolean execute(CommandSender sender, String subCommand, String[] args) {
         final @Nullable Command ver = MinecraftServer.getServer().server.getCommandMap().getCommand("version");
-        if (ver != null) ver.execute(sender, "plazma", new String[0]);
+        if (ver != null) ver.execute(sender, "plazma", org.plazmamc.plazma.util.Constants.EMPTY_STRING);
         return true;
     }
 }

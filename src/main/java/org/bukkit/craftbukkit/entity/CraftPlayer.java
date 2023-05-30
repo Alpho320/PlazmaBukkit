@@ -472,7 +472,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     public void sendTitle(Title title) {
         Preconditions.checkNotNull(title, "Title is null");
         setTitleTimes(title.getFadeIn(), title.getStay(), title.getFadeOut());
-        setSubtitle(title.getSubtitle() == null ? new BaseComponent[0] : title.getSubtitle());
+        setSubtitle(title.getSubtitle() == null ? org.plazmamc.plazma.util.Constants.BASE_COMPONENT : title.getSubtitle());
         showTitle(title.getTitle());
     }
 

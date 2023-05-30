@@ -50,7 +50,7 @@ public class Main {
                 System.exit(0);
             }
 
-            URLClassLoader classLoader = new URLClassLoader(extractedUrls.toArray(new URL[0]));
+            URLClassLoader classLoader = new URLClassLoader(extractedUrls.toArray(org.plazmamc.plazma.util.Constants.URL));
 
             System.out.println("Starting server");
             Thread runThread = new Thread(() -> {

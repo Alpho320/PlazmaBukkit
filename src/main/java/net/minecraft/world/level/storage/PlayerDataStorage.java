@@ -120,7 +120,7 @@ public class PlayerDataStorage {
         String[] astring = this.playerDir.list();
 
         if (astring == null) {
-            astring = new String[0];
+            astring = org.plazmamc.plazma.util.Constants.EMPTY_STRING;
         }
 
         for (int i = 0; i < astring.length; ++i) {

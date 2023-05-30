@@ -81,7 +81,7 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
                 }, prepareExecutor));
             }
 
-            CompletableFuture<?>[] completableFutures = map.values().toArray(new CompletableFuture[0]);
+            CompletableFuture<?>[] completableFutures = map.values().toArray(org.plazmamc.plazma.util.Constants.COMPLETABLE_FUTURE);
             return CompletableFuture.allOf(completableFutures).handle((unused, ex) -> {
                 return map;
             });

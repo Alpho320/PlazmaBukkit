@@ -125,7 +125,7 @@ public class IronGolem extends AbstractGolem implements NeutralMob {
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.targetSelector.addGoal(1, new DefendVillageTargetGoal(this));
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this, new Class[0]));
+        this.targetSelector.addGoal(2, new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::isAngryAt));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Mob.class, 5, false, false, (entityliving) -> {
             return entityliving instanceof Enemy && !(entityliving instanceof Creeper);

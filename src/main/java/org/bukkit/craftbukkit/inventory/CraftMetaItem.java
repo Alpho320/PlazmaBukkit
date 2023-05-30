@@ -880,7 +880,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
     // Paper start
     @Override
     public net.md_5.bungee.api.chat.BaseComponent[] getDisplayNameComponent() {
-        return displayName == null ? new net.md_5.bungee.api.chat.BaseComponent[0] : net.md_5.bungee.chat.ComponentSerializer.parse(displayName);
+        return displayName == null ? org.plazmamc.plazma.util.Constants.BASE_COMPONENT : net.md_5.bungee.chat.ComponentSerializer.parse(displayName);
     }
     // Paper end
     @Override

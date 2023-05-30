@@ -66,7 +66,7 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
     protected static final int SLOT_FUEL = 1;
     protected static final int SLOT_RESULT = 2;
     public static final int DATA_LIT_TIME = 0;
-    private static final int[] SLOTS_FOR_UP = new int[]{0};
+    private static final int[] SLOTS_FOR_UP = org.plazmamc.plazma.util.Constants.ZERO_INT;
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
     public static final int DATA_LIT_DURATION = 1;

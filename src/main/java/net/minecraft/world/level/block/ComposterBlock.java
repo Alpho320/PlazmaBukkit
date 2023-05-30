@@ -442,7 +442,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
 
         @Override
         public int[] getSlotsForFace(Direction side) {
-            return side == Direction.DOWN ? new int[]{0} : new int[0];
+            return side == Direction.DOWN ? org.plazmamc.plazma.util.Constants.ZERO_INT : org.plazmamc.plazma.util.Constants.EMPTY_INT;
         }
 
         @Override
@@ -491,7 +491,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
 
         @Override
         public int[] getSlotsForFace(Direction side) {
-            return side == Direction.UP ? new int[]{0} : new int[0];
+            return side == Direction.UP ? org.plazmamc.plazma.util.Constants.ZERO_INT : org.plazmamc.plazma.util.Constants.EMPTY_INT;
         }
 
         @Override
@@ -533,7 +533,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
 
         @Override
         public int[] getSlotsForFace(Direction side) {
-            return new int[0];
+            return org.plazmamc.plazma.util.Constants.EMPTY_INT;
         }
 
         @Override

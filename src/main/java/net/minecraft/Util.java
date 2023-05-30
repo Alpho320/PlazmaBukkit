@@ -400,7 +400,7 @@ public class Util {
         } else if (futures.size() == 1) {
             return futures.get(0).thenApply(List::of);
         } else {
-            CompletableFuture<Void> completableFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+            CompletableFuture<Void> completableFuture = CompletableFuture.allOf(futures.toArray(org.plazmamc.plazma.util.Constants.COMPLETABLE_FUTURE));
             return completableFuture.thenApply((void_) -> {
                 return futures.stream().map(CompletableFuture::join).toList();
             });

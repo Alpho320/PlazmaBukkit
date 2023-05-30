@@ -13,8 +13,8 @@ import net.minecraft.world.phys.Vec3;
 
 public class Path {
     public final List<Node> nodes;
-    private Node[] openSet = new Node[0];
-    private Node[] closedSet = new Node[0];
+    private Node[] openSet = org.plazmamc.plazma.util.Constants.EMPTY_NODE;
+    private Node[] closedSet = org.plazmamc.plazma.util.Constants.EMPTY_NODE;
     @Nullable
     private Set<Target> targetNodes;
     private int nextNodeIndex;

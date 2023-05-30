@@ -184,7 +184,7 @@ public class Creeper extends Monster implements PowerableMob {
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
         this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this, new Class[0]));
+        this.targetSelector.addGoal(2, new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
     }
 
     public static AttributeSupplier.Builder createAttributes() {

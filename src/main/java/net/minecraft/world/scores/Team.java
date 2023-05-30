@@ -80,7 +80,7 @@ public abstract class Team {
         public final int id;
 
         public static String[] getAllNames() {
-            return BY_NAME.keySet().toArray(new String[0]);
+            return BY_NAME.keySet().toArray(org.plazmamc.plazma.util.Constants.EMPTY_STRING);
         }
 
         @Nullable

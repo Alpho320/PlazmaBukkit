@@ -89,7 +89,7 @@ public class ShapelessRecipe implements CraftingRecipe {
     public boolean matches(CraftingContainer inventory, Level world) {
         // Pufferfish start
         if (!this.isBukkit) {
-            java.util.List<Ingredient> ingredients = com.google.common.collect.Lists.newArrayList(this.ingredients.toArray(new Ingredient[0]));
+            java.util.List<Ingredient> ingredients = com.google.common.collect.Lists.newArrayList(this.ingredients.toArray(org.plazmamc.plazma.util.Constants.INGREDIENT));
 
             inventory: for (int index = 0; index < inventory.getContainerSize(); index++) {
                 ItemStack itemStack = inventory.getItem(index);

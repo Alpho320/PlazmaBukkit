@@ -81,7 +81,7 @@ public final class ChunkEntitySlices {
             }
         }
 
-        return ret.toArray(new org.bukkit.entity.Entity[0]);
+        return ret.toArray(org.plazmamc.plazma.util.Constants.BUKKIT_ENTITY);
     }
 
     public CompoundTag save() {
@@ -298,7 +298,7 @@ public final class ChunkEntitySlices {
 
     protected static final class BasicEntityList<E extends Entity> {
 
-        protected static final Entity[] EMPTY = new Entity[0];
+        protected static final Entity[] EMPTY = org.plazmamc.plazma.util.Constants.ENTITY;
         protected static final int DEFAULT_CAPACITY = 4;
 
         protected E[] storage;

@@ -262,7 +262,7 @@ public class ShapedRecipe implements CraftingRecipe {
         }
 
         if (pattern.length == l) {
-            return new String[0];
+            return org.plazmamc.plazma.util.Constants.EMPTY_STRING;
         } else {
             String[] astring1 = new String[pattern.length - l - k];
 

@@ -11,6 +11,6 @@ public class MemoryReserve {
     }
 
     public static void release() {
-        reserve = new byte[0];
+        reserve = org.plazmamc.plazma.util.Constants.EMPTY_BYTE;
     }
 }

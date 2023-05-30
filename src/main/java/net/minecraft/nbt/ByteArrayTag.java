@@ -175,7 +175,7 @@ public class ByteArrayTag extends CollectionTag<ByteTag> {
     }
 
     public void clear() {
-        this.data = new byte[0];
+        this.data = org.plazmamc.plazma.util.Constants.EMPTY_BYTE;
     }
 
     @Override
