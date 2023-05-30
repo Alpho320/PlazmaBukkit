@@ -378,6 +378,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     public boolean valid;
     public boolean generation;
     public int maxAirTicks = this.getDefaultMaxAirSupply(); // CraftBukkit - SPIGOT-6907: re-implement LivingEntity#setMaximumAir()
+    @Nullable // Paper
     public org.bukkit.projectiles.ProjectileSource projectileSource; // For projectiles only
     public boolean lastDamageCancelled; // SPIGOT-5339, SPIGOT-6252, SPIGOT-6777: Keep track if the event was canceled
     public boolean persistentInvisibility = false;

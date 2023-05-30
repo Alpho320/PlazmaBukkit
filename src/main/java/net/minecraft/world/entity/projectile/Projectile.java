@@ -49,14 +49,24 @@ public abstract class Projectile extends Entity implements TraceableEntity {
             this.ownerUUID = entity.getUUID();
             this.cachedOwner = entity;
         }
-        this.projectileSource = (entity != null && entity.getBukkitEntity() instanceof ProjectileSource) ? (ProjectileSource) entity.getBukkitEntity() : null; // CraftBukkit
-
+        this.refreshProjectileSource(false); // Paper
     }
+    // Paper start
+    public void refreshProjectileSource(boolean fillCache) {
+        if (fillCache) {
+            this.getOwner();
+        }
+        if (this.cachedOwner != null && !this.cachedOwner.isRemoved() && this.projectileSource == null && this.cachedOwner.getBukkitEntity() instanceof ProjectileSource projSource) {
+            this.projectileSource = projSource;
+        }
+    }
+    // Paper end
 
     @Nullable
     @Override
     public Entity getOwner() {
         if (this.cachedOwner != null && !this.cachedOwner.isRemoved()) {
+            this.refreshProjectileSource(false); // Paper
             return this.cachedOwner;
         } else if (this.ownerUUID != null && this.level instanceof ServerLevel) {
             this.cachedOwner = ((ServerLevel) this.level).getEntity(this.ownerUUID);
@@ -72,6 +82,7 @@ public abstract class Projectile extends Entity implements TraceableEntity {
                 }
             }
             // Paper end
+            this.refreshProjectileSource(false); // Paper
             return this.cachedOwner;
         } else {
             return null;
