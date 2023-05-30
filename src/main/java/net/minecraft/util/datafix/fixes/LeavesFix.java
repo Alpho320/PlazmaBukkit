@@ -71,14 +71,14 @@ public class LeavesFix extends DataFix {
             return this.fixTypeEverywhereTyped("Leaves fix", type, (typed) -> {
                 return typed.updateTyped(opticFinder, (typedx) -> {
                     int[] is = new int[]{0};
-                    Typed<?> typed2 = typedx.updateTyped(opticFinder2, (typed) -> {
-                        Int2ObjectMap<LeavesFix.LeavesSection> int2ObjectMap = new Int2ObjectOpenHashMap<>(typed.getAllTyped(opticFinder3).stream().map((typedx) -> {
-                            return new LeavesFix.LeavesSection(typedx, this.getInputSchema());
+                    Typed<?> typed2 = typedx.updateTyped(opticFinder2, (typed2x) -> {
+                        Int2ObjectMap<LeavesFix.LeavesSection> int2ObjectMap = new Int2ObjectOpenHashMap<>(typed2x.getAllTyped(opticFinder3).stream().map((typedx2) -> {
+                            return new LeavesFix.LeavesSection(typedx2, this.getInputSchema());
                         }).collect(Collectors.toMap(LeavesFix.Section::getIndex, (leavesSection) -> {
                             return leavesSection;
                         })));
                         if (int2ObjectMap.values().stream().allMatch(LeavesFix.Section::isSkippable)) {
-                            return typed;
+                            return typed2x;
                         } else {
                             List<IntSet> list = Lists.newArrayList();
 
@@ -134,8 +134,8 @@ public class LeavesFix extends DataFix {
                                 }
                             }
 
-                            return typed.updateTyped(opticFinder3, (typedx) -> {
-                                return int2ObjectMap.get(typedx.get(DSL.remainderFinder()).get("Y").asInt(0)).write(typedx);
+                            return typed.updateTyped(opticFinder3, (typedx2) -> {
+                                return int2ObjectMap.get(typedx2.get(DSL.remainderFinder()).get("Y").asInt(0)).write(typedx2);
                             });
                         }
                     });
@@ -298,8 +298,8 @@ public class LeavesFix extends DataFix {
                 throw new IllegalStateException("Block state type is not what was expected.");
             } else {
                 Optional<List<Pair<String, Dynamic<?>>>> optional = typed.getOptional(this.paletteFinder);
-                this.palette = optional.map((list) -> {
-                    return list.stream().map(Pair::getSecond).collect(Collectors.toList());
+                this.palette = (java.util.List)optional.map((list) -> {
+                    return (java.util.List)list.stream().map(Pair::getSecond).collect(Collectors.toList());
                 }).orElse(ImmutableList.of());
                 Dynamic<?> dynamic = typed.get(DSL.remainderFinder());
                 this.index = dynamic.get("Y").asInt(0);
@@ -321,7 +321,7 @@ public class LeavesFix extends DataFix {
         public Typed<?> write(Typed<?> typed) {
             return this.isSkippable() ? typed : typed.update(DSL.remainderFinder(), (dynamic) -> {
                 return dynamic.set("BlockStates", dynamic.createLongList(Arrays.stream(this.storage.getRaw())));
-            }).set(this.paletteFinder, this.palette.stream().map((dynamic) -> {
+            }).set(this.paletteFinder, (java.util.List)this.palette.stream().map((dynamic) -> {
                 return Pair.of(References.BLOCK_STATE.typeName(), dynamic);
             }).collect(Collectors.toList()));
         }
