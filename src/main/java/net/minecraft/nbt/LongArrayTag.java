@@ -193,7 +193,7 @@ public class LongArrayTag extends CollectionTag<LongTag> {
 
     @Override
     public void clear() {
-        this.data = new long[0];
+        this.data = org.plazmamc.plazma.util.Constants.EMPTY_LONG;
     }
 
     @Override

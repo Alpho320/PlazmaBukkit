@@ -95,7 +95,7 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
     }
 
     public String[] getUserList() {
-        return (String[]) this.map.keySet().toArray(new String[0]);
+        return (String[]) this.map.keySet().toArray(org.plazmamc.plazma.util.Constants.EMPTY_STRING);
     }
 
     // CraftBukkit start

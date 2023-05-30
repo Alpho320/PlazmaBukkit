@@ -166,7 +166,7 @@ public final class WeakCollection<T> implements Collection<T> {
 
     @Override
     public Object[] toArray() {
-        return this.toArray(new Object[0]);
+        return this.toArray(org.plazmamc.plazma.util.Constants.EMPTY_OBJECT);
     }
 
     @Override

@@ -189,7 +189,7 @@ public class IntArrayTag extends CollectionTag<IntTag> {
     }
 
     public void clear() {
-        this.data = new int[0];
+        this.data = org.plazmamc.plazma.util.Constants.EMPTY_INT;
     }
 
     @Override

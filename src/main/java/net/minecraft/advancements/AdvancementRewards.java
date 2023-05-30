@@ -24,7 +24,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 public class AdvancementRewards {
-    public static final AdvancementRewards EMPTY = new AdvancementRewards(0, new ResourceLocation[0], new ResourceLocation[0], CommandFunction.CacheableFunction.NONE);
+    public static final AdvancementRewards EMPTY = new AdvancementRewards(0, org.plazmamc.plazma.util.Constants.RESOURCE_LOCATION, org.plazmamc.plazma.util.Constants.RESOURCE_LOCATION, CommandFunction.CacheableFunction.NONE);
     private final int experience;
     private final ResourceLocation[] loot;
     private final ResourceLocation[] recipes;
@@ -187,7 +187,7 @@ public class AdvancementRewards {
         }
 
         public AdvancementRewards build() {
-            return new AdvancementRewards(this.experience, this.loot.toArray(new ResourceLocation[0]), this.recipes.toArray(new ResourceLocation[0]), this.function == null ? CommandFunction.CacheableFunction.NONE : new CommandFunction.CacheableFunction(this.function));
+            return new AdvancementRewards(this.experience, this.loot.toArray(org.plazmamc.plazma.util.Constants.RESOURCE_LOCATION), this.recipes.toArray(org.plazmamc.plazma.util.Constants.RESOURCE_LOCATION), this.function == null ? CommandFunction.CacheableFunction.NONE : new CommandFunction.CacheableFunction(this.function));
         }
     }
 }

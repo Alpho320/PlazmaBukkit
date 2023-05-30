@@ -28,7 +28,7 @@ public class CrashReport {
     private final List<CrashReportCategory> details = Lists.newArrayList();
     private File saveFile;
     private boolean trackingStackTrace = true;
-    private StackTraceElement[] uncategorizedStackTrace = new StackTraceElement[0];
+    private StackTraceElement[] uncategorizedStackTrace = org.plazmamc.plazma.util.Constants.STACK_TRACE_ELEMENT;
     private final SystemReport systemReport = new SystemReport();
 
     public CrashReport(String message, Throwable cause) {

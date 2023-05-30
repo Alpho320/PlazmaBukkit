@@ -238,8 +238,8 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
 
     @Override
     public void handleHello(ServerboundHelloPacket packet) {
-        Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet", new Object[0]);
-        if (!org.plazmamc.plazma.configurations.GlobalConfiguration.get().player.allowAnyUsername) Validate.validState(ServerLoginPacketListenerImpl.isValidUsername(packet.name()), "Invalid characters in username", new Object[0]); // Plazma
+        Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT);
+        if (!org.plazmamc.plazma.configurations.GlobalConfiguration.get().player.allowAnyUsername) Validate.validState(ServerLoginPacketListenerImpl.isValidUsername(packet.name()), "Invalid characters in username", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT); // Plazma
         // Paper start - validate usernames
         if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.performUsernameValidation) {
             if (!this.iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation && !validateUsername(packet.name())) {
@@ -298,7 +298,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
 
     @Override
     public void handleKey(ServerboundKeyPacket packet) {
-        Validate.validState(this.state == ServerLoginPacketListenerImpl.State.KEY, "Unexpected key packet", new Object[0]);
+        Validate.validState(this.state == ServerLoginPacketListenerImpl.State.KEY, "Unexpected key packet", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT);
 
         final String s;
 

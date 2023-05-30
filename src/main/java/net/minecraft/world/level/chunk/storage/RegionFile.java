@@ -445,7 +445,7 @@ public class RegionFile implements AutoCloseable {
         initOversizedState(); // Paper
         this.usedSectors = new RegionBitmap();
         this.version = outputChunkStreamVersion;
-        if (!Files.isDirectory(directory, new LinkOption[0])) {
+        if (!Files.isDirectory(directory, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
             throw new IllegalArgumentException("Expected directory, got " + directory.toAbsolutePath());
         } else {
             this.externalFileDir = directory;
@@ -701,7 +701,7 @@ public class RegionFile implements AutoCloseable {
     private DataInputStream createExternalChunkInputStream(ChunkPos pos, byte flags) throws IOException {
         Path path = this.getExternalChunkPath(pos);
 
-        if (!Files.isRegularFile(path, new LinkOption[0])) {
+        if (!Files.isRegularFile(path, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
             RegionFile.LOGGER.error("External chunk path {} is not file", path);
             return null;
         } else {
@@ -753,7 +753,7 @@ public class RegionFile implements AutoCloseable {
                             return false;
                         }
 
-                        if (!Files.isRegularFile(this.getExternalChunkPath(pos), new LinkOption[0])) {
+                        if (!Files.isRegularFile(this.getExternalChunkPath(pos), org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
                             return false;
                         }
                     } else {

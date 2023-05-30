@@ -14,7 +14,7 @@ public final class VersionCommand implements PaperSubcommand {
     public boolean execute(final CommandSender sender, final String subCommand, final String[] args) {
         final @Nullable Command ver = MinecraftServer.getServer().server.getCommandMap().getCommand("version");
         if (ver != null) {
-            ver.execute(sender, "paper", new String[0]);
+            ver.execute(sender, "paper", org.plazmamc.plazma.util.Constants.EMPTY_STRING);
         }
         return true;
     }

@@ -379,7 +379,7 @@ public class CompoundTag implements Tag {
             throw new ReportedException(this.createReport(key, ByteArrayTag.TYPE, var3));
         }
 
-        return new byte[0];
+        return org.plazmamc.plazma.util.Constants.EMPTY_BYTE;
     }
 
     public int[] getIntArray(String key) {
@@ -391,7 +391,7 @@ public class CompoundTag implements Tag {
             throw new ReportedException(this.createReport(key, IntArrayTag.TYPE, var3));
         }
 
-        return new int[0];
+        return org.plazmamc.plazma.util.Constants.EMPTY_INT;
     }
 
     public long[] getLongArray(String key) {
@@ -403,7 +403,7 @@ public class CompoundTag implements Tag {
             throw new ReportedException(this.createReport(key, LongArrayTag.TYPE, var3));
         }
 
-        return new long[0];
+        return org.plazmamc.plazma.util.Constants.EMPTY_LONG;
     }
 
     public CompoundTag getCompound(String key) {

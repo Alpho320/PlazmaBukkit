@@ -70,7 +70,7 @@ public class LeavesFix extends DataFix {
             OpticFinder<?> opticFinder3 = DSL.typeFinder(type3);
             return this.fixTypeEverywhereTyped("Leaves fix", type, (typed) -> {
                 return typed.updateTyped(opticFinder, (typedx) -> {
-                    int[] is = new int[]{0};
+                    int[] is = org.plazmamc.plazma.util.Constants.ZERO_INT;
                     Typed<?> typed2 = typedx.updateTyped(opticFinder2, (typed2x) -> {
                         Int2ObjectMap<LeavesFix.LeavesSection> int2ObjectMap = new Int2ObjectOpenHashMap<>(typed2x.getAllTyped(opticFinder3).stream().map((typedx2) -> {
                             return new LeavesFix.LeavesSection(typedx2, this.getInputSchema());

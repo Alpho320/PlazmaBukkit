@@ -125,14 +125,14 @@ public class LevelStorageSource {
     }
 
     public LevelStorageSource.LevelCandidates findLevelCandidates() throws LevelStorageException {
-        if (!Files.isDirectory(this.baseDir, new LinkOption[0])) {
+        if (!Files.isDirectory(this.baseDir, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
             throw new LevelStorageException(Component.translatable("selectWorld.load_folder_access"));
         } else {
             try {
                 List<LevelStorageSource.LevelDirectory> list = Files.list(this.baseDir).filter((path) -> {
-                    return Files.isDirectory(path, new LinkOption[0]);
+                    return Files.isDirectory(path, org.plazmamc.plazma.util.Constants.LINK_OPTION);
                 }).map(LevelStorageSource.LevelDirectory::new).filter((convertable_b) -> {
-                    return Files.isRegularFile(convertable_b.dataFile(), new LinkOption[0]) || Files.isRegularFile(convertable_b.oldDataFile(), new LinkOption[0]);
+                    return Files.isRegularFile(convertable_b.dataFile(), org.plazmamc.plazma.util.Constants.LINK_OPTION) || Files.isRegularFile(convertable_b.oldDataFile(), org.plazmamc.plazma.util.Constants.LINK_OPTION);
                 }).toList();
 
                 return new LevelStorageSource.LevelCandidates(list);
@@ -187,12 +187,12 @@ public class LevelStorageSource {
 
     @Nullable
     <T> T readLevelData(LevelStorageSource.LevelDirectory levelSave, BiFunction<Path, DataFixer, T> levelDataParser) {
-        if (!Files.exists(levelSave.path(), new LinkOption[0])) {
+        if (!Files.exists(levelSave.path(), org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
             return null;
         } else {
             Path path = levelSave.dataFile();
 
-            if (Files.exists(path, new LinkOption[0])) {
+            if (Files.exists(path, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
                 T t0 = levelDataParser.apply(path, this.fixerUpper);
 
                 if (t0 != null) {
@@ -201,7 +201,7 @@ public class LevelStorageSource {
             }
 
             path = levelSave.oldDataFile();
-            return Files.exists(path, new LinkOption[0]) ? levelDataParser.apply(path, this.fixerUpper) : null;
+            return Files.exists(path, org.plazmamc.plazma.util.Constants.LINK_OPTION) ? levelDataParser.apply(path, this.fixerUpper) : null;
         }
     }
 
@@ -322,7 +322,7 @@ public class LevelStorageSource {
     }
 
     public boolean levelExists(String name) {
-        return Files.isDirectory(this.baseDir.resolve(name), new LinkOption[0]);
+        return Files.isDirectory(this.baseDir.resolve(name), org.plazmamc.plazma.util.Constants.LINK_OPTION);
     }
 
     public Path getBaseDir() {
@@ -546,7 +546,7 @@ public class LevelStorageSource {
             this.checkLock();
             Path path = this.levelDirectory.dataFile();
 
-            if (Files.exists(path, new LinkOption[0])) {
+            if (Files.exists(path, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
                 CompoundTag nbttagcompound = NbtIo.readCompressed(path.toFile());
                 CompoundTag nbttagcompound1 = nbttagcompound.getCompound("Data");
 

@@ -333,7 +333,7 @@ public class Panda extends Animal {
         this.goalSelector.addGoal(13, new FollowParentGoal(this, 1.25D));
         this.goalSelector.addGoal(14, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-        this.targetSelector.addGoal(1, (new Panda.PandaHurtByTargetGoal(this, new Class[0])).setAlertOthers(new Class[0]));
+        this.targetSelector.addGoal(1, (new Panda.PandaHurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS)).setAlertOthers(org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
     }
 
     public static AttributeSupplier.Builder createAttributes() {

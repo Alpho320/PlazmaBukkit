@@ -1250,7 +1250,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
 
     public static List<Entity> getCurrentlyTickingEntities() {
         Entity ticking = currentlyTickingEntity.get();
-        List<Entity> ret = java.util.Arrays.asList(ticking == null ? new Entity[0] : new Entity[] { ticking });
+        List<Entity> ret = java.util.Arrays.asList(ticking == null ? org.plazmamc.plazma.util.Constants.ENTITY : new Entity[] { ticking });
 
         return ret;
     }

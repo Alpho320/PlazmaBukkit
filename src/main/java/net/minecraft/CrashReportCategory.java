@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class CrashReportCategory {
     private final String title;
     private final List<CrashReportCategory.Entry> entries = Lists.newArrayList();
-    private StackTraceElement[] stackTrace = new StackTraceElement[0];
+    private StackTraceElement[] stackTrace = org.plazmamc.plazma.util.Constants.STACK_TRACE_ELEMENT;
 
     public CrashReportCategory(String title) {
         this.title = title;

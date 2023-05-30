@@ -609,7 +609,7 @@ public class CraftMetaBook extends CraftMetaItem implements BookMeta {
                 throw new IllegalArgumentException("Invalid page number " + page + "/" + CraftMetaBook.this.getPageCount());
             }
 
-            BaseComponent[] newText = text == null ? new BaseComponent[0] : text;
+            BaseComponent[] newText = text == null ? org.plazmamc.plazma.util.Constants.BASE_COMPONENT : text;
             CraftMetaBook.this.pages.set(page - 1, this.componentsToPage(newText));
         }
 
@@ -622,7 +622,7 @@ public class CraftMetaBook extends CraftMetaItem implements BookMeta {
         public void addPage(final BaseComponent[]... pages) {
             for (BaseComponent[] page : pages) {
                 if (page == null) {
-                    page = new BaseComponent[0];
+                    page = org.plazmamc.plazma.util.Constants.BASE_COMPONENT;
                 }
 
                 CraftMetaBook.this.internalAddPage(this.componentsToPage(page));

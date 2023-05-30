@@ -17,7 +17,7 @@ public final class ChunkList implements Iterable<LevelChunk> {
         this.chunkToIndex.defaultReturnValue(Integer.MIN_VALUE);
     }
 
-    protected static final LevelChunk[] EMPTY_LIST = new LevelChunk[0];
+    protected static final LevelChunk[] EMPTY_LIST = org.plazmamc.plazma.util.Constants.LEVEL_CHUNK;
 
     protected LevelChunk[] chunks = EMPTY_LIST;
     protected int count;

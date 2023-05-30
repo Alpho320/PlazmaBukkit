@@ -230,7 +230,7 @@ public class ListTag extends CollectionTag<Tag> {
             }
         }
 
-        return new int[0];
+        return org.plazmamc.plazma.util.Constants.EMPTY_INT;
     }
 
     public long[] getLongArray(int index) {
@@ -241,7 +241,7 @@ public class ListTag extends CollectionTag<Tag> {
             }
         }
 
-        return new long[0];
+        return org.plazmamc.plazma.util.Constants.EMPTY_LONG;
     }
 
     public double getDouble(int index) {
