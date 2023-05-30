@@ -1654,7 +1654,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     public org.bukkit.entity.Entity[] getChunkEntities(int chunkX, int chunkZ) {
         io.papermc.paper.world.ChunkEntitySlices slices = ((ServerLevel)this).getEntityLookup().getChunk(chunkX, chunkZ);
         if (slices == null) {
-            return new org.bukkit.entity.Entity[0];
+            return org.plazmamc.plazma.util.Constants.BUKKIT_ENTITY;
         }
         return slices.getChunkEntities();
     }

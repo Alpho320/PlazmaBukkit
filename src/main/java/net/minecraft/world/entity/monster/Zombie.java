@@ -165,7 +165,7 @@ public class Zombie extends Monster {
         this.goalSelector.addGoal(2, new ZombieAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, this::canBreakDoors));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, new Class[0])).setAlertOthers(ZombifiedPiglin.class));
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS)).setAlertOthers(ZombifiedPiglin.class));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         // Purpur start
         if ( level.spigotConfig.zombieAggressiveTowardsVillager ) this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<AbstractVillager>(this, AbstractVillager.class, false) { // Spigot

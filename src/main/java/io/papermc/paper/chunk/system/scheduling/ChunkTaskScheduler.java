@@ -751,7 +751,7 @@ public final class ChunkTaskScheduler {
 
     public static ChunkInfo[] getChunkInfos() {
         synchronized (WAITING_CHUNKS) {
-            return WAITING_CHUNKS.toArray(new ChunkInfo[0]);
+            return WAITING_CHUNKS.toArray(org.plazmamc.plazma.util.Constants.CHUNK_INFO);
         }
     }
 

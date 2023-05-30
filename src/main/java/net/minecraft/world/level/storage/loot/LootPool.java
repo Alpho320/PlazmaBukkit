@@ -160,7 +160,7 @@ public class LootPool {
             if (this.rolls == null) {
                 throw new IllegalArgumentException("Rolls not set");
             } else {
-                return new LootPool(this.entries.toArray(new LootPoolEntryContainer[0]), this.conditions.toArray(new LootItemCondition[0]), this.functions.toArray(new LootItemFunction[0]), this.rolls, this.bonusRolls);
+                return new LootPool(this.entries.toArray(new LootPoolEntryContainer[0]), this.conditions.toArray(new LootItemCondition[0]), this.functions.toArray(org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION), this.rolls, this.bonusRolls);
             }
         }
     }
@@ -171,7 +171,7 @@ public class LootPool {
             JsonObject jsonObject = GsonHelper.convertToJsonObject(jsonElement, "loot pool");
             LootPoolEntryContainer[] lootPoolEntryContainers = GsonHelper.getAsObject(jsonObject, "entries", jsonDeserializationContext, LootPoolEntryContainer[].class);
             LootItemCondition[] lootItemConditions = GsonHelper.getAsObject(jsonObject, "conditions", new LootItemCondition[0], jsonDeserializationContext, LootItemCondition[].class);
-            LootItemFunction[] lootItemFunctions = GsonHelper.getAsObject(jsonObject, "functions", new LootItemFunction[0], jsonDeserializationContext, LootItemFunction[].class);
+            LootItemFunction[] lootItemFunctions = GsonHelper.getAsObject(jsonObject, "functions", org.plazmamc.plazma.util.Constants.LOOT_ITEM_FUNCTION, jsonDeserializationContext, LootItemFunction[].class);
             NumberProvider numberProvider = GsonHelper.getAsObject(jsonObject, "rolls", jsonDeserializationContext, NumberProvider.class);
             NumberProvider numberProvider2 = GsonHelper.getAsObject(jsonObject, "bonus_rolls", ConstantValue.exactly(0.0F), jsonDeserializationContext, NumberProvider.class);
             return new LootPool(lootPoolEntryContainers, lootItemConditions, lootItemFunctions, numberProvider, numberProvider2);

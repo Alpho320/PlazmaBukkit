@@ -267,7 +267,7 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
         this.goalSelector.addGoal(8, new Bee.BeeWanderGoal());
         this.goalSelector.addGoal(9, new FloatGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-        this.targetSelector.addGoal(1, (new Bee.BeeHurtByOtherGoal(this)).setAlertOthers(new Class[0]));
+        this.targetSelector.addGoal(1, (new Bee.BeeHurtByOtherGoal(this)).setAlertOthers(org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
         this.targetSelector.addGoal(2, new Bee.BeeBecomeAngryTargetGoal(this));
         this.targetSelector.addGoal(3, new ResetUniversalAngerTargetGoal<>(this, true));
     }

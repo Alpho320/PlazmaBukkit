@@ -88,7 +88,7 @@ public class DebugLevelSource extends ChunkGenerator {
 
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor world, RandomState noiseConfig) {
-        return new NoiseColumn(0, new BlockState[0]);
+        return new NoiseColumn(0, org.plazmamc.plazma.util.Constants.BLOCK_STATE);
     }
 
     @Override

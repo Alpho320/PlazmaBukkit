@@ -457,7 +457,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         if (variant == Rabbit.Variant.EVIL) {
             this.getAttribute(Attributes.ARMOR).setBaseValue(8.0D);
             this.goalSelector.addGoal(4, new Rabbit.EvilRabbitAttackGoal(this));
-            this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, new Class[0])).setAlertOthers());
+            this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS)).setAlertOthers());
             this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
             this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Wolf.class, true));
             if (!this.hasCustomName()) {

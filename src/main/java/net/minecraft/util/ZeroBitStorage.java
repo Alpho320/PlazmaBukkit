@@ -5,7 +5,7 @@ import java.util.function.IntConsumer;
 import org.apache.commons.lang3.Validate;
 
 public class ZeroBitStorage implements BitStorage {
-    public static final long[] RAW = new long[0];
+    public static final long[] RAW = org.plazmamc.plazma.util.Constants.EMPTY_LONG;
     private final int size;
 
     public ZeroBitStorage(int size) {

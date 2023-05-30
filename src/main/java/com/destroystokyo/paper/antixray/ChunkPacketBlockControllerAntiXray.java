@@ -92,8 +92,8 @@ public final class ChunkPacketBlockControllerAntiXray extends ChunkPacketBlockCo
             Set<BlockState> presetBlockStateSet = new LinkedHashSet<>();
             // Therefore addAll(Collection<? extends E>) is used, which guarantees this order in the doc
             presetBlockStateSet.addAll(presetBlockStateList);
-            presetBlockStates = presetBlockStateSet.isEmpty() ? new BlockState[]{Blocks.DIAMOND_ORE.defaultBlockState()} : presetBlockStateSet.toArray(new BlockState[0]);
-            presetBlockStatesFull = presetBlockStateSet.isEmpty() ? new BlockState[]{Blocks.DIAMOND_ORE.defaultBlockState()} : presetBlockStateList.toArray(new BlockState[0]);
+            presetBlockStates = presetBlockStateSet.isEmpty() ? new BlockState[]{Blocks.DIAMOND_ORE.defaultBlockState()} : presetBlockStateSet.toArray(org.plazmamc.plazma.util.Constants.BLOCK_STATE);
+            presetBlockStatesFull = presetBlockStateSet.isEmpty() ? new BlockState[]{Blocks.DIAMOND_ORE.defaultBlockState()} : presetBlockStateList.toArray(org.plazmamc.plazma.util.Constants.BLOCK_STATE);
             presetBlockStatesStone = null;
             presetBlockStatesDeepslate = null;
             presetBlockStatesNetherrack = null;

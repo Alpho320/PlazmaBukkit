@@ -84,7 +84,7 @@ public class Silverfish extends Monster {
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(5, new Silverfish.SilverfishMergeWithStoneGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, new Class[0])).setAlertOthers());
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS)).setAlertOthers());
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 

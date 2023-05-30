@@ -20,7 +20,7 @@ public final class IBlockDataList {
         this.map.defaultReturnValue(Long.MAX_VALUE);
     }
 
-    private static final long[] EMPTY_LIST = new long[0];
+    private static final long[] EMPTY_LIST = org.plazmamc.plazma.util.Constants.EMPTY_LONG;
 
     private long[] byIndex = EMPTY_LIST;
     private int size;

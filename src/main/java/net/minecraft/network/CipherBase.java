@@ -7,8 +7,8 @@ import javax.crypto.ShortBufferException;
 
 public class CipherBase {
     private final Cipher cipher;
-    private byte[] heapIn = new byte[0];
-    private byte[] heapOut = new byte[0];
+    private byte[] heapIn = org.plazmamc.plazma.util.Constants.EMPTY_BYTE;
+    private byte[] heapOut = org.plazmamc.plazma.util.Constants.EMPTY_BYTE;
 
     protected CipherBase(Cipher cipher) {
         this.cipher = cipher;

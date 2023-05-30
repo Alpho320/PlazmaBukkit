@@ -124,7 +124,7 @@ public class PlayerAdvancements {
     }
 
     private void load(ServerAdvancementManager advancementLoader) {
-        if (Files.isRegularFile(this.playerSavePath, new LinkOption[0])) {
+        if (Files.isRegularFile(this.playerSavePath, org.plazmamc.plazma.util.Constants.LINK_OPTION)) {
             try {
                 JsonReader jsonreader = new JsonReader(Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8));
 

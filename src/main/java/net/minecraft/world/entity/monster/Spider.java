@@ -93,7 +93,7 @@ public class Spider extends Monster {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, new Class[0]));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
         this.targetSelector.addGoal(2, new Spider.SpiderTargetGoal<>(this, Player.class));
         this.targetSelector.addGoal(3, new Spider.SpiderTargetGoal<>(this, IronGolem.class));
     }

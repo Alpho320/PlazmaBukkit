@@ -265,7 +265,7 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, new Class[0]));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, org.plazmamc.plazma.util.Constants.EMPTY_CLASS));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, false, false, WitherBoss.LIVING_ENTITY_SELECTOR));
     }
 

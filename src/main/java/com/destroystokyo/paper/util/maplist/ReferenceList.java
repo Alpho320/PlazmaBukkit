@@ -15,7 +15,7 @@ public final class ReferenceList<E> implements Iterable<E> {
         this.referenceToIndex.defaultReturnValue(Integer.MIN_VALUE);
     }
 
-    protected static final Object[] EMPTY_LIST = new Object[0];
+    protected static final Object[] EMPTY_LIST = org.plazmamc.plazma.util.Constants.EMPTY_OBJECT;
 
     protected Object[] references = EMPTY_LIST;
     protected int count;

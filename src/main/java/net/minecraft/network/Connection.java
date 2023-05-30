@@ -318,7 +318,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
     }
 
     public void setListener(PacketListener listener) {
-        Validate.notNull(listener, "packetListener", new Object[0]);
+        Validate.notNull(listener, "packetListener", org.plazmamc.plazma.util.Constants.EMPTY_OBJECT);
         this.packetListener = listener;
     }
     // Paper start
