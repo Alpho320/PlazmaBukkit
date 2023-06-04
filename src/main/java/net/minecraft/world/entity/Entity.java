@@ -292,7 +292,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     public double yo;
     public double zo;
     private Vec3 position;
-    private BlockPos blockPosition;
+    public BlockPos blockPosition; // Pufferfish - private->public
     private ChunkPos chunkPosition;
     private Vec3 deltaMovement;
     private float yRot;
@@ -417,6 +417,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         return this.originWorld;
     }
     // Paper end
+    // Pufferfish start
+    public boolean activatedPriorityReset = false; // DAB
+    public int activatedPriority = gg.pufferfish.pufferfish.PufferfishConfig.maximumActivationPrio; // golf score
+    public final BlockPos.MutableBlockPos cachedBlockPos = new BlockPos.MutableBlockPos(); // used where needed
+    // Pufferfish end
+    
     public float getBukkitYaw() {
         return this.yRot;
     }
@@ -491,17 +497,36 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
         this.isLegacyTrackingEntity = isLegacyTrackingEntity;
     }
 
+    private org.spigotmc.TrackingRange.TrackingRangeType getFurthestEntity(Entity entity, net.minecraft.server.level.ChunkMap chunkMap, org.spigotmc.TrackingRange.TrackingRangeType type, int range) {
+        List<Entity> passengers = entity.getPassengers();
+        for (int i = 0, size = passengers.size(); i < size; i++) {
+            Entity passenger = passengers.get(i);
+            org.spigotmc.TrackingRange.TrackingRangeType passengerType = passenger.trackingRangeType;
+            int passengerRange = chunkMap.getEntityTrackerRange(passengerType.ordinal());
+            if (passengerRange > range) {
+                type = passengerType;
+                range = passengerRange;
+            }
+
+            type = this.getFurthestEntity(passenger, chunkMap, type, range);
+        }
+
+        return type;
+    }
+
     public final com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> getPlayersInTrackRange() {
         // determine highest range of passengers
         if (this.passengers.isEmpty()) {
             return ((ServerLevel)this.level).getChunkSource().chunkMap.playerEntityTrackerTrackMaps[this.trackingRangeType.ordinal()]
                 .getObjectsInRange(MCUtil.getCoordinateKey(this));
         }
-        Iterable<Entity> passengers = this.getIndirectPassengers();
+        //Iterable<Entity> passengers = this.getIndirectPassengers(); // Pufferfish
         net.minecraft.server.level.ChunkMap chunkMap = ((ServerLevel)this.level).getChunkSource().chunkMap;
         org.spigotmc.TrackingRange.TrackingRangeType type = this.trackingRangeType;
         int range = chunkMap.getEntityTrackerRange(type.ordinal());
 
+        // Pufferfish start - use getFurthestEntity to skip getIndirectPassengers
+        /*
         for (Entity passenger : passengers) {
             org.spigotmc.TrackingRange.TrackingRangeType passengerType = passenger.trackingRangeType;
             int passengerRange = chunkMap.getEntityTrackerRange(passengerType.ordinal());
@@ -510,6 +535,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                 range = passengerRange;
             }
         }
+         */
+        type = this.getFurthestEntity(this, chunkMap, type, range);
+        // Pufferfish end
 
         return chunkMap.playerEntityTrackerTrackMaps[type.ordinal()].getObjectsInRange(MCUtil.getCoordinateKey(this));
     }
@@ -791,6 +819,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     // CraftBukkit end
 
     public void baseTick() {
+        // Pufferfish start - entity TTL
+        if (type != EntityType.PLAYER && type.ttl >= 0 && this.tickCount >= type.ttl) {
+            remove(RemovalReason.DISCARDED);
+            return;
+        }
+        // Pufferfish end - entity TTL
         this.level.getProfiler().push("entityBaseTick");
         if (firstTick && this instanceof net.minecraft.world.entity.NeutralMob neutralMob) neutralMob.tickInitialPersistentAnger(level); // Paper - Update last hurt when ticking
         this.feetBlockState = null;
@@ -4164,16 +4198,18 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
     }
 
     public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> tag, double speed) {
-        if (this.touchingUnloadedChunk()) {
+        if (false && this.touchingUnloadedChunk()) { // Pufferfish - cost of a lookup here is the same cost as below, so skip
             return false;
         } else {
             AABB axisalignedbb = this.getBoundingBox().deflate(0.001D);
-            int i = Mth.floor(axisalignedbb.minX);
-            int j = Mth.ceil(axisalignedbb.maxX);
-            int k = Mth.floor(axisalignedbb.minY);
-            int l = Mth.ceil(axisalignedbb.maxY);
-            int i1 = Mth.floor(axisalignedbb.minZ);
-            int j1 = Mth.ceil(axisalignedbb.maxZ);
+            // Pufferfish start - rename
+            int minBlockX = Mth.floor(axisalignedbb.minX);
+            int maxBlockX = Mth.ceil(axisalignedbb.maxX);
+            int minBlockY = Mth.floor(axisalignedbb.minY);
+            int maxBlockY = Mth.ceil(axisalignedbb.maxY);
+            int minBlockZ = Mth.floor(axisalignedbb.minZ);
+            int maxBlockZ = Mth.ceil(axisalignedbb.maxZ);
+            // Pufferfish end
             double d1 = 0.0D;
             boolean flag = this.isPushedByFluid();
             boolean flag1 = false;
@@ -4181,14 +4217,61 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
             int k1 = 0;
             BlockPos.MutableBlockPos blockposition_mutableblockposition = new BlockPos.MutableBlockPos();
 
-            for (int l1 = i; l1 < j; ++l1) {
-                for (int i2 = k; i2 < l; ++i2) {
-                    for (int j2 = i1; j2 < j1; ++j2) {
-                        blockposition_mutableblockposition.set(l1, i2, j2);
-                        FluidState fluid = this.level.getFluidState(blockposition_mutableblockposition);
+            // Pufferfish start - based off CollisionUtil.getCollisionsForBlocksOrWorldBorder
+            final int minSection = io.papermc.paper.util.WorldUtil.getMinSection(this.level);
+            final int maxSection = io.papermc.paper.util.WorldUtil.getMaxSection(this.level);
+            final int minBlock = minSection << 4;
+            final int maxBlock = (maxSection << 4) | 15;
+
+            // special cases:
+            if (minBlockY > maxBlock || maxBlockY < minBlock) {
+                // no point in checking
+                return false;
+            }
+
+            int minYIterate = Math.max(minBlock, minBlockY);
+            int maxYIterate = Math.min(maxBlock, maxBlockY);
+
+            int minChunkX = minBlockX >> 4;
+            int maxChunkX = maxBlockX >> 4;
+
+            int minChunkZ = minBlockZ >> 4;
+            int maxChunkZ = maxBlockZ >> 4;
+
+            for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+                int minZ = currChunkZ == minChunkZ ? minBlockZ & 15 : 0; // coordinate in chunk
+                int maxZ = currChunkZ == maxChunkZ ? maxBlockZ & 15 : 16; // coordinate in chunk
+
+                for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+                    int minX = currChunkX == minChunkX ? minBlockX & 15 : 0; // coordinate in chunk
+                    int maxX = currChunkX == maxChunkX ? maxBlockX & 15 : 16; // coordinate in chunk
+
+                    net.minecraft.world.level.chunk.ChunkAccess chunk = this.level.getChunkIfLoadedImmediately(currChunkX, currChunkZ);
+                    if (chunk == null) {
+                        return false; // if we're touching an unloaded chunk then it's false
+                    }
+
+                    net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+
+                    for (int currY = minYIterate; currY < maxYIterate; ++currY) {
+                        net.minecraft.world.level.chunk.LevelChunkSection section = sections[(currY >> 4) - minSection];
+
+                        if (section == null || section.hasOnlyAir() || section.fluidStateCount == 0) { // if no fluids, nothing in this section
+                            // empty
+                            // skip to next section
+                            currY = (currY & ~(15)) + 15; // increment by 15: iterator loop increments by the extra one
+                            continue;
+                        }
+
+                        net.minecraft.world.level.chunk.PalettedContainer<BlockState> blocks = section.states;
+
+                        for (int currZ = minZ; currZ < maxZ; ++currZ) {
+                            for (int currX = minX; currX < maxX; ++currX) {
+                                FluidState fluid = blocks.get(currX & 15, currY & 15, currZ & 15).getFluidState();
 
                         if (fluid.is(tag)) {
-                            double d2 = (double) ((float) i2 + fluid.getHeight(this.level, blockposition_mutableblockposition));
+                            blockposition_mutableblockposition.set((currChunkX << 4) + currX, currY, (currChunkZ << 4) + currZ);
+                            double d2 = (double) ((float) currY + fluid.getHeight(this.level, blockposition_mutableblockposition));
 
                             if (d2 >= axisalignedbb.minY) {
                                 flag1 = true;
@@ -4210,9 +4293,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                                 // CraftBukkit end
                             }
                         }
+                            }
+                        }
                     }
                 }
             }
+            // Pufferfish end
 
             if (vec3d.length() > 0.0D) {
                 if (k1 > 0) {

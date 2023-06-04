@@ -55,7 +55,7 @@ public class EndCrystalItem extends Item {
                         world.gameEvent((Entity) context.getPlayer(), GameEvent.ENTITY_PLACE, blockposition1);
                         EndDragonFight enderdragonbattle = ((ServerLevel) world).dragonFight();
 
-                        if (enderdragonbattle != null) {
+                        if (enderdragonbattle != null && gg.pufferfish.pufferfish.PufferfishConfig.allowEndCrystalRespawn) { // Pufferfish
                             enderdragonbattle.tryRespawn();
                         }
                     }

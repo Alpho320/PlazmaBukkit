@@ -313,6 +313,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     public volatile Thread shutdownThread; // Paper
     public volatile boolean abnormalExit = false; // Paper
     public boolean isIteratingOverLevels = false; // Paper
+    
+    public gg.pufferfish.pufferfish.util.AsyncExecutor mobSpawnExecutor = new gg.pufferfish.pufferfish.util.AsyncExecutor("MobSpawning"); // Pufferfish - optimize mob spawning
 
     public static <S extends MinecraftServer> S spin(Function<Thread, S> serverFactory) {
         AtomicReference<S> atomicreference = new AtomicReference();
@@ -1682,7 +1684,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
     @DontObfuscate
     public String getServerModName() {
-        return "Paper"; // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+        return "Pufferfish"; // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
     }
 
     public SystemReport fillSystemReport(SystemReport details) {
@@ -2267,6 +2269,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public ProfilerFiller getProfiler() {
+        if (gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE;
         return this.profiler;
     }
 
