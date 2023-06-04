@@ -262,7 +262,7 @@ import javax.annotation.Nullable; // Paper
 import javax.annotation.Nonnull; // Paper
 
 public final class CraftServer implements Server {
-    private final String serverName = "Paper"; // Paper
+    private final String serverName = "Pufferfish"; // Paper // Pufferfish
     private final String serverVersion;
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final Logger logger = Logger.getLogger("Minecraft");
@@ -1062,6 +1062,11 @@ public final class CraftServer implements Server {
                 plugin.getPluginMeta().getDisplayName(),
                 "This plugin is not properly shutting down its async tasks when it is being shut down. This task may throw errors during the final shutdown logs and might not complete before process dies."
             ));
+            getLogger().log(Level.SEVERE, String.format("%s Stacktrace", worker.getThread().getName()));
+            StackTraceElement[] stackTrace = worker.getThread().getStackTrace();
+            for (StackTraceElement element : stackTrace) {
+                getLogger().log(Level.SEVERE, "  " + element.toString());
+            }
         }
     }
     // Paper end
