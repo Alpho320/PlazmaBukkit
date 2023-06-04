@@ -709,6 +709,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
             org.spigotmc.ActivationRange.activateEntities(this); // Spigot
             timings.entityTick.startTiming(); // Spigot
             this.entityTickList.forEach((entity) -> {
+                entity.activatedPriorityReset = false; // Pufferfish - DAB
                 if (!entity.isRemoved()) {
                     if (false && this.shouldDiscardEntity(entity)) { // CraftBukkit - We prevent spawning in general, so this butchering is not needed
                         entity.discard();
@@ -728,7 +729,20 @@ public class ServerLevel extends Level implements WorldGenLevel {
                             }
 
                             gameprofilerfiller.push("tick");
-                            this.guardEntityTick(this::tickNonPassenger, entity);
+                        // Pufferfish start - copied from this.guardEntityTick
+                        try {
+                            this.tickNonPassenger(entity); // Pufferfish - changed
+                            MinecraftServer.getServer().executeMidTickTasks(); // Tuinity - execute chunk tasks mid tick
+                        } catch (Throwable throwable) {
+                            if (throwable instanceof ThreadDeath) throw throwable; // Paper
+                            // Paper start - Prevent tile entity and entity crashes
+                            final String msg = String.format("Entity threw exception at %s:%s,%s,%s", entity.level.getWorld().getName(), entity.getX(), entity.getY(), entity.getZ());
+                            MinecraftServer.LOGGER.error(msg, throwable);
+                            getCraftServer().getPluginManager().callEvent(new com.destroystokyo.paper.event.server.ServerExceptionEvent(new com.destroystokyo.paper.exception.ServerInternalException(msg, throwable)));
+                            entity.discard();
+                            // Paper end
+                        }
+                        // Pufferfish end
                             gameprofilerfiller.pop();
                         }
                     }
@@ -793,8 +807,10 @@ public class ServerLevel extends Level implements WorldGenLevel {
     }
     // Paper start - optimise random block ticking
     private final BlockPos.MutableBlockPos chunkTickMutablePosition = new BlockPos.MutableBlockPos();
-    private final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(this.random.nextLong());
+    // private final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(); // Pufferfish - moved to super
     // Paper end
+
+    private int currentIceAndSnowTick = 0; protected void resetIceAndSnowTick() { this.currentIceAndSnowTick = this.randomTickRandom.nextInt(16); } // Pufferfish
 
     public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
         ChunkPos chunkcoordintpair = chunk.getPos();
@@ -806,7 +822,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
         gameprofilerfiller.push("thunder");
         final BlockPos.MutableBlockPos blockposition = this.chunkTickMutablePosition; // Paper - use mutable to reduce allocation rate, final to force compile fail on change
 
-        if (!this.paperConfig().environment.disableThunder && flag && this.isThundering() && this.spigotConfig.thunderChance > 0 && this.random.nextInt(this.spigotConfig.thunderChance) == 0) { // Spigot // Paper - disable thunder
+        if (!this.paperConfig().environment.disableThunder && flag && this.isThundering() && this.spigotConfig.thunderChance > 0 && /*this.random.nextInt(this.spigotConfig.thunderChance) == 0 &&*/ chunk.shouldDoLightning(this.random)) { // Spigot // Paper - disable thunder // Pufferfish - replace random with shouldDoLightning
             blockposition.set(this.findLightningTargetAround(this.getBlockRandomPos(j, 0, k, 15))); // Paper
             if (this.isRainingAt(blockposition)) {
                 DifficultyInstance difficultydamagescaler = this.getCurrentDifficultyAt(blockposition);
@@ -836,7 +852,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
         gameprofilerfiller.popPush("iceandsnow");
         int l;
 
-        if (!this.paperConfig().environment.disableIceAndSnow && this.random.nextInt(16) == 0) { // Paper - Disable ice and snow
+        if (!this.paperConfig().environment.disableIceAndSnow && (this.currentIceAndSnowTick++ & 15) == 0) { // Paper - Disable ice and snow // Paper - optimise random ticking  // Pufferfish - optimize further random ticking
             // Paper start - optimise chunk ticking
             this.getRandomBlockPosition(j, 0, k, 15, blockposition);
             int normalY = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, blockposition.getX() & 15, blockposition.getZ() & 15) + 1;

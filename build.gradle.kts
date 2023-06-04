@@ -7,8 +7,12 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":paper-api"))
-    implementation(project(":paper-mojangapi"))
+    implementation(project(":pufferfish-api")) // Pufferfish // Paper
+    // Pufferfish start
+    implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
+        exclude("io.papermc.paper", "paper-api")
+    }
+    // Pufferfish end
     // Paper start
     implementation("org.jline:jline-terminal-jansi:3.21.0")
     implementation("net.minecrell:terminalconsoleappender:1.3.0")
@@ -42,6 +46,13 @@ dependencies {
     runtimeOnly("org.apache.maven.resolver:maven-resolver-connector-basic:1.7.3")
     runtimeOnly("org.apache.maven.resolver:maven-resolver-transport-http:1.7.3")
 
+    // Pufferfish start
+    implementation("org.yaml:snakeyaml:1.32")
+    implementation ("me.carleslc.Simple-YAML:Simple-Yaml:1.8.2") {
+        exclude(group="org.yaml", module="snakeyaml")
+    }
+    // Pufferfish end
+
     testImplementation("io.github.classgraph:classgraph:4.8.47") // Paper - mob goal test
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.hamcrest:hamcrest-library:1.3")
@@ -50,6 +61,14 @@ dependencies {
 }
 
 val craftbukkitPackageVersion = "1_19_R3" // Paper
+
+// Pufferfish Start
+tasks.withType<JavaCompile> {
+    val compilerArgs = options.compilerArgs
+    compilerArgs.add("--add-modules=jdk.incubator.vector")
+}
+// Pufferfish End
+
 tasks.jar {
     archiveClassifier.set("dev")
 
@@ -62,7 +81,7 @@ tasks.jar {
         attributes(
             "Main-Class" to "org.bukkit.craftbukkit.Main",
             "Implementation-Title" to "CraftBukkit",
-            "Implementation-Version" to "git-Paper-$implementationVersion",
+            "Implementation-Version" to "git-Pufferfish-$implementationVersion", // Pufferfish
             "Implementation-Vendor" to date, // Paper
             "Specification-Title" to "Bukkit",
             "Specification-Version" to project.version,

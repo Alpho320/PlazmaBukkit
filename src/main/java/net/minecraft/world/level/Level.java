@@ -274,6 +274,17 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
 
     public abstract ResourceKey<LevelStem> getTypeKey();
 
+    protected final io.papermc.paper.util.math.ThreadUnsafeRandom randomTickRandom = new io.papermc.paper.util.math.ThreadUnsafeRandom(java.util.concurrent.ThreadLocalRandom.current().nextLong()); public net.minecraft.util.RandomSource getThreadUnsafeRandom() { return this.randomTickRandom; } // Pufferfish - move thread unsafe random initialization // Pufferfish - getter
+
+    // Pufferfish start - ensure these get inlined
+    private final int minBuildHeight, minSection, height, maxBuildHeight, maxSection;
+    @Override public final int getMaxBuildHeight() { return this.maxBuildHeight; }
+    @Override public final int getMinSection() { return this.minSection; }
+    @Override public final int getMaxSection() { return this.maxSection; }
+    @Override public final int getMinBuildHeight() { return this.minBuildHeight; }
+    @Override public final int getHeight() { return this.height; }
+    // Pufferfish end
+
     protected Level(WritableLevelData worlddatamutable, ResourceKey<Level> resourcekey, RegistryAccess iregistrycustom, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean flag, boolean flag1, long i, int j, org.bukkit.generator.ChunkGenerator gen, org.bukkit.generator.BiomeProvider biomeProvider, org.bukkit.World.Environment env, java.util.function.Function<org.spigotmc.SpigotWorldConfig, io.papermc.paper.configuration.WorldConfiguration> paperWorldConfigCreator, java.util.concurrent.Executor executor) { // Paper - Async-Anti-Xray - Pass executor
         this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
         this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
@@ -296,6 +307,13 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         });
         final DimensionType dimensionmanager = (DimensionType) holder.value();
 
+        // Pufferfish start
+        this.minBuildHeight = dimensionmanager.minY();
+        this.minSection = SectionPos.blockToSectionCoord(this.minBuildHeight);
+        this.height = dimensionmanager.height();
+        this.maxBuildHeight = this.minBuildHeight + this.height;
+        this.maxSection = SectionPos.blockToSectionCoord(this.maxBuildHeight - 1) + 1;
+        // Pufferfish end
         this.dimension = resourcekey;
         this.isClientSide = flag;
         if (dimensionmanager.coordinateScale() != 1.0D) {
@@ -412,6 +430,91 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     public MinecraftServer getServer() {
         return null;
     }
+
+    // Pufferfish start - broken down method of raytracing for EntityLiving#hasLineOfSight, replaces IBlockAccess#rayTrace(RayTrace)
+    public net.minecraft.world.phys.BlockHitResult.Type rayTraceDirect(net.minecraft.world.phys.Vec3 vec3d, net.minecraft.world.phys.Vec3 vec3d1, net.minecraft.world.phys.shapes.CollisionContext voxelshapecoll) {
+        // most of this code comes from IBlockAccess#a(RayTrace, BiFunction, Function), but removes the needless functions
+        if (vec3d.equals(vec3d1)) {
+            return net.minecraft.world.phys.BlockHitResult.Type.MISS;
+        }
+
+        double endX = Mth.lerp(-1.0E-7D, vec3d1.x, vec3d.x);
+        double endY = Mth.lerp(-1.0E-7D, vec3d1.y, vec3d.y);
+        double endZ = Mth.lerp(-1.0E-7D, vec3d1.z, vec3d.z);
+
+        double startX = Mth.lerp(-1.0E-7D, vec3d.x, vec3d1.x);
+        double startY = Mth.lerp(-1.0E-7D, vec3d.y, vec3d1.y);
+        double startZ = Mth.lerp(-1.0E-7D, vec3d.z, vec3d1.z);
+
+        int currentX = Mth.floor(startX);
+        int currentY = Mth.floor(startY);
+        int currentZ = Mth.floor(startZ);
+
+        BlockPos.MutableBlockPos currentBlock = new BlockPos.MutableBlockPos(currentX, currentY, currentZ);
+
+        LevelChunk chunk = this.getChunkIfLoaded(currentBlock);
+        if (chunk == null) {
+            return net.minecraft.world.phys.BlockHitResult.Type.MISS;
+        }
+
+        net.minecraft.world.phys.BlockHitResult.Type initialCheck = this.rayTraceBlockDirect(vec3d, vec3d1, currentBlock, chunk.getBlockState(currentBlock), voxelshapecoll);
+
+        if (initialCheck != null) {
+            return initialCheck;
+        }
+
+        double diffX = endX - startX;
+        double diffY = endY - startY;
+        double diffZ = endZ - startZ;
+
+        int xDirection = Mth.sign(diffX);
+        int yDirection = Mth.sign(diffY);
+        int zDirection = Mth.sign(diffZ);
+
+        double normalizedX = xDirection == 0 ? Double.MAX_VALUE : (double) xDirection / diffX;
+        double normalizedY = yDirection == 0 ? Double.MAX_VALUE : (double) yDirection / diffY;
+        double normalizedZ = zDirection == 0 ? Double.MAX_VALUE : (double) zDirection / diffZ;
+
+        double normalizedXDirection = normalizedX * (xDirection > 0 ? 1.0D - Mth.frac(startX) : Mth.frac(startX));
+        double normalizedYDirection = normalizedY * (yDirection > 0 ? 1.0D - Mth.frac(startY) : Mth.frac(startY));
+        double normalizedZDirection = normalizedZ * (zDirection > 0 ? 1.0D - Mth.frac(startZ) : Mth.frac(startZ));
+
+        net.minecraft.world.phys.BlockHitResult.Type result;
+
+        do {
+            if (normalizedXDirection > 1.0D && normalizedYDirection > 1.0D && normalizedZDirection > 1.0D) {
+                return net.minecraft.world.phys.BlockHitResult.Type.MISS;
+            }
+
+            if (normalizedXDirection < normalizedYDirection) {
+                if (normalizedXDirection < normalizedZDirection) {
+                    currentX += xDirection;
+                    normalizedXDirection += normalizedX;
+                } else {
+                    currentZ += zDirection;
+                    normalizedZDirection += normalizedZ;
+                }
+            } else if (normalizedYDirection < normalizedZDirection) {
+                currentY += yDirection;
+                normalizedYDirection += normalizedY;
+            } else {
+                currentZ += zDirection;
+                normalizedZDirection += normalizedZ;
+            }
+
+            currentBlock.set(currentX, currentY, currentZ);
+            if (chunk.getPos().x != currentBlock.getX() >> 4 || chunk.getPos().z != currentBlock.getZ() >> 4) {
+                chunk = this.getChunkIfLoaded(currentBlock);
+                if (chunk == null) {
+                    return net.minecraft.world.phys.BlockHitResult.Type.MISS;
+                }
+            }
+            result = this.rayTraceBlockDirect(vec3d, vec3d1, currentBlock, chunk.getBlockState(currentBlock), voxelshapecoll);
+        } while (result == null);
+
+        return result;
+    }
+    // Pufferfish end
 
     public boolean isInWorldBounds(BlockPos pos) {
         return pos.isInsideBuildHeightAndWorldBoundsHorizontal(this); // Paper - use better/optimized check
@@ -925,13 +1028,13 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         try {
             tickConsumer.accept(entity);
             MinecraftServer.getServer().executeMidTickTasks(); // Paper - execute chunk tasks mid tick
-        } catch (Throwable throwable) {
+        } catch (Throwable throwable) { // Pufferfish - diff on change ServerLevel.tick
             if (throwable instanceof ThreadDeath) throw throwable; // Paper
             // Paper start - Prevent tile entity and entity crashes
             final String msg = String.format("Entity threw exception at %s:%s,%s,%s", entity.level.getWorld().getName(), entity.getX(), entity.getY(), entity.getZ());
             MinecraftServer.LOGGER.error(msg, throwable);
             getCraftServer().getPluginManager().callEvent(new ServerExceptionEvent(new ServerInternalException(msg, throwable)));
-            entity.discard();
+            entity.discard(); // Pufferfish - diff on change ServerLevel.tick
             // Paper end
         }
     }
@@ -1454,6 +1557,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     }
 
     public ProfilerFiller getProfiler() {
+        if (gg.pufferfish.pufferfish.PufferfishConfig.disableMethodProfiler) return net.minecraft.util.profiling.InactiveProfiler.INSTANCE; // Pufferfish
         return (ProfilerFiller) this.profiler.get();
     }
 
