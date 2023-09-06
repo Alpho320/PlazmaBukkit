@@ -137,6 +137,11 @@ public class LevelConfigurations extends ConfigurationPart {
     public class CarpetFixes extends ConfigurationPart {
 
         public boolean enabled = DO_OPTIMIZE;
+        boolean optimizedSheepChildColor = false;
+
+        public boolean optimizedSheepChildColor() {
+            return enabled && optimizedSheepChildColor;
+        }
 
     }
 }

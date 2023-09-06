@@ -431,19 +431,27 @@ public class Sheep extends Animal implements Shearable {
     }
 
     private DyeColor getOffspringColor(Animal firstParent, Animal secondParent) {
+        // Plazma start - CarpetFixes - Optimized sheep chile color
         DyeColor enumcolor = ((Sheep) firstParent).getColor();
         DyeColor enumcolor1 = ((Sheep) secondParent).getColor();
-        CraftingContainer inventorycrafting = Sheep.makeContainer(enumcolor, enumcolor1);
-        Optional<Item> optional = this.level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, inventorycrafting, this.level).map((recipecrafting) -> { // CraftBukkit - decompile error
-            return recipecrafting.assemble(inventorycrafting, this.level.registryAccess());
-        }).map(ItemStack::getItem);
+        if (this.level.plazmaLevelConfiguration().carpetFixes.optimizedSheepChildColor()) {
+            DyeColor col = org.plazmamc.plazma.util.CarpetFixesUtils.properDyeMixin(enumcolor, enumcolor1);
+            if (col == null) col = this.level.random.nextBoolean() ? enumcolor : enumcolor1;
+            return col;
+        } else {
+            CraftingContainer inventorycrafting = Sheep.makeContainer(enumcolor, enumcolor1);
+            Optional<Item> optional = this.level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, inventorycrafting, this.level).map((recipecrafting) -> { // CraftBukkit - decompile error
+                return recipecrafting.assemble(inventorycrafting, this.level.registryAccess());
+            }).map(ItemStack::getItem);
 
-        Objects.requireNonNull(DyeItem.class);
-        optional = optional.filter(DyeItem.class::isInstance);
-        Objects.requireNonNull(DyeItem.class);
-        return (DyeColor) optional.map(DyeItem.class::cast).map(DyeItem::getDyeColor).orElseGet(() -> {
-            return this.level.random.nextBoolean() ? enumcolor : enumcolor1;
-        });
+            Objects.requireNonNull(DyeItem.class);
+            optional = optional.filter(DyeItem.class::isInstance);
+            Objects.requireNonNull(DyeItem.class);
+            return (DyeColor) optional.map(DyeItem.class::cast).map(DyeItem::getDyeColor).orElseGet(() -> {
+                return this.level.random.nextBoolean() ? enumcolor : enumcolor1;
+            });
+        }
+        // Plazma end
     }
 
     private static CraftingContainer makeContainer(DyeColor firstColor, DyeColor secondColor) {
