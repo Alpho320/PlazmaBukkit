@@ -41,12 +41,17 @@ class PaperEventManager {
         RegisteredListener[] listeners = handlers.getRegisteredListeners();
         if (listeners.length == 0) return;
         // Plazma end
-        if (event.isAsynchronous() && this.server.isPrimaryThread()) {
-            throw new IllegalStateException(event.getEventName() + " may only be triggered asynchronously.");
-        } else if (!event.isAsynchronous() && !this.server.isPrimaryThread() && !this.server.isStopping()) {
-            throw new IllegalStateException(event.getEventName() + " may only be triggered synchronously.");
+        // Plazma start - Optimize spigot event bus
+        if (event.asynchronous() != net.kyori.adventure.util.TriState.NOT_SET) {
+            final boolean isAsync = event.isAsynchronous();
+            final boolean onPrimaryThread = this.server.isPrimaryThread();
+            if (isAsync && onPrimaryThread) {
+                throw new IllegalStateException(event.getEventName() + " may only be triggered asynchronously.");
+            } else if (!isAsync && !onPrimaryThread && !this.server.isStopping()) {
+                throw new IllegalStateException(event.getEventName() + " may only be triggered synchronously.");
+            }
         }
-
+        // Plazma end
         for (RegisteredListener registration : listeners) {
             if (!registration.getPlugin().isEnabled()) {
                 continue;
