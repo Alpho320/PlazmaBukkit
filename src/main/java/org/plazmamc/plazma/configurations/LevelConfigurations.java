@@ -131,4 +131,12 @@ public class LevelConfigurations extends ConfigurationPart {
         }
 
     }
+
+    public CarpetFixes carpetFixes;
+
+    public class CarpetFixes extends ConfigurationPart {
+
+        public boolean enabled = DO_OPTIMIZE;
+
+    }
 }
