@@ -75,4 +75,12 @@ public class GlobalConfiguration extends ConfigurationPart {
         public int timerTimeOut = 0;
 
     }
+
+    public CarpetFixes carpetFixes;
+
+    public class CarpetFixes extends ConfigurationPart {
+
+        public boolean enabled = DO_OPTIMIZE;
+
+    }
 }
