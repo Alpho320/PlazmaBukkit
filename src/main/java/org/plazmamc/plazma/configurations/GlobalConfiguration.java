@@ -81,6 +81,11 @@ public class GlobalConfiguration extends ConfigurationPart {
     public class CarpetFixes extends ConfigurationPart {
 
         public boolean enabled = DO_OPTIMIZE;
+        boolean optimizedBiomeAccess = true;
+
+        public boolean optimizedBiomeAccess() {
+            return enabled && optimizedBiomeAccess;
+        }
 
     }
 }
