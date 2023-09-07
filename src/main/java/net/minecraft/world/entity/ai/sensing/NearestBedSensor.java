@@ -57,20 +57,39 @@ public class NearestBedSensor extends Sensor<Mob> {
             java.util.List<Pair<Holder<PoiType>, BlockPos>> poiposes = new java.util.ArrayList<>();
             // don't ask me why it's unbounded. ask mojang.
             io.papermc.paper.util.PoiAccess.findAnyPoiPositions(poiManager, type -> type.is(PoiTypes.HOME), predicate, entity.blockPosition(), 48, PoiManager.Occupancy.ANY, false, Integer.MAX_VALUE, poiposes);
-            Path path = AcquirePoi.findPathToPois(entity, new java.util.HashSet<>(poiposes));
-            // Paper end - optimise POI access
-            if (path != null && path.canReach()) {
-                BlockPos blockPos = path.getTarget();
-                Optional<Holder<PoiType>> optional = poiManager.getType(blockPos);
-                if (optional.isPresent()) {
-                    entity.getBrain().setMemory(MemoryModuleType.NEAREST_BED, blockPos);
-                }
-            } else if (this.triedCount < 5) {
-                this.batchCache.long2LongEntrySet().removeIf((entry) -> {
-                    return entry.getLongValue() < this.lastUpdate;
-                });
-            }
+            // Plazma start - await on async path processing
+            if (world.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+                Path possiblePath = AcquirePoi.findPathToPois(entity, new java.util.HashSet<>(poiposes));
+                org.plazmamc.plazma.entity.path.AsyncPathProcessor.awaitProcessing(possiblePath, path -> {
+                    // read canReach check
+                    if ((path == null || !path.canReach()) && this.triedCount < 5) {
+                        this.batchCache.long2LongEntrySet().removeIf((entry) -> entry.getLongValue() < this.lastUpdate);
+                        return;
+                    }
+                    if (path == null) return;
 
+                    BlockPos blockPos = path.getTarget();
+                    Optional<Holder<PoiType>> optional = poiManager.getType(blockPos);
+                    if (optional.isPresent()) {
+                        entity.getBrain().setMemory(MemoryModuleType.NEAREST_BED, blockPos);
+                    }
+                });
+            } else {
+                Path path = AcquirePoi.findPathToPois(entity, new java.util.HashSet<>(poiposes));
+                // Paper end - optimise POI access
+                if (path != null && path.canReach()) {
+                    BlockPos blockPos = path.getTarget();
+                    Optional<Holder<PoiType>> optional = poiManager.getType(blockPos);
+                    if (optional.isPresent()) {
+                        entity.getBrain().setMemory(MemoryModuleType.NEAREST_BED, blockPos);
+                    }
+                } else if (this.triedCount < 5) {
+                    this.batchCache.long2LongEntrySet().removeIf((entry) -> {
+                        return entry.getLongValue() < this.lastUpdate;
+                    });
+                }
+            }
+            // Plazma end
         }
     }
 }

@@ -57,20 +57,40 @@ public class SetClosestHomeAsWalkTarget {
                             Set<Pair<Holder<PoiType>, BlockPos>> set = poiManager.findAllWithType((poiType) -> {
                                 return poiType.is(PoiTypes.HOME);
                             }, predicate, entity.blockPosition(), 48, PoiManager.Occupancy.ANY).collect(Collectors.toSet());
-                            Path path = AcquirePoi.findPathToPois(entity, set);
-                            if (path != null && path.canReach()) {
-                                BlockPos blockPos = path.getTarget();
-                                Optional<Holder<PoiType>> optional2 = poiManager.getType(blockPos);
-                                if (optional2.isPresent()) {
-                                    walkTarget.set(new WalkTarget(blockPos, speed, 1));
-                                    DebugPackets.sendPoiTicketCountPacket(world, blockPos);
-                                }
-                            } else if (mutableInt.getValue() < 5) {
-                                long2LongMap.long2LongEntrySet().removeIf((entry) -> {
-                                    return entry.getLongValue() < mutableLong.getValue();
-                                });
-                            }
+                            // Plazma start - Async path processing
+                            if (entity.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+                                // await on path async
+                                Path possiblePath = AcquirePoi.findPathToPois(entity, set);
 
+                                // wait on the path to be processed
+                                org.plazmamc.plazma.entity.path.AsyncPathProcessor.awaitProcessing(possiblePath, path -> {
+                                    if (path == null || !path.canReach() || mutableInt.getValue() < 5) { // read canReach check
+                                        long2LongMap.long2LongEntrySet().removeIf((entry) -> entry.getLongValue() < mutableLong.getValue());
+                                        return;
+                                    }
+                                    BlockPos blockPos = path.getTarget();
+                                    Optional<Holder<PoiType>> optional2 = poiManager.getType(blockPos);
+                                    if (optional2.isPresent()) {
+                                        walkTarget.set(new WalkTarget(blockPos, speed, 1));
+                                        DebugPackets.sendPoiTicketCountPacket(world, blockPos);
+                                    }
+                                });
+                            } else {
+                                Path path = AcquirePoi.findPathToPois(entity, set);
+                                if (path != null && path.canReach()) {
+                                    BlockPos blockPos = path.getTarget();
+                                    Optional<Holder<PoiType>> optional2 = poiManager.getType(blockPos);
+                                    if (optional2.isPresent()) {
+                                        walkTarget.set(new WalkTarget(blockPos, speed, 1));
+                                        DebugPackets.sendPoiTicketCountPacket(world, blockPos);
+                                    }
+                                } else if (mutableInt.getValue() < 5) {
+                                    long2LongMap.long2LongEntrySet().removeIf((entry) -> {
+                                        return entry.getLongValue() < mutableLong.getValue();
+                                    });
+                                }
+                            }
+                            // Plazma end
                             return true;
                         } else {
                             return false;

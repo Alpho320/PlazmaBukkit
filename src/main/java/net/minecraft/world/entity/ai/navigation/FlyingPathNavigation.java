@@ -16,10 +16,22 @@ public class FlyingPathNavigation extends PathNavigation {
         super(entity, world);
     }
 
+    // Plamza start - async path processing
+    private static final org.plazmamc.plazma.entity.path.NodeEvaluatorGenerator nodeEvaluatorGenerator = (org.plazmamc.plazma.entity.path.NodeEvaluatorFeatures nodeEvaluatorFeatures) -> {
+        FlyNodeEvaluator nodeEvaluator = new FlyNodeEvaluator();
+        nodeEvaluator.setCanPassDoors(nodeEvaluatorFeatures.canPassDoors());
+        nodeEvaluator.setCanFloat(nodeEvaluatorFeatures.canFloat());
+        nodeEvaluator.setCanWalkOverFences(nodeEvaluatorFeatures.canWalkOverFences());
+        nodeEvaluator.setCanOpenDoors(nodeEvaluatorFeatures.canOpenDoors());
+        return nodeEvaluator;
+    };
+    // Plazma end
+
     @Override
     protected PathFinder createPathFinder(int range) {
         this.nodeEvaluator = new FlyNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
+        if (this.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) return new PathFinder(this.nodeEvaluator, range, nodeEvaluatorGenerator); // Plazma - async path processing
         return new PathFinder(this.nodeEvaluator, range);
     }
 
@@ -49,7 +61,7 @@ public class FlyingPathNavigation extends PathNavigation {
         if (this.hasDelayedRecomputation) {
             this.recomputePath();
         }
-
+        if (this.path != null && !this.path.isProcessed()) return; // Plamza - async path processing
         if (!this.isDone()) {
             if (this.canUpdatePath()) {
                 this.followThePath();

@@ -21,6 +21,7 @@ public class MoveToTargetSink extends Behavior<Mob> {
     private int remainingCooldown;
     @Nullable
     private Path path;
+    private boolean finishedProcessing; // Plazma - track when path is processed
     @Nullable
     private BlockPos lastTargetPos;
     private float speedModifier;
@@ -42,9 +43,11 @@ public class MoveToTargetSink extends Behavior<Mob> {
             Brain<?> brain = entity.getBrain();
             WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
             boolean bl = this.reachedTarget(entity, walkTarget);
-            if (!bl && this.tryComputePath(entity, walkTarget, world.getGameTime())) {
+            if (!world.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled && !bl && this.tryComputePath(entity, walkTarget, world.getGameTime())) { // Plazma - async path processing means we can't know if the path is reachable here
                 this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
                 return true;
+            } else if (world.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled && !bl) {
+                return true; // Plazma - async pathfinding
             } else {
                 brain.eraseMemory(MemoryModuleType.WALK_TARGET);
                 if (bl) {
@@ -58,6 +61,7 @@ public class MoveToTargetSink extends Behavior<Mob> {
 
     @Override
     protected boolean canStillUse(ServerLevel world, Mob entity, long time) {
+        if (world.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled && !this.finishedProcessing) return true; // Plazma - wait for processing
         if (this.path != null && this.lastTargetPos != null) {
             Optional<WalkTarget> optional = entity.getBrain().getMemory(MemoryModuleType.WALK_TARGET);
             PathNavigation pathNavigation = entity.getNavigation();
@@ -81,28 +85,99 @@ public class MoveToTargetSink extends Behavior<Mob> {
 
     @Override
     protected void start(ServerLevel serverLevel, Mob mob, long l) {
+        // Plazma start - petal - start processing
+        if (serverLevel.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+            Brain<?> brain = mob.getBrain();
+            WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
+
+            this.finishedProcessing = false;
+            this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
+            this.path = this.computePath(mob, walkTarget);
+            return;
+        }
+        // Plazma end
         mob.getBrain().setMemory(MemoryModuleType.PATH, this.path);
         mob.getNavigation().moveTo(this.path, (double)this.speedModifier);
     }
 
     @Override
     protected void tick(ServerLevel serverLevel, Mob mob, long l) {
-        Path path = mob.getNavigation().getPath();
-        Brain<?> brain = mob.getBrain();
-        if (this.path != path) {
-            this.path = path;
-            brain.setMemory(MemoryModuleType.PATH, path);
-        }
+        // Plazma start - Async path processing
+        if (serverLevel.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+            if (this.path != null && !this.path.isProcessed()) return; // wait for processing
 
-        if (path != null && this.lastTargetPos != null) {
-            WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
-            if (walkTarget.getTarget().currentBlockPosition().distSqr(this.lastTargetPos) > 4.0D && this.tryComputePath(mob, walkTarget, serverLevel.getGameTime())) {
-                this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
-                this.start(serverLevel, mob, l);
+            if (!this.finishedProcessing) {
+                this.finishedProcessing = true;
+
+                Brain<?> brain = mob.getBrain();
+                boolean canReach = this.path != null && this.path.canReach();
+                if (canReach) {
+                    brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+                } else if (!brain.hasMemoryValue(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE)) {
+                    brain.setMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, l);
+                }
+
+                if (!canReach) {
+                    Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
+
+                    if (!walkTarget.isPresent()) return;
+
+                    BlockPos blockPos = walkTarget.get().getTarget().currentBlockPosition();
+                    Vec3 vec3 = DefaultRandomPos.getPosTowards((PathfinderMob) mob, 10, 7, Vec3.atBottomCenterOf(blockPos), (float) Math.PI / 2F);
+                    if (vec3 != null) {
+                        // try recalculating the path using a random position
+                        this.path = mob.getNavigation().createPath(vec3.x, vec3.y, vec3.z, 0);
+                        this.finishedProcessing = false;
+                        return;
+                    }
+                }
+
+                mob.getBrain().setMemory(MemoryModuleType.PATH, this.path);
+                mob.getNavigation().moveTo(this.path, this.speedModifier);
             }
 
+            Path path = mob.getNavigation().getPath();
+            Brain<?> brain = mob.getBrain();
+
+            if (path != null && this.lastTargetPos != null && brain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
+                WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get(); // we know isPresent = true
+                if (walkTarget.getTarget().currentBlockPosition().distSqr(this.lastTargetPos) > 4.0D) {
+                    this.start(serverLevel, mob, l);
+                }
+            }
+        } else {
+            Path path = mob.getNavigation().getPath();
+            Brain<?> brain = mob.getBrain();
+            if (this.path != path) {
+                this.path = path;
+                brain.setMemory(MemoryModuleType.PATH, path);
+            }
+
+            if (path != null && this.lastTargetPos != null) {
+                WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
+                if (walkTarget.getTarget().currentBlockPosition().distSqr(this.lastTargetPos) > 4.0D && this.tryComputePath(mob, walkTarget, serverLevel.getGameTime())) {
+                    this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
+                    this.start(serverLevel, mob, l);
+                }
+
+            }
         }
+        // Plazma end
     }
+
+    // Plazma start - Async path processing
+    @Nullable
+    private Path computePath(Mob entity, WalkTarget walkTarget) {
+        BlockPos blockPos = walkTarget.getTarget().currentBlockPosition();
+        // don't pathfind outside region
+        this.speedModifier = walkTarget.getSpeedModifier();
+        Brain<?> brain = entity.getBrain();
+        if (this.reachedTarget(entity, walkTarget)) {
+            brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+        }
+        return entity.getNavigation().createPath(blockPos, 0);
+    }
+    // Plazma end
 
     private boolean tryComputePath(Mob entity, WalkTarget walkTarget, long time) {
         BlockPos blockPos = walkTarget.getTarget().currentBlockPosition();

@@ -30,6 +30,17 @@ public class Path {
         this.reached = reachesTarget;
     }
 
+    // Plazma start - async path processing
+    /**
+     * checks if the path is completely processed in the case of it being computed async
+     *
+     * @return true if the path is processed
+     */
+    public boolean isProcessed() {
+        return true;
+    }
+    // Plazma end
+
     public void advance() {
         ++this.nextNodeIndex;
     }
@@ -104,6 +115,7 @@ public class Path {
     }
 
     public boolean sameAs(@Nullable Path o) {
+        if (o == this) return true; // Plazma - short circuit
         if (o == null) {
             return false;
         } else if (o.nodes.size() != this.nodes.size()) {

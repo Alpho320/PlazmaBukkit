@@ -1144,7 +1144,7 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
                         } else {
                             Bee.this.pathfindRandomlyTowards(Bee.this.hivePos);
                         }
-                    } else {
+                    } else if (navigation.getPath() != null && navigation.getPath().isProcessed()) { // Plazma - check processing
                         boolean flag = this.pathfindDirectlyTowards(Bee.this.hivePos);
 
                         if (!flag) {
@@ -1206,7 +1206,7 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
             } else {
                 Path pathentity = Bee.this.navigation.getPath();
 
-                return pathentity != null && pathentity.getTarget().equals(pos) && pathentity.canReach() && pathentity.isDone();
+                return pathentity != null && pathentity.isProcessed() && pathentity.getTarget().equals(pos) && pathentity.canReach() && pathentity.isDone(); // Plazma - ensure path is processed
             }
         }
     }

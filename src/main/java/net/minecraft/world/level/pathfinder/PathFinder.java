@@ -24,35 +24,76 @@ public class PathFinder {
     public final NodeEvaluator nodeEvaluator;
     private static final boolean DEBUG = false;
     private final BinaryHeap openSet = new BinaryHeap();
+    private final @Nullable org.plazmamc.plazma.entity.path.NodeEvaluatorGenerator nodeEvaluatorGenerator; // Plazma - we use this later to generate an evaluator
 
+    // Plazma start - support nodeEvaluatorgenerators
     public PathFinder(NodeEvaluator pathNodeMaker, int range) {
+        this(pathNodeMaker, range, null);
+    }
+
+    public PathFinder(NodeEvaluator pathNodeMaker, int range, @Nullable org.plazmamc.plazma.entity.path.NodeEvaluatorGenerator nodeEvaluatorGenerator) {
         this.nodeEvaluator = pathNodeMaker;
         this.maxVisitedNodes = range;
+        this.nodeEvaluatorGenerator = nodeEvaluatorGenerator;
     }
+    // Plazma end
 
     @Nullable
     public Path findPath(PathNavigationRegion world, Mob mob, Set<BlockPos> positions, float followRange, int distance, float rangeMultiplier) {
-        this.openSet.clear();
-        this.nodeEvaluator.prepare(world, mob);
-        Node node = this.nodeEvaluator.getStart();
+        if (!mob.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) this.openSet.clear();// Plazma - it's always cleared in processPath
+        // Plazma start - use a generated evaluator if we have one otherwise run sync
+        NodeEvaluator nodeEvaluator = this.nodeEvaluatorGenerator == null ? this.nodeEvaluator : org.plazmamc.plazma.entity.path.NodeEvaluatorCache.takeNodeEvaluator(this.nodeEvaluatorGenerator, this.nodeEvaluator);
+        nodeEvaluator.prepare(world, mob);
+        Node node = nodeEvaluator.getStart();
+        // Plazma end
         if (node == null) {
+            org.plazmamc.plazma.entity.path.NodeEvaluatorCache.removeNodeEvaluator(nodeEvaluator); // Plazma - handle nodeEvaluatorGenerator
             return null;
         } else {
             // Paper start - remove streams - and optimize collection
             List<Map.Entry<Target, BlockPos>> map = Lists.newArrayList();
             for (BlockPos pos : positions) {
-                map.add(new java.util.AbstractMap.SimpleEntry<>(this.nodeEvaluator.getGoal(pos.getX(), pos.getY(), pos.getZ()), pos));
+                map.add(new java.util.AbstractMap.SimpleEntry<>(nodeEvaluator.getGoal(pos.getX(), pos.getY(), pos.getZ()), pos)); // Plazma - handle nodeEvaluatorGenerator
             }
             // Paper end
-            Path path = this.findPath(world.getProfiler(), node, map, followRange, distance, rangeMultiplier);
-            this.nodeEvaluator.done();
-            return path;
+            // Plazma start - async path processing
+            if (this.nodeEvaluatorGenerator == null) {
+                // run sync :(
+                org.plazmamc.plazma.entity.path.NodeEvaluatorCache.removeNodeEvaluator(nodeEvaluator);
+                return this.findPath(world.getProfiler(), node, map, followRange, distance, rangeMultiplier);
+            }
+
+            return new org.plazmamc.plazma.entity.path.AsyncPath(Lists.newArrayList(), positions, () -> {
+                try {
+                    return this.processPath(nodeEvaluator, node, map, followRange, distance, rangeMultiplier);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                } finally {
+                    nodeEvaluator.done();
+                    org.plazmamc.plazma.entity.path.NodeEvaluatorCache.returnNodeEvaluator(nodeEvaluator);
+                }
+            });
+            // Plazma end
         }
     }
 
-    @Nullable
+    // Plazma start - split pathfinding into the original sync method for compat and processing for delaying
+    //@Nullable // Plazma - Always not null
     // Paper start - optimize collection
     private Path findPath(ProfilerFiller profiler, Node startNode, List<Map.Entry<Target, BlockPos>> positions, float followRange, int distance, float rangeMultiplier) {
+        try {
+            return this.processPath(this.nodeEvaluator, startNode, positions, followRange, distance, rangeMultiplier);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            this.nodeEvaluator.done();
+        }
+    }
+
+    private synchronized @org.jetbrains.annotations.NotNull Path processPath(NodeEvaluator nodeEvaluator, Node startNode, List<Map.Entry<Target, BlockPos>> positions, float followRange, int distance, float rangeMultiplier) { // sync to only use the caching functions in this class on a single thread
+        org.apache.commons.lang3.Validate.isTrue(!positions.isEmpty()); // ensure that we have at least one position, which means we'll always return a path
         //profiler.push("find_path"); // Purpur
         //profiler.markForCharting(MetricCategory.PATH_FINDING); // Purpur
         // Set<Target> set = positions.keySet();
@@ -91,7 +132,7 @@ public class PathFinder {
             }
 
             if (!(node.distanceTo(startNode) >= followRange)) {
-                int k = this.nodeEvaluator.getNeighbors(this.neighbors, node);
+                int k = nodeEvaluator.getNeighbors(this.neighbors, node); // Plazma - use provided nodeEvaluator
 
                 for(int l = 0; l < k; ++l) {
                     Node node2 = this.neighbors[l];
@@ -126,6 +167,7 @@ public class PathFinder {
         return best;
         // Paper end
     }
+    // Plazma end
 
     protected float distance(Node a, Node b) {
         return a.distanceTo(b);

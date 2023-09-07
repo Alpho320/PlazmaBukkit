@@ -88,4 +88,33 @@ public class GlobalConfiguration extends ConfigurationPart {
         }
 
     }
+
+    public Entity entity;
+
+    public class Entity extends ConfigurationPart {
+
+        public AsyncPathProcessing asyncPathProcessing;
+
+        public class AsyncPathProcessing extends ConfigurationPart.Post {
+
+            public boolean enabled = false;
+            public int maxThreads = 0;
+            public int keepAlive = 60;
+
+            @Override
+            public void postProcess() {
+                if (maxThreads < 0) {
+                    maxThreads = Math.max(Runtime.getRuntime().availableProcessors() + maxThreads, 1);
+                } else if (maxThreads == 0) {
+                    maxThreads = Math.max(Runtime.getRuntime().availableProcessors() / 4, 1);
+                }
+                if (!enabled) {
+                    maxThreads = 0;
+                } else {
+                    org.bukkit.Bukkit.getLogger().log(java.util.logging.Level.INFO, "Using " + maxThreads + " threads for Async Pathfinding");
+                }
+            }
+
+        }
+    }
 }

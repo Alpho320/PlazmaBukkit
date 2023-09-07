@@ -708,12 +708,23 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
             protected PathFinder createPathFinder(int range) {
                 this.nodeEvaluator = new WalkNodeEvaluator();
                 this.nodeEvaluator.setCanPassDoors(true);
-                return new PathFinder(this.nodeEvaluator, range) {
-                    @Override
-                    protected float distance(Node a, Node b) {
-                        return a.distanceToXZ(b);
-                    }
-                };
+                // Plazma start - async path processing
+                if (this.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+                    return new PathFinder(this.nodeEvaluator, range, GroundPathNavigation.nodeEvaluatorGenerator) {
+                        @Override
+                        protected float distance(Node a, Node b) {
+                            return a.distanceToXZ(b);
+                        }
+                    };
+                } else {
+                    return new PathFinder(this.nodeEvaluator, range) {
+                        @Override
+                        protected float distance(Node a, Node b) {
+                            return a.distanceToXZ(b);
+                        }
+                    };
+                }
+                // Plazma end
             }
         };
     }

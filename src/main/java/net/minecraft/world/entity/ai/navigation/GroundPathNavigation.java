@@ -21,10 +21,22 @@ public class GroundPathNavigation extends PathNavigation {
         super(entity, world);
     }
 
+    // Plamza start - async path processing
+    protected static final org.plazmamc.plazma.entity.path.NodeEvaluatorGenerator nodeEvaluatorGenerator = (org.plazmamc.plazma.entity.path.NodeEvaluatorFeatures nodeEvaluatorFeatures) -> {
+        WalkNodeEvaluator nodeEvaluator = new WalkNodeEvaluator();
+        nodeEvaluator.setCanPassDoors(nodeEvaluatorFeatures.canPassDoors());
+        nodeEvaluator.setCanFloat(nodeEvaluatorFeatures.canFloat());
+        nodeEvaluator.setCanWalkOverFences(nodeEvaluatorFeatures.canWalkOverFences());
+        nodeEvaluator.setCanOpenDoors(nodeEvaluatorFeatures.canOpenDoors());
+        return nodeEvaluator;
+    };
+    // Plazma end
+
     @Override
     protected PathFinder createPathFinder(int range) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
+        if (this.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) return new PathFinder(this.nodeEvaluator, range, nodeEvaluatorGenerator); // Plazma - async path processing
         return new PathFinder(this.nodeEvaluator, range);
     }
 

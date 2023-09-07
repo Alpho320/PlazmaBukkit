@@ -68,28 +68,62 @@ public class AcquirePoi {
                         io.papermc.paper.util.PoiAccess.findNearestPoiPositions(poiManager, poiPredicate, predicate2, entity.blockPosition(), 48, 48*48, PoiManager.Occupancy.HAS_SPACE, false, 5, poiposes);
                         Set<Pair<Holder<PoiType>, BlockPos>> set = new java.util.HashSet<>(poiposes);
                         // Paper end - optimise POI access
-                        Path path = findPathToPois(entity, set);
-                        if (path != null && path.canReach()) {
-                            BlockPos blockPos = path.getTarget();
-                            poiManager.getType(blockPos).ifPresent((poiType) -> {
-                                poiManager.take(poiPredicate, (holder, blockPos2) -> {
-                                    return blockPos2.equals(blockPos);
-                                }, blockPos, 1);
-                                queryResult.set(GlobalPos.of(world.dimension(), blockPos));
-                                entityStatus.ifPresent((status) -> {
-                                    world.broadcastEntityEvent(entity, status);
+                        // Plazma start - Async Path Processing
+                        if (entity.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+                            // await on patoh async
+                            Path possiblePath = findPathToPois(entity, set);
+
+                            // wait on the path to be processed
+                            org.plazmamc.plazma.entity.path.AsyncPathProcessor.awaitProcessing(possiblePath, path -> {
+                                // read canReach check
+                                if (path == null || !path.canReach()) {
+                                    for(Pair<Holder<PoiType>, BlockPos> pair : set) {
+                                        long2ObjectMap.computeIfAbsent(
+                                                pair.getSecond().asLong(),
+                                                (m) -> new JitteredLinearRetry(entity.level.random, time)
+                                        );
+                                    }
+                                    return;
+                                }
+                                BlockPos blockPos = path.getTarget();
+                                poiManager.getType(blockPos).ifPresent((poiType) -> {
+                                    poiManager.take(poiPredicate,
+                                            (holder, blockPos2) -> blockPos2.equals(blockPos),
+                                            blockPos,
+                                            1
+                                    );
+                                    queryResult.set(GlobalPos.of(world.dimension(), blockPos));
+                                    entityStatus.ifPresent((status) -> {
+                                        world.broadcastEntityEvent(entity, status);
+                                    });
+                                    long2ObjectMap.clear();
+                                    DebugPackets.sendPoiTicketCountPacket(world, blockPos);
                                 });
-                                long2ObjectMap.clear();
-                                DebugPackets.sendPoiTicketCountPacket(world, blockPos);
                             });
                         } else {
-                            for(Pair<Holder<PoiType>, BlockPos> pair : set) {
-                                long2ObjectMap.computeIfAbsent(pair.getSecond().asLong(), (m) -> {
-                                    return new AcquirePoi.JitteredLinearRetry(world.random, time);
+                            Path path = findPathToPois(entity, set);
+                            if (path != null && path.canReach()) {
+                                BlockPos blockPos = path.getTarget();
+                                poiManager.getType(blockPos).ifPresent((poiType) -> {
+                                    poiManager.take(poiPredicate, (holder, blockPos2) -> {
+                                        return blockPos2.equals(blockPos);
+                                    }, blockPos, 1);
+                                    queryResult.set(GlobalPos.of(world.dimension(), blockPos));
+                                    entityStatus.ifPresent((status) -> {
+                                        world.broadcastEntityEvent(entity, status);
+                                    });
+                                    long2ObjectMap.clear();
+                                    DebugPackets.sendPoiTicketCountPacket(world, blockPos);
                                 });
+                            } else {
+                                for (Pair<Holder<PoiType>, BlockPos> pair : set) {
+                                    long2ObjectMap.computeIfAbsent(pair.getSecond().asLong(), (m) -> {
+                                        return new AcquirePoi.JitteredLinearRetry(world.random, time);
+                                    });
+                                }
                             }
                         }
-
+                        // Plazma end
                         return true;
                     }
                 };
