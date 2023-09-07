@@ -15,10 +15,22 @@ public class WaterBoundPathNavigation extends PathNavigation {
         super(entity, world);
     }
 
+    // Plazma start - async path processing
+    private static final org.plazmamc.plazma.entity.path.NodeEvaluatorGenerator nodeEvaluatorGenerator = (org.plazmamc.plazma.entity.path.NodeEvaluatorFeatures nodeEvaluatorFeatures) -> {
+        SwimNodeEvaluator nodeEvaluator = new SwimNodeEvaluator(nodeEvaluatorFeatures.allowBreaching());
+        nodeEvaluator.setCanPassDoors(nodeEvaluatorFeatures.canPassDoors());
+        nodeEvaluator.setCanFloat(nodeEvaluatorFeatures.canFloat());
+        nodeEvaluator.setCanWalkOverFences(nodeEvaluatorFeatures.canWalkOverFences());
+        nodeEvaluator.setCanOpenDoors(nodeEvaluatorFeatures.canOpenDoors());
+        return nodeEvaluator;
+    };
+    // Plazma end
+
     @Override
     protected PathFinder createPathFinder(int range) {
         this.allowBreaching = this.mob.getType() == EntityType.DOLPHIN;
         this.nodeEvaluator = new SwimNodeEvaluator(this.allowBreaching);
+        if (this.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) return new PathFinder(this.nodeEvaluator, range, nodeEvaluatorGenerator); // Plazma - async path processing
         return new PathFinder(this.nodeEvaluator, range);
     }
 

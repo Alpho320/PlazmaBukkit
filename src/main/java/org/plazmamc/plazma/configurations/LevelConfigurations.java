@@ -130,6 +130,19 @@ public class LevelConfigurations extends ConfigurationPart {
 
         }
 
+        public AsyncPathProcessing asyncPathProcessing;
+
+        public class AsyncPathProcessing extends ConfigurationPart.Post {
+
+            public boolean enabled = DO_OPTIMIZE;
+
+            @Override
+            public void postProcess() {
+                enabled = enabled && org.plazmamc.plazma.configurations.GlobalConfiguration.get().entity.asyncPathProcessing.enabled;
+            }
+
+        }
+
     }
 
     public CarpetFixes carpetFixes;

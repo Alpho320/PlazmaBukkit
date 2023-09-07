@@ -152,6 +152,8 @@ public abstract class PathNavigation {
             return null;
         } else if (!this.canUpdatePath()) {
             return null;
+        } else if (this.path instanceof org.plazmamc.plazma.entity.path.AsyncPath asyncPath && !asyncPath.isProcessed() && asyncPath.hasSameProcessingPositions(positions)) { // Plazma start -  catch early if it's still processing these positions let it keep processing
+            return this.path; // plazma end
         } else if (this.path != null && !this.path.isDone() && positions.contains(this.targetPos)) {
             return this.path;
         } else {
@@ -177,13 +179,30 @@ public abstract class PathNavigation {
             int i = (int)(followRange + (float)range);
             PathNavigationRegion pathNavigationRegion = new PathNavigationRegion(this.level, blockPos.offset(-i, -i, -i), blockPos.offset(i, i, i));
             Path path = this.pathFinder.findPath(pathNavigationRegion, this.mob, positions, followRange, distance, this.maxVisitedNodesMultiplier);
-            //this.level.getProfiler().pop(); // Purpur
-            if (path != null && path.getTarget() != null) {
-                this.targetPos = path.getTarget();
-                this.reachRange = distance;
-                this.resetStuckTimeout();
-            }
+            // Plazma start - async path processing
+            if (this.level.plazmaLevelConfiguration().entity.asyncPathProcessing.enabled) {
+                // assign early a target position. most calls will only have 1 position
+                if (!positions.isEmpty()) this.targetPos = positions.iterator().next();
 
+                org.plazmamc.plazma.entity.path.AsyncPathProcessor.awaitProcessing(path, processedPath -> {
+                    // check that processing didn't take so long that we calculated a new path
+                    if (processedPath != this.path) return;
+
+                    if (processedPath != null && processedPath.getTarget() != null) {
+                        this.targetPos = processedPath.getTarget();
+                        this.reachRange = distance;
+                        this.resetStuckTimeout();
+                    }
+                });
+            } else {
+                //this.level.getProfiler().pop(); // Purpur
+                if (path != null && path.getTarget() != null) {
+                    this.targetPos = path.getTarget();
+                    this.reachRange = distance;
+                    this.resetStuckTimeout();
+                }
+            }
+            // Plazma end
             return path;
         }
     }
@@ -229,8 +248,8 @@ public abstract class PathNavigation {
             if (this.isDone()) {
                 return false;
             } else {
-                this.trimPath();
-                if (this.path.getNodeCount() <= 0) {
+                if (path.isProcessed()) this.trimPath(); // Plazma start - only trim if processed
+                if (path.isProcessed() && this.path.getNodeCount() <= 0) { // Plazma end
                     return false;
                 } else {
                     this.speedModifier = speed;
@@ -253,7 +272,7 @@ public abstract class PathNavigation {
         if (this.hasDelayedRecomputation) {
             this.recomputePath();
         }
-
+        if (this.path != null && !this.path.isProcessed()) return; // Plazma - skip pathfinding if we're still processing
         if (!this.isDone()) {
             if (this.canUpdatePath()) {
                 this.followThePath();
@@ -279,6 +298,7 @@ public abstract class PathNavigation {
     }
 
     protected void followThePath() {
+        if (!this.path.isProcessed()) return; // Plazma - skip if not processed
         Vec3 vec3 = this.getTempMobPos();
         this.maxDistanceToWaypoint = this.mob.getBbWidth() > 0.75F ? this.mob.getBbWidth() / 2.0F : 0.75F - this.mob.getBbWidth() / 2.0F;
         Vec3i vec3i = this.path.getNextNodePos();
@@ -438,7 +458,7 @@ public abstract class PathNavigation {
     public boolean shouldRecomputePath(BlockPos pos) {
         if (this.hasDelayedRecomputation) {
             return false;
-        } else if (this.path != null && !this.path.isDone() && this.path.getNodeCount() != 0) {
+        } else if (this.path != null && this.path.isProcessed() && !this.path.isDone() && this.path.getNodeCount() != 0) { // Plazma - Skip if not processed
             Node node = this.path.getEndNode();
             Vec3 vec3 = new Vec3(((double)node.x + this.mob.getX()) / 2.0D, ((double)node.y + this.mob.getY()) / 2.0D, ((double)node.z + this.mob.getZ()) / 2.0D);
             return pos.closerToCenterThan(vec3, (double)(this.path.getNodeCount() - this.path.getNextNodeIndex()));

@@ -293,7 +293,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
     protected boolean closeToNextPos() {
         Path pathentity = this.getNavigation().getPath();
 
-        if (pathentity != null) {
+        if (pathentity != null && pathentity.isProcessed()) { // Plazma - ensure path is processed
             BlockPos blockposition = pathentity.getTarget();
 
             if (blockposition != null) {
