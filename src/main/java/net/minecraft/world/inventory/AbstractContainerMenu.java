@@ -424,6 +424,7 @@ public abstract class AbstractContainerMenu {
                     this.resetQuickCraft();
                 }
             } else if (this.quickcraftStatus == 1) {
+                if (slotIndex < 0) return; // Paper
                 slot = (Slot) this.slots.get(slotIndex);
                 itemstack = this.getCarried();
                 if (AbstractContainerMenu.canItemQuickReplace(slot, itemstack, true) && slot.mayPlace(itemstack) && (this.quickcraftType == 2 || itemstack.getCount() > this.quickcraftSlots.size()) && this.canDragTo(slot)) {
@@ -600,6 +601,7 @@ public abstract class AbstractContainerMenu {
                 int i2;
 
                 if (actionType == ClickType.SWAP) {
+                    if (slotIndex < 0 || button < 0) return; // Paper
                     slot2 = (Slot) this.slots.get(slotIndex);
                     itemstack1 = playerinventory.getItem(button);
                     itemstack = slot2.getItem();
