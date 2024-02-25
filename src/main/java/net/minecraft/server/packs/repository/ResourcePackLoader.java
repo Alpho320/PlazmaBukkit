@@ -20,7 +20,7 @@ public class ResourcePackLoader {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private final String id;
-    private final ResourcePackLoader.c resources;
+    public final ResourcePackLoader.c resources; // PAIL private -> public
     private final IChatBaseComponent title;
     private final IChatBaseComponent description;
     private final EnumResourcePackVersion compatibility;
@@ -59,7 +59,7 @@ public class ResourcePackLoader {
         try {
             IResourcePack iresourcepack = resourcepackloader_c.open(s);
 
-            ResourcePackLoader.a resourcepackloader_a;
+            ResourcePackLoader.a resourcepackloader_a = null; // CraftBukkit - decompile fix
             label53:
             {
                 FeatureFlagsMetadataSection featureflagsmetadatasection;
@@ -93,7 +93,7 @@ public class ResourcePackLoader {
                     iresourcepack.close();
                 }
 
-                return featureflagsmetadatasection;
+                return resourcepackloader_a; // CraftBukkit - decompile fix
             }
 
             if (iresourcepack != null) {

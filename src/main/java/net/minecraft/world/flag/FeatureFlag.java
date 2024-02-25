@@ -2,7 +2,7 @@ package net.minecraft.world.flag;
 
 public class FeatureFlag {
 
-    final FeatureFlagUniverse universe;
+    public final FeatureFlagUniverse universe; // PAIL public
     final long mask;
 
     FeatureFlag(FeatureFlagUniverse featureflaguniverse, int i) {

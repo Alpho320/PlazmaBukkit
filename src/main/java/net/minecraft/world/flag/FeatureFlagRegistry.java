@@ -20,7 +20,7 @@ public class FeatureFlagRegistry {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private final FeatureFlagUniverse universe;
-    private final Map<MinecraftKey, FeatureFlag> names;
+    public final Map<MinecraftKey, FeatureFlag> names; // PAIL public
     private final FeatureFlagSet allFlags;
 
     FeatureFlagRegistry(FeatureFlagUniverse featureflaguniverse, FeatureFlagSet featureflagset, Map<MinecraftKey, FeatureFlag> map) {
