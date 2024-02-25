@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.core.BlockPosition;
-import net.minecraft.world.entity.boss.enderdragon.EntityEnderCrystal;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.util.CraftLocation;
@@ -9,40 +9,40 @@ import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.EntityType;
 
 public class CraftEnderCrystal extends CraftEntity implements EnderCrystal {
-    public CraftEnderCrystal(CraftServer server, EntityEnderCrystal entity) {
+    public CraftEnderCrystal(CraftServer server, EndCrystal entity) {
         super(server, entity);
     }
 
     @Override
     public boolean isShowingBottom() {
-        return getHandle().showsBottom();
+        return this.getHandle().showsBottom();
     }
 
     @Override
     public void setShowingBottom(boolean showing) {
-        getHandle().setShowBottom(showing);
+        this.getHandle().setShowBottom(showing);
     }
 
     @Override
     public Location getBeamTarget() {
-        BlockPosition pos = getHandle().getBeamTarget();
+        BlockPos pos = this.getHandle().getBeamTarget();
         return pos == null ? null : CraftLocation.toBukkit(pos, getWorld());
     }
 
     @Override
     public void setBeamTarget(Location location) {
         if (location == null) {
-            getHandle().setBeamTarget((BlockPosition) null);
+            this.getHandle().setBeamTarget((BlockPos) null);
         } else if (location.getWorld() != getWorld()) {
             throw new IllegalArgumentException("Cannot set beam target location to different world");
         } else {
-            getHandle().setBeamTarget(CraftLocation.toBlockPosition(location));
+            this.getHandle().setBeamTarget(CraftLocation.toBlockPosition(location));
         }
     }
 
     @Override
-    public EntityEnderCrystal getHandle() {
-        return (EntityEnderCrystal) entity;
+    public EndCrystal getHandle() {
+        return (EndCrystal) entity;
     }
 
     @Override

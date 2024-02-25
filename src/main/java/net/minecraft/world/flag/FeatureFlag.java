@@ -5,8 +5,8 @@ public class FeatureFlag {
     public final FeatureFlagUniverse universe; // PAIL public
     final long mask;
 
-    FeatureFlag(FeatureFlagUniverse featureflaguniverse, int i) {
-        this.universe = featureflaguniverse;
-        this.mask = 1L << i;
+    FeatureFlag(FeatureFlagUniverse universe, int id) {
+        this.universe = universe;
+        this.mask = 1L << id;
     }
 }

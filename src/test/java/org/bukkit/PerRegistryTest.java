@@ -21,7 +21,7 @@ public class PerRegistryTest extends AbstractTestingBase {
 
     @BeforeClass
     public static void init() {
-        random = new Random();
+        PerRegistryTest.random = new Random();
     }
 
     @Parameters(name = "{index}: {0}")
@@ -53,7 +53,7 @@ public class PerRegistryTest extends AbstractTestingBase {
         this.registry.forEach(element -> {
             // Values in the registry should be referentially equal to what is returned with #get()
             // This ensures that new instances are not created each time #get() is invoked
-            Assert.assertSame(element, registry.get(element.getKey()));
+            Assert.assertSame(element, this.registry.get(element.getKey()));
         });
     }
 
@@ -62,17 +62,17 @@ public class PerRegistryTest extends AbstractTestingBase {
         this.registry.forEach(element -> {
             NamespacedKey key = element.getKey();
 
-            assertSameMatchWithKeyMessage(element, key.toString()); // namespace:key
-            assertSameMatchWithKeyMessage(element, key.getKey()); // key
-            assertSameMatchWithKeyMessage(element, key.toString().replace('_', ' ')); // namespace:key with space
-            assertSameMatchWithKeyMessage(element, key.getKey().replace('_', ' ')); // key with space
-            assertSameMatchWithKeyMessage(element, randomizeCase(key.toString())); // nAmeSPaCe:kEY
-            assertSameMatchWithKeyMessage(element, randomizeCase(key.getKey())); // kEy
+            this.assertSameMatchWithKeyMessage(element, key.toString()); // namespace:key
+            this.assertSameMatchWithKeyMessage(element, key.getKey()); // key
+            this.assertSameMatchWithKeyMessage(element, key.toString().replace('_', ' ')); // namespace:key with space
+            this.assertSameMatchWithKeyMessage(element, key.getKey().replace('_', ' ')); // key with space
+            this.assertSameMatchWithKeyMessage(element, this.randomizeCase(key.toString())); // nAmeSPaCe:kEY
+            this.assertSameMatchWithKeyMessage(element, this.randomizeCase(key.getKey())); // kEy
         });
     }
 
     private void assertSameMatchWithKeyMessage(Keyed element, String key) {
-        Assert.assertSame(key, element, registry.match(key));
+        Assert.assertSame(key, element, this.registry.match(key));
     }
 
     private String randomizeCase(String input) {
@@ -81,7 +81,7 @@ public class PerRegistryTest extends AbstractTestingBase {
 
         for (int i = 0; i < size; i++) {
             char character = input.charAt(i);
-            builder.append(random.nextBoolean() ? Character.toUpperCase(character) : character);
+            builder.append(PerRegistryTest.random.nextBoolean() ? Character.toUpperCase(character) : character);
         }
 
         return builder.toString();
