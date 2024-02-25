@@ -398,7 +398,7 @@ public class LevelStorageSource {
 
     public class LevelStorageAccess implements AutoCloseable {
 
-        final DirectoryLock lock;
+        final DirectoryLock lock = null; // Plazma
         public final LevelStorageSource.LevelDirectory levelDirectory;
         private final String levelId;
         private final Map<LevelResource, Path> resources = Maps.newHashMap();
@@ -410,7 +410,7 @@ public class LevelStorageSource {
             // CraftBukkit end
             this.levelId = s;
             this.levelDirectory = new LevelStorageSource.LevelDirectory(LevelStorageSource.this.baseDir.resolve(s));
-            this.lock = DirectoryLock.create(this.levelDirectory.path());
+            //this.lock = DirectoryLock.create(this.levelDirectory.path());
         }
 
         public String getLevelId() {
@@ -430,9 +430,9 @@ public class LevelStorageSource {
         }
 
         private void checkLock() {
-            if (!this.lock.isValid()) {
+            /*if (!this.lock.isValid()) {
                 throw new IllegalStateException("Lock is no longer valid");
-            }
+            }*/
         }
 
         public PlayerDataStorage createPlayerStorage() {
@@ -484,7 +484,7 @@ public class LevelStorageSource {
         }
 
         public Optional<Path> getIconFile() {
-            return !this.lock.isValid() ? Optional.empty() : Optional.of(this.levelDirectory.iconFile());
+            return Optional.of(this.levelDirectory.iconFile());
         }
 
         public void deleteLevel() throws IOException {
@@ -513,7 +513,7 @@ public class LevelStorageSource {
                                 throw ioexception;
                             } else {
                                 if (path1.equals(LevelStorageAccess.this.levelDirectory.path())) {
-                                    LevelStorageAccess.this.lock.close();
+                                    //LevelStorageAccess.this.lock.close();
                                     Files.deleteIfExists(path);
                                 }
 
@@ -604,7 +604,7 @@ public class LevelStorageSource {
         }
 
         public void close() throws IOException {
-            this.lock.close();
+            //this.lock.close();
         }
     }
 }
