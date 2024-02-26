@@ -118,7 +118,8 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
     public static final int TICKS_PER_DAY = 24000;
     public static final int MAX_ENTITY_SPAWN_Y = 20000000;
     public static final int MIN_ENTITY_SPAWN_Y = -20000000;
-    protected final List<TickingBlockEntity> blockEntityTickers = Lists.newArrayList(); public final int getTotalTileEntityTickers() { return this.blockEntityTickers.size(); } // Paper
+    protected final me.alpho320.fabulous.paper.BlockEntityTickersList blockEntityTickers = new me.alpho320.fabulous.paper.BlockEntityTickersList(); // Alpho320
+    public final int getTotalTileEntityTickers() { return this.blockEntityTickers.size(); } // Paper
     protected final NeighborUpdater neighborUpdater;
     private final List<TickingBlockEntity> pendingBlockEntityTickers = Lists.newArrayList();
     private boolean tickingBlockEntities;
@@ -1040,8 +1041,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
         // Spigot start
         // Iterator iterator = this.blockEntityTickers.iterator();
         int tilesThisCycle = 0;
-        var toRemove = new it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet<TickingBlockEntity>(net.minecraft.Util.identityStrategy()); // Paper - use removeAll
-        toRemove.add(null);
+
         for (tileTickPosition = 0; tileTickPosition < this.blockEntityTickers.size(); tileTickPosition++) { // Paper - Disable tick limiters
             this.tileTickPosition = (this.tileTickPosition < this.blockEntityTickers.size()) ? this.tileTickPosition : 0;
             TickingBlockEntity tickingblockentity = (TickingBlockEntity) this.blockEntityTickers.get(tileTickPosition);
@@ -1056,7 +1056,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
             if (tickingblockentity.isRemoved()) {
                 // Spigot start
                 tilesThisCycle--;
-                toRemove.add(tickingblockentity); // Paper - use removeAll
+                this.blockEntityTickers.markAsRemoved(this.tileTickPosition); // this.blockEntityTickers.remove(this.tileTickPosition--); // SparklyPaper - optimize block entity removals
                 // Spigot end
             } else if (this.shouldTickBlocksAt(tickingblockentity.getPos())) {
                 tickingblockentity.tick();
@@ -1067,7 +1067,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
                 // Paper end - execute chunk tasks during tick
             }
         }
-        this.blockEntityTickers.removeAll(toRemove);
+        this.blockEntityTickers.removeMarkedEntries(); // SparklyPaper - optimize block entity removals
 
         //timings.tileEntityTick.stopTiming(); // Spigot // Purpur
         this.tickingBlockEntities = false;
