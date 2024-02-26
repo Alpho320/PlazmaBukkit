@@ -74,10 +74,10 @@ tasks.jar {
 
     manifest {
         val git = Git(rootProject.layout.projectDirectory.path)
-        val gitHash = git("rev-parse", "--short=7", "HEAD").getText().trim()
+        val gitHash = "f91ea41"
         val implementationVersion = System.getenv("BUILD_NUMBER") ?: "\"$gitHash\""
-        val date = git("show", "-s", "--format=%ci", gitHash).getText().trim() // Paper
-        val gitBranch = git("rev-parse", "--abbrev-ref", "HEAD").getText().trim() // Paper
+        val date = "25022024" // Paper
+        val gitBranch = "master" // Paper
         attributes(
             "Main-Class" to "org.bukkit.craftbukkit.Main",
             "Implementation-Title" to "CraftBukkit",
