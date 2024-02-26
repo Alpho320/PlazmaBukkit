@@ -237,7 +237,7 @@ public class ServerStatsCounter extends StatsCounter {
 
     public void sendStats(ServerPlayer player) {
         Object2IntMap<Stat<?>> object2intmap = new Object2IntOpenHashMap();
-        Iterator iterator = this.getDirty().iterator();
+        Iterator iterator = this.dirty.iterator(); // Alpho320 - Skip dirty stats copy when requesting player stats
 
         while (iterator.hasNext()) {
             Stat<?> statistic = (Stat) iterator.next();
@@ -245,6 +245,7 @@ public class ServerStatsCounter extends StatsCounter {
             object2intmap.put(statistic, this.getValue(statistic));
         }
 
+        this.dirty.clear(); // Alpho320 - Skip dirty stats copy when requesting player stats
         player.connection.send(new ClientboundAwardStatsPacket(object2intmap));
     }
 }

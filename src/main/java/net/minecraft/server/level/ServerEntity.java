@@ -212,11 +212,13 @@ public class ServerEntity {
 
                 if ((this.trackDelta || this.entity.hasImpulse || this.entity instanceof LivingEntity && ((LivingEntity) this.entity).isFallFlying()) && this.tickCount > 0) {
                     Vec3 vec3d1 = this.entity.getDeltaMovement();
-                    double d0 = vec3d1.distanceToSqr(this.ap);
+                    if (vec3d1 != this.ap) { // Alpho320 start - skip distanceToSqr call in ServerEntity#sendChanges if the delta movement hasn't changed
+                        double d0 = vec3d1.distanceToSqr(this.ap);
 
-                    if (d0 > 1.0E-7D || d0 > 0.0D && vec3d1.lengthSqr() == 0.0D) {
-                        this.ap = vec3d1;
-                        this.broadcast.accept(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.ap));
+                        if (d0 > 1.0E-7D || d0 > 0.0D && vec3d1.lengthSqr() == 0.0D) {
+                            this.ap = vec3d1;
+                            this.broadcast.accept(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.ap));
+                        }
                     }
                 }
 

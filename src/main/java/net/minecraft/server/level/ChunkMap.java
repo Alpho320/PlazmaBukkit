@@ -1618,7 +1618,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
                 boolean flag = d1 <= d2 && this.entity.broadcastToPlayer(player);
 
                 // CraftBukkit start - respect vanish API
-                if (!player.getBukkitEntity().canSee(this.entity.getBukkitEntity())) {
+                if (!player.getBukkitEntity().canSeeChunkMapUpdatePlayer(this.entity.getBukkitEntity())) { // Alpho320 - optimize canSee checks
                     flag = false;
                 }
                 // CraftBukkit end
