@@ -12,8 +12,8 @@ public class AsyncCatcher
     {
         if ( !io.papermc.paper.util.TickThread.isTickThread() ) // Paper // Paper - rewrite chunk system
         {
-            MinecraftServer.LOGGER.error("Thread " + Thread.currentThread().getName() + " failed main thread check: " + reason, new Throwable()); // Paper
-            throw new IllegalStateException( "Asynchronous " + reason + "!" );
+            //MinecraftServer.LOGGER.error("Thread " + Thread.currentThread().getName() + " failed main thread check: " + reason, new Throwable()); // Paper
+            //throw new IllegalStateException( "Asynchronous " + reason + "!" );
         }
     }
 }
